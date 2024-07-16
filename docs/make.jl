@@ -8,7 +8,7 @@ makedocs(;
     authors="cgtbatista <c203748@dac.unicamp.br> and contributors",
     sitename="CelluloseBuilder.jl",
     format=Documenter.HTML(;
-        canonical="https://Carlos G. T. Batista.github.io/CelluloseBuilder.jl",
+        canonical="https://cgtbatista.github.io/CelluloseBuilder.jl",
         edit_link="main",
         assets=String[],
     ),
@@ -18,6 +18,6 @@ makedocs(;
 )
 
 deploydocs(;
-    repo="github.com/Carlos G. T. Batista/CelluloseBuilder.jl",
+    repo="github.com/cgtbatista/CelluloseBuilder.jl",
     devbranch="main",
 )

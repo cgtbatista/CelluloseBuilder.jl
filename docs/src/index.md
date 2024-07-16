@@ -4,7 +4,7 @@ CurrentModule = CelluloseBuilder
 
 # CelluloseBuilder
 
-Documentation for [CelluloseBuilder](https://github.com/Carlos G. T. Batista/CelluloseBuilder.jl).
+Documentation for [CelluloseBuilder](https://github.com/cgtbatista/CelluloseBuilder.jl).
 
 ```@index
 ```
