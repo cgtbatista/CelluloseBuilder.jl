@@ -1,14 +1,16 @@
 """
 
     gettingBasisVectors(lattice_vector::Vector{Int64}, uc_parameters::Vector{Vector{Float64}})
+    gettingBasisVectors(lattice_vector::Vector{Int64}, phase::String)
 
-This function aims to return the basis vectors for the unit cell given the unit cell lattice and paramenters. The return is a `Vector{Vector{Float64}}` structured as
+This function aims to return the basis vectors for the unit cell given an unit cell lattice and its paramenters. The return is a `Vector{Vector{Float64}}` structured as
 `[xbasisvector, ybasisvector, zbasisvector]`.
 
 ## Arguments
 
 - `lattice_vector::Vector{Int64}`: The lattice vector of the unit cell.
 - `uc_parameters::Vector{Vector{Float64}}`: The unit cell parameters. It can be rightly obtained from the `get_crystallographic_info()` function.
+- `phase`: The cellulose polymorph crystal to base the crystallographic information.
 
 ### Examples
 
@@ -19,11 +21,6 @@ julia >
 ```
 
 """
-
-function gettingBasisVectors(lattice_vector::Vector{Int64}, phase::String)
-    uc_parameters = get_crystallographic_info(phase)[3]
-    return gettingBasisVectors(lattice_vector, uc_parameters)
-end
 
 function gettingBasisVectors(lattice_vector::Vector{Int64}, uc_parameters::Vector{Vector{Float64}})
     a = uc_parameters[1][1]; b = uc_parameters[1][2]; c = uc_parameters[1][3];              ## the coefficients of the unit cell parameters
@@ -44,6 +41,160 @@ function gettingBasisVectors(lattice_vector::Vector{Int64}, uc_parameters::Vecto
         lattice_vector[3]*c
     ]
     return [ xbasisvector, ybasisvector, zbasisvector ]
+end
+
+function gettingBasisVectors(lattice_vector::Vector{Int64}, phase::String)
+    uc_parameters = get_crystallographic_info(phase)[3]
+    return gettingBasisVectors(lattice_vector, uc_parameters)
+end
+
+
+"""
+
+    gettingPBC(xsize::Int64, ysize::Int64, zsize::Int64, phase::String; pbc=nothing)
+    gettingPBC(xyzsizes::Vector{Int64}, phase::String; pbc=nothing)
+
+This function aims to return the crystallographic information for the setted cellulose phase. The information is related to the CHARMM atomnames, the unit cell
+parameters and the fractional coordinates of the asymetric unit.
+
+## Arguments
+
+- `xyzsizes::Vector{Int64}`: The number of unit cells along x, y and z axes (`a`, `b` and `c`).
+- `xsize::Int64`: The number of unit cells along x axis (`a`).
+- `ysize::Int64`: The number of unit cells units along y axis (`b`).
+- `zsize::Int64`: The number of unit cells units along z axis (`c`).
+- `phase::String`: The cellulose phase. It could be `Iβ`, `Iα`, `II` or `III`.
+- `pbc=nothing`: The periodic boundary conditions to be applied. It's could be around `:A`, `:B`, or both directions `:ALL`. The default is `nothing`.
+
+### Examples
+
+```julia-repl
+
+julia > 
+
+```
+
+"""
+
+function gettingPBC(xyzsizes::Vector{Int64}, phase::String; pbc=nothing)
+    xsize = xyzsizes[1]; ysize = xyzsizes[2]; zsize = xyzsizes[3];
+    return gettingPBC(xsize, ysize, zsize, phase; pbc=pbc)
+end
+
+function gettingPBC(xsize::Int64, ysize::Int64, zsize::Int64,  phase::String; pbc=nothing)
+    if phase == "I-BETA" || phase == "Ib" || phase == "Iβ"
+        if pbc == :all || pbc == :All || pbc == :ALL
+            xsize += 1; ysize += 1;
+            println("         periodic boundary conditions will be applied in a and b crystalographic directions.")
+            println("         surfaces (1 0 0), (2 0 0), (0 1 0), and (0 2 0) will be exposed!")
+        elseif pbc == :a || pbc == :A
+            xsize += 1;
+            println("         periodic boundary conditions will be applied in a crystalographic direction.")
+            println("         surfaces (1 0 0), (2 0 0), and (0 1 0) will be exposed!")
+        elseif pbc == :b || pbc == :B
+            ysize += 1;
+            println("         periodic boundary conditions will be applied in b crystalographic direction.")
+            println("         surfaces (1 0 0), (0 1 0), and (0 2 0) will be exposed!")
+        elseif isnothing(pbc)
+            println("         periodic boundary conditions will not be special applied.")
+            println("         default translational symmetry will be applied with the surfaces (1 0 0) and (0 1 0) exposed!")
+        end
+    elseif phase == "I-ALPHA" || phase == "Ia" || phase == "Iα"
+        if !isnothing(pbc)
+            println("         periodic boundary conditions $pbc will not be applied in the Iα phase, because it is not valid!")
+            println("         default translational symmetry will be applied with the surfaces (1 0 0) and (0 1 0) exposed!")
+        else
+            println("         periodic boundary conditions will not be special applied.")
+            println("         default translational symmetry will be applied with the surfaces (1 0 0) and (0 1 0) exposed!")
+        end
+    elseif phase == "II"
+        if pbc == :all || pbc == :All || pbc == :ALL
+            xsize += 1;
+            println("         periodic boundary conditions will be applied in a and b crystalographic directions.")
+            println("         surfaces (1 0 0), (2 0 0), (0 1 0), and (0 2 0) will be exposed!")
+        elseif pbc == :a || pbc == :A
+            xsize += 1;
+            println("         periodic boundary conditions will be applied in a crystalographic direction.")
+            println("         surfaces (1 0 0), (2 0 0), and (0 1 0) will be exposed!")
+        elseif pbc == :b || pbc == :B
+            ysize += 1;
+            println("         periodic boundary conditions will be applied in b crystalographic direction.")
+            println("         surfaces (1 0 0), (0 1 0), and (0 2 0) will be exposed!")
+        elseif isnothing(pbc)
+            println("         periodic boundary conditions will not be special applied.")
+            println("         default translational symmetry will be applied with the surfaces (1 0 0) and (0 1 0) exposed!")
+        end
+    elseif phase == "III"
+        if !isnothing(pbc)
+            println("         periodic boundary conditions $pbc will not be applied in the Iα phase, because it is not valid!")
+            println("         default translational symmetry will be applied with the surfaces (1 0 0) and (0 1 0) exposed!")
+        else
+            println("         periodic boundary conditions will not be special applied.")
+            println("         default translational symmetry will be applied with the surfaces (1 0 0) and (0 1 0) exposed!")
+        end
+    end
+    return [xsize, ysize, zsize]
+end
+
+function PBCtools(phase, pbc, nfrag, xsize, ysize, xyzfile, vmd)
+    
+    forbbiden=Int64[]; remainder=Int64[];
+
+    if phase == "I-BETA" || phase == "Ib" || phase == "Iβ"
+
+        a=nfrag; boundary=1; n_forbbiden=0; upper=nfrag-1;
+        
+        if pbc == :all || pbc == :ALL || pbc == :All
+            for b in collect(boundary:1:ysize)
+                n_forbbiden = (2*xsize-1)*b - 1
+                push!(forbbiden, convert(Int64, n_forbbiden))
+            end
+            for b in collect(boundary:1:xsize)
+                a = a - 1
+                push!(forbbiden, convert(Int64, a))
+            end
+        elseif pbc == :a || pbc == :A
+            for b in collect(boundary:1:ysize)
+                n_forbbiden = (2*xsize-1)*b - 1
+                push!(forbbiden, convert(Int64, n_forbbiden))
+            end
+        elseif pbc == :b || pbc == :B
+            for b in collect(boundary:1:xsize)
+                a = a - 1
+                push!(forbbiden, convert(Int64, a))
+            end
+        end
+       
+        for num in 0:upper
+            dummy_logical = 1
+            for ith_forbs in forbbiden
+                if num == ith_forbs
+                    dummy_logical = 0
+                    break
+                end
+            end
+            if dummy_logical == 1
+                remainder = push!(remainder, convert(Int64, num))
+            end
+        end
+
+        sel_fragments = join(remainder, " "); n_fragments = length(remainder);
+
+        new_xyzfile = "/tmp/cellulose" * ".xyz"
+        vmdinput_file = tempname() * ".tcl"
+        
+        vmdinput = open(vmdinput_file, "w")
+        Base.write(vmdinput, "mol new \"$xyzfile\" \n")
+        Base.write(vmdinput, "set sel [ atomselect top \"fragment $sel_fragments\" ] \n")
+        Base.write(vmdinput, "\$sel writexyz \"$new_xyzfile\" \n")
+        Base.write(vmdinput, "exit \n")
+        Base.close(vmdinput)
+        vmdoutput = split(Base.read(`$vmd -dispdev text -e $vmdinput_file`, String), "\n")
+
+    end
+
+    return new_xyzfile, sel_fragments, n_fragments
+
 end
 
 
@@ -75,19 +226,6 @@ julia >
 
 """
 
-function transform_AsymUnits(phase::String)
-    raw_AsymUnit = get_crystallographic_info(phase)[2]
-    return transform_AsymUnits(raw_AsymUnit, phase)
-end
-
-function transform_AsymUnits(x::Vector{Float64}, y::Vector{Float64}, z::Vector{Float64}, phase::String)  
-    if length(x) != length(y) || length(y) != length(z)
-        error("The number of x, y, and z coordinates must be the same.")
-    end
-    raw_AsymUnit = [ [ i, j, k ] for (i, j, k) in zip(x, y, z) ]
-    return transform_AsymUnits(raw_AsymUnit, phase)
-end
-
 function transform_AsymUnits(raw_AsymUnit::Vector{Vector{Float64}}, phase::String)
     xtemp = Float64[]; ytemp = Float64[]; ztemp = Float64[]; 
     if phase == "I-BETA" || phase == "Ib" || phase == "Iβ" || phase == "II" || phase == "III"
@@ -113,8 +251,18 @@ function transform_AsymUnits(raw_AsymUnit::Vector{Vector{Float64}}, phase::Strin
     return [ [ i, j, k ] for (i, j, k) in zip(xtemp, ytemp, ztemp) ]
 end
 
+function transform_AsymUnits(phase::String)
+    raw_AsymUnit = get_crystallographic_info(phase)[2]
+    return transform_AsymUnits(raw_AsymUnit, phase)
+end
 
-
+function transform_AsymUnits(x::Vector{Float64}, y::Vector{Float64}, z::Vector{Float64}, phase::String)  
+    if length(x) != length(y) || length(y) != length(z)
+        error("The number of x, y, and z coordinates must be the same.")
+    end
+    raw_AsymUnit = [ [ i, j, k ] for (i, j, k) in zip(x, y, z) ]
+    return transform_AsymUnits(raw_AsymUnit, phase)
+end
 
 
 """
@@ -139,12 +287,6 @@ julia >
 ```
 
 """
-
-function unitcell2cartesian(cell_dim::Vector{Int64}, phase::String)
-    fractional_coords = transform_AsymUnits(phase)
-    uc_parameters = get_crystallographic_info(phase)[3]
-    return unitcell2cartesian(cell_dim, fractional_coords, uc_parameters)
-end
 
 function unitcell2cartesian(cell_dim::Vector{Int64}, fractional_coords::Vector{Vector{Float64}}, uc_parameters::Vector{Vector{Float64}})
     
@@ -190,6 +332,11 @@ function unitcell2cartesian(cell_dim::Vector{Int64}, fractional_coords::Vector{V
     return x, y, z
 end
 
+function unitcell2cartesian(cell_dim::Vector{Int64}, phase::String)
+    fractional_coords = transform_AsymUnits(phase)
+    uc_parameters = get_crystallographic_info(phase)[3]
+    return unitcell2cartesian(cell_dim, fractional_coords, uc_parameters)
+end
 
 
 

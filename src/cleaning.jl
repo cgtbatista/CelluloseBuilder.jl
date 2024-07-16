@@ -1,3 +1,19 @@
+"""
+
+    cleaning_tmpfiles()
+
+Cleaning all the *.pdb, *.tcl, and *xyz temporary files inside the /tmp folder.
+
+### Examples
+
+```julia-repl
+
+julia > cleaning_tmpfiles()
+
+```
+
+"""
+
 function cleaning_tmpfiles()
     files = readdir("/tmp")
     for file in files

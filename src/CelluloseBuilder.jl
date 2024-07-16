@@ -13,7 +13,6 @@ include("./cleaning.jl")
 include("./crystallographic.jl")
 include("./formatter.jl")
 include("./nfragments.jl")
-include("./pbc.jl")
 include("./systemgenerator.jl")
 
 end

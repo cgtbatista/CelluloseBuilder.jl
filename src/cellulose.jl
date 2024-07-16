@@ -108,9 +108,7 @@ function cellulosebuilder(a::Int64, b::Int64, c::Int64; phase="Iβ", pbc=nothing
         push!(tmpfragments, new_pdbname)
     end
     println("       + using the CHARMM topology file to build the final PDB/PSF with the fragments")
-    #topology_file = "/home/geckodo/Documents/dupree/fibril/cellulose-builder/top_all36_carb.rtf"
-    #topology_file = "/home/user/Documents/phd/dupree/fibril/cellulose-builder/top_all36_carb.rtf"
-    #topology_file = "./src/toppar/top_all36_carb.rtf"
+
     vmdoutput2 = _exporting_PDBfile(phase, 2*xyzsize[3], tmpfragments, topology_file, covalent=covalent, vmd=vmd)
     
     destination_path = pwd()
