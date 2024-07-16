@@ -114,10 +114,10 @@ function cellulosebuilder(a::Int64, b::Int64, c::Int64; phase="Iβ", pbc=nothing
     vmdoutput2 = _exporting_PDBfile(phase, 2*xyzsize[3], tmpfragments, topology_file, covalent=covalent, vmd=vmd)
     
     destination_path = pwd()
-    mv("/tmp/cellulose.xyz", joinpath(destination_path, "cellulose.xyz"))
-    mv("/tmp/cellulose.psf", joinpath(destination_path, "cellulose.psf"))
-    mv("/tmp/cellulose.pdb", joinpath(destination_path, "cellulose.pdb"))
-    
+    mv("/tmp/cellulose.xyz", joinpath(destination_path, "cellulose.xyz"), force=true)
+    mv("/tmp/cellulose.psf", joinpath(destination_path, "cellulose.psf"), force=true)
+    mv("/tmp/cellulose.pdb", joinpath(destination_path, "cellulose.pdb"), force=true)
+
     cleaning_tmpfiles()
     println("")
     println("   ... it is done!")
