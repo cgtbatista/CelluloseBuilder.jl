@@ -29,7 +29,7 @@ Cellulose-builder builds Cartesian coordinates files for cellulose crystalline d
 
 ### Examples
 
-```julia-repl
+```jldoctest
 
 julia > 
 
@@ -74,8 +74,11 @@ function cellulosebuilder(a::Int64, b::Int64, c::Int64; phase="Iβ", pbc=nothing
     println("       + appling transformations on fractional coordinates needed for the phase $phase.")
     println("       + transforming the asymmetric unit to the cartesian coordinates for every [a,b,c] = [$xsize,$ysize,$zsize] Å.")
     ## PHASES CAN DIFFER...
-    if phase == "I-BETA" || phase == "Ib" || phase == "Iβ"
+    if phase == "Ib" || phase == "Iβ" || phase == "II" || phase == "III" || phase == "III_I" || phase == "III_i" || phase == "IIIi"
         xinit, yinit, zinit = unitcell2cartesian(xyzsize[1:2], phase)
+    end
+    if phase == "Ia" || phase == "Iα"
+        xinit, yinit, zinit = unitcell2cartesian(xyzsize, phase)
     end
     println("       + atomic labels for $phase.")
     atomsinit, atomstype = atomsvecString(phase, xyzsize[1], xyzsize[2])
@@ -83,40 +86,35 @@ function cellulosebuilder(a::Int64, b::Int64, c::Int64; phase="Iβ", pbc=nothing
 
     println("   2 - Extending the cellulose modifications of the atoms:")
     println("       + cleaning the coordinates and atomic labels for $phase.")
-    atomsclean, xclean, yclean, zclean = XY_coord_trimming(atomsinit, xinit, yinit, zinit, xyzsize, phase)
+    atomsclean, xclean, yclean, zclean = _XY_trimming_coords(atomsinit, xinit, yinit, zinit, xyzsize, phase=phase)
     println("       + expanding the z coordinates for $phase.")
-    atomsexpnd, xexpnd, yexpnd, zexpnd = Z_propagation(atomsclean, xclean, yclean, zclean, xyzsize[3], phase)
+    atomsexpnd, xexpnd, yexpnd, zexpnd = _Z_propagation_coords(atomsclean, xclean, yclean, zclean, xyzsize[3], phase=phase)
     println("       + picking the number of fragments of the basic structure.")
     xyzfile, vmdoutput = _exporting_XYZfile(atomsexpnd, xexpnd, yexpnd, zexpnd)
     n_fragments = picking_fragments(vmdoutput)
     println("")
 
     println("   3 - Periodic boundary conditions (PBC) on the $n_fragments fragments: $(pbc)...")
-    vmdxyz, frag_sel, frag_units = PBCtools(phase, pbc, n_fragments, xyzsize[1], xyzsize[2], xyzfile, vmd)
+    vmdxyz, frag_sel, frag_units = transformingPBC(n_fragments, xyzsize[1], xyzsize[2], phase=phase, pbc=pbc, xyzfile=xyzfile, vmd=vmd)
     println("")
 
     println("   4 - Generating the PSF/PDB files:")    
     println("       + writing the PDBs for each of those $frag_units fragment units.")
-    pdb_basename = _XYZfragments_2_PDB(vmdxyz, frag_sel, vmd=vmd)[1]
+    pdb_basename = _XYZfragments_2_PDB(vmdxyz, frag_sel, vmd=vmd)[2]
     println("       + cleaning each fragment PDB.")
     units = Base.split(frag_sel, " ");
-    tmpfragments = String[];
+    tmpfragments = String[]; tmpfile = tempname();
     for u in units
         pdbname = pdb_basename * "_" * u * ".pdb"
-        new_pdbname = "/tmp/tmp_" * u * ".pdb"
+        new_pdbname = tmpfile * "_" * u * ".pdb"
         _PDBfragment_cleaning(atomstype, pdbname, new_pdbname)
         push!(tmpfragments, new_pdbname)
     end
     println("       + using the CHARMM topology file to build the final PDB/PSF with the fragments")
 
-    vmdoutput2 = _exporting_PDBfile(phase, 2*xyzsize[3], tmpfragments, topology_file, covalent=covalent, vmd=vmd)
+    vmdoutput2 = _exporting_PDBfile(2*xyzsize[3], tmpfragments, topology_file=topology_file, covalent=covalent, vmd=vmd)
     
-    destination_path = pwd()
-    mv("/tmp/cellulose.xyz", joinpath(destination_path, "cellulose.xyz"), force=true)
-    mv("/tmp/cellulose.psf", joinpath(destination_path, "cellulose.psf"), force=true)
-    mv("/tmp/cellulose.pdb", joinpath(destination_path, "cellulose.pdb"), force=true)
-
-    cleaning_tmpfiles()
+    cleaning_tmpfiles("cellulose")
     println("")
     println("   ... it is done!")
 

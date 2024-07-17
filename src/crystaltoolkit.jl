@@ -1,5 +1,97 @@
 """
 
+    _Z_propagation_coords(atoms::Vector{String}, x::Vector{Float64}, y::Vector{Float64}, z::Vector{Float64}, zsize::Int64; phase="Iβ")
+
+
+This function is able to propagate the crystalline system across the z-axis.
+
+## Arguments
+
+- `atoms::Vector{String}`: atoms names of the system.
+- `x::Vector{Float64}), y::Vector{Float64}), z::Vector{Float64})`: cartesian coordinates of the system.
+- `zsize::Int64`: The number of unit cells units along z axis (`c`).
+
+### Examples
+
+```jldoctest
+
+julia > 
+
+```
+
+"""
+function _Z_propagation_coords(atoms::Vector{String}, x::Vector{Float64}, y::Vector{Float64}, z::Vector{Float64}, zsize::Int64; phase="Iβ")
+
+    xcoords = Float64[]; ycoords = Float64[]; zcoords = Float64[]; atomnames = String[];
+    parameters = get_crystallographic_info(phase)[3]
+ 
+    # Iβ
+    if phase == "Ib" || phase == "Iβ"
+        c = parameters[1][3];
+        for k in collect(1:1:zsize)
+            append!(atomnames, atoms); append!(xcoords, x); append!(ycoords, y); append!(zcoords, z .+ c*(k-1));
+        end        
+    end
+
+    return atomnames, xcoords, ycoords, zcoords
+
+end
+
+"""
+
+    _XY_trimming_coords(atoms::Vector{Vector{String}}, x::Vector{Vector{Float64}}, y::Vector{Vector{Float64}}, z::Vector{Vector{Float64}}, cell_dim::Vector{Int64}; phase="Iβ")
+
+This function is able to save the atomic information (labels + cartesian coordinates) on XYZ file.
+
+## Arguments
+
+- `atoms::Vector{Vector{String}}`: atomnames of the system.
+- `x::Vector{Vector{Float64}}, y::Vector{Vector{Float64}}, z::Vector{Vector{Float64}}`: cartesian coordinates.
+- `cell_dim::Vector{Int64}`: cell dimensions of the system.
+
+### Examples
+
+```jldoctest
+
+julia > 
+
+```
+
+"""
+
+function _XY_trimming_coords(atoms::Vector{Vector{String}}, x::Vector{Vector{Float64}}, y::Vector{Vector{Float64}}, z::Vector{Vector{Float64}}, cell_dim::Vector{Int64}; phase="Iβ")
+
+    atomnames, xcoords, ycoords, zcoords = String[], Float64[], Float64[], Float64[]
+    xsize, ysize = cell_dim[1], cell_dim[2]
+
+    units = 1
+
+    if phase == "Ib" || phase == "Iβ"
+        for j in collect(1:1:ysize), i in collect(1:1:xsize)
+            atomstemp, xtemp, ytemp, ztemp = atoms[units], x[units], y[units], z[units]
+            _atomselect_indexes = (eachindex(atomstemp) .== 0)
+            if ((i == 1) && (j != ysize)) || ((i != 1) && (i != xsize) && (j == 1))
+                _atomselect_indexes = (eachindex(atomstemp) .>= 64) .& (eachindex(atomstemp) .<= 84)
+            end
+            if ((j != 1) && (i == xsize)) || ((i != 1) && (i != xsize) && (j == ysize))
+                _atomselect_indexes = (eachindex(atomstemp) .>= 22) .& (eachindex(atomstemp) .<= 42)
+            end
+            if ((i == 1) && (j == ysize)) || ((j == 1) && (i == xsize))
+                _atomselect_indexes = ((eachindex(atomstemp) .>= 22) .& (eachindex(atomstemp) .<= 42)) .| ((eachindex(atomstemp) .>= 64) .& (eachindex(atomstemp) .<= 84))
+            end
+            append!(atomnames, atomstemp[.!(_atomselect_indexes)])
+            append!(xcoords, xtemp[.!(_atomselect_indexes)]); append!(ycoords, ytemp[.!(_atomselect_indexes)]); append!(zcoords, ztemp[.!(_atomselect_indexes)]);
+
+            units += 1
+        end
+    else error("The phase $phase is not implemented yet."); end
+    
+    return atomnames, xcoords, ycoords, zcoords
+
+end
+
+"""
+
     gettingBasisVectors(lattice_vector::Vector{Int64}, uc_parameters::Vector{Vector{Float64}})
     gettingBasisVectors(lattice_vector::Vector{Int64}, phase::String)
 
@@ -8,15 +100,16 @@ This function aims to return the basis vectors for the unit cell given an unit c
 
 ## Arguments
 
-- `lattice_vector::Vector{Int64}`: The lattice vector of the unit cell.
+- `lattice_vector::Vector{Int64}`: The lattice vector `[xsize, ysize, zsize]` of the unit cell.
 - `uc_parameters::Vector{Vector{Float64}}`: The unit cell parameters. It can be rightly obtained from the `get_crystallographic_info()` function.
 - `phase`: The cellulose polymorph crystal to base the crystallographic information.
 
 ### Examples
 
-```julia-repl
+```jldoctest
 
-julia > 
+julia > gettingBasisVectors([ 5, 7, 4], get_crystallographic_info("Iβ")[3])
+julia > gettingBasisVectors([ xsize, ysize, zsize ], "Iα")
 
 ```
 
@@ -49,6 +142,7 @@ function gettingBasisVectors(lattice_vector::Vector{Int64}, phase::String)
 end
 
 
+
 """
 
     gettingPBC(xsize::Int64, ysize::Int64, zsize::Int64, phase::String; pbc=nothing)
@@ -68,21 +162,18 @@ parameters and the fractional coordinates of the asymetric unit.
 
 ### Examples
 
-```julia-repl
+```jldoctest
 
-julia > 
+julia > gettingPBC(5, 7, 8, "Iβ")
+julia > gettingPBC([ 5, 7, 8 ], "Iβ")
 
 ```
 
 """
 
-function gettingPBC(xyzsizes::Vector{Int64}, phase::String; pbc=nothing)
-    xsize = xyzsizes[1]; ysize = xyzsizes[2]; zsize = xyzsizes[3];
-    return gettingPBC(xsize, ysize, zsize, phase; pbc=pbc)
-end
 
 function gettingPBC(xsize::Int64, ysize::Int64, zsize::Int64,  phase::String; pbc=nothing)
-    if phase == "I-BETA" || phase == "Ib" || phase == "Iβ"
+    if phase == "Ib" || phase == "Iβ"
         if pbc == :all || pbc == :All || pbc == :ALL
             xsize += 1; ysize += 1;
             println("         periodic boundary conditions will be applied in a and b crystalographic directions.")
@@ -99,7 +190,7 @@ function gettingPBC(xsize::Int64, ysize::Int64, zsize::Int64,  phase::String; pb
             println("         periodic boundary conditions will not be special applied.")
             println("         default translational symmetry will be applied with the surfaces (1 0 0) and (0 1 0) exposed!")
         end
-    elseif phase == "I-ALPHA" || phase == "Ia" || phase == "Iα"
+    elseif phase == "Ia" || phase == "Iα"
         if !isnothing(pbc)
             println("         periodic boundary conditions $pbc will not be applied in the Iα phase, because it is not valid!")
             println("         default translational symmetry will be applied with the surfaces (1 0 0) and (0 1 0) exposed!")
@@ -124,7 +215,7 @@ function gettingPBC(xsize::Int64, ysize::Int64, zsize::Int64,  phase::String; pb
             println("         periodic boundary conditions will not be special applied.")
             println("         default translational symmetry will be applied with the surfaces (1 0 0) and (0 1 0) exposed!")
         end
-    elseif phase == "III"
+    elseif phase == "III" || phase == "III_I" || phase == "III_i" || phase == "IIIi"
         if !isnothing(pbc)
             println("         periodic boundary conditions $pbc will not be applied in the Iα phase, because it is not valid!")
             println("         default translational symmetry will be applied with the surfaces (1 0 0) and (0 1 0) exposed!")
@@ -136,66 +227,11 @@ function gettingPBC(xsize::Int64, ysize::Int64, zsize::Int64,  phase::String; pb
     return [xsize, ysize, zsize]
 end
 
-function PBCtools(phase, pbc, nfrag, xsize, ysize, xyzfile, vmd)
-    
-    forbbiden=Int64[]; remainder=Int64[];
-
-    if phase == "I-BETA" || phase == "Ib" || phase == "Iβ"
-
-        a=nfrag; boundary=1; n_forbbiden=0; upper=nfrag-1;
-        
-        if pbc == :all || pbc == :ALL || pbc == :All
-            for b in collect(boundary:1:ysize)
-                n_forbbiden = (2*xsize-1)*b - 1
-                push!(forbbiden, convert(Int64, n_forbbiden))
-            end
-            for b in collect(boundary:1:xsize)
-                a = a - 1
-                push!(forbbiden, convert(Int64, a))
-            end
-        elseif pbc == :a || pbc == :A
-            for b in collect(boundary:1:ysize)
-                n_forbbiden = (2*xsize-1)*b - 1
-                push!(forbbiden, convert(Int64, n_forbbiden))
-            end
-        elseif pbc == :b || pbc == :B
-            for b in collect(boundary:1:xsize)
-                a = a - 1
-                push!(forbbiden, convert(Int64, a))
-            end
-        end
-       
-        for num in 0:upper
-            dummy_logical = 1
-            for ith_forbs in forbbiden
-                if num == ith_forbs
-                    dummy_logical = 0
-                    break
-                end
-            end
-            if dummy_logical == 1
-                remainder = push!(remainder, convert(Int64, num))
-            end
-        end
-
-        sel_fragments = join(remainder, " "); n_fragments = length(remainder);
-
-        new_xyzfile = "/tmp/cellulose" * ".xyz"
-        vmdinput_file = tempname() * ".tcl"
-        
-        vmdinput = open(vmdinput_file, "w")
-        Base.write(vmdinput, "mol new \"$xyzfile\" \n")
-        Base.write(vmdinput, "set sel [ atomselect top \"fragment $sel_fragments\" ] \n")
-        Base.write(vmdinput, "\$sel writexyz \"$new_xyzfile\" \n")
-        Base.write(vmdinput, "exit \n")
-        Base.close(vmdinput)
-        vmdoutput = split(Base.read(`$vmd -dispdev text -e $vmdinput_file`, String), "\n")
-
-    end
-
-    return new_xyzfile, sel_fragments, n_fragments
-
+function gettingPBC(xyzsizes::Vector{Int64}, phase::String; pbc=nothing)
+    xsize = xyzsizes[1]; ysize = xyzsizes[2]; zsize = xyzsizes[3];
+    return gettingPBC(xsize, ysize, zsize, phase; pbc=pbc)
 end
+
 
 
 """
@@ -218,9 +254,11 @@ transformed asymmetric unit cell structured as a `Vector{Vector[Float64]}`.
 
 ## Examples
 
-```julia-repl
+```jldoctest
 
-julia > 
+julia > transform_AsymUnits(x, y, z, "Iβ")
+julia > transform_AsymUnits(xyz, "Iβ")
+julia > transform_AsymUnits("Iβ")
 
 ```
 
@@ -228,7 +266,7 @@ julia >
 
 function transform_AsymUnits(raw_AsymUnit::Vector{Vector{Float64}}, phase::String)
     xtemp = Float64[]; ytemp = Float64[]; ztemp = Float64[]; 
-    if phase == "I-BETA" || phase == "Ib" || phase == "Iβ" || phase == "II" || phase == "III"
+    if phase == "Ib" || phase == "Iβ" || phase == "II" || phase == "III" || phase == "III_I" || phase == "III_i" || phase == "IIIi"
         for raw in enumerate(repeat(raw_AsymUnit, outer=2))
             if raw[1] <= length(raw_AsymUnit)
                 push!(xtemp, raw[2][1])
@@ -240,7 +278,7 @@ function transform_AsymUnits(raw_AsymUnit::Vector{Vector{Float64}}, phase::Strin
                 push!(ztemp, raw[2][3]+0.5)
             end
         end
-    elseif phase == "I-ALPHA" || phase == "Ia" || phase == "Iα"
+    elseif phase == "Ia" || phase == "Iα"
         for raw in raw_AsymUnit
             push!(xtemp, raw[1])
             push!(ytemp, raw[2])
@@ -265,6 +303,7 @@ function transform_AsymUnits(x::Vector{Float64}, y::Vector{Float64}, z::Vector{F
 end
 
 
+
 """
 
     unitcell2cartesian(cell_dim::Vector{Int64}, fractional_coords::Vector{Vector{Float64}}, uc_parameters::Vector{Vector{Float64}})
@@ -282,7 +321,8 @@ Its uses the `get_crystallographic_info()` function to get the crystallographic 
 # Examples
 ```jldoctest
 
-julia > 
+julia > unitcell2cartesian(xyzsize[1:2], get_crystallographic_info("Iβ")[2], get_crystallographic_info("Iβ")[3])
+julia > unitcell2cartesian(xyzsize, phase)
 
 ```
 
@@ -344,8 +384,16 @@ end
 
     get_crystallographic_info(phase::String)
 
-This function aims to return the crystallographic information for the setted cellulose phase. The information is related to the CHARMM atomnames, the unit cell
+This function aims to return the crystallographic information for each cellulose polymorph. The information is related to the CHARMM atomnames, the unit cell
 parameters and the fractional coordinates of the asymetric unit.
+
+    - `atomnames::Vector{String}` is the default CHARMM names for each atom of the β-Glc residue.
+
+    - `asymmetric_unit::Vector{Vector{Float64}}` store the fractional coordinates for the asymetric unit with the
+       format [ [x0, y0, z0], [x1, y1, z1], [x2, y2, z2], ..., [xN, yN, zN] ].
+
+    - `parameters_unit::Vector{Vector{Float64}}` have crystalographic parameters on the first vector (`a`, `b`, `c`)
+       and angles on the second vector (`α`, `β`, `γ`)
 
 ## Arguments
 
@@ -353,16 +401,17 @@ parameters and the fractional coordinates of the asymetric unit.
 
 ### Examples
 
-```julia-repl
+```jldoctest
 
-julia > 
+julia > get_crystallographic_info("III_I")
 
 ```
 
 """
+
 function get_crystallographic_info(phase::String)
-    ## [ atomname1, atomname2, ..., atomnameN ], [ [x0, y0, z0], [x1, y1, z1], ..., [xN, yN, zN] ], [ [a, b, c], [α, β, γ] ]
-    if phase == "I-BETA" || phase == "Ib" || phase == "Iβ"
+    ## [ [a, b, c], [α, β, γ] ]
+    if phase == "Ib" || phase == "Iβ"
         atomnames = [ "C1", "H1", "C2", "H2", "C3", "H3", "C4", "H4", "C5", "H5", "C6", "H61", "H62", "O2", "O3", "O4", "O5", "O6", "HO2", "HO3", "HO6" ]
         asymmetric_unit =  [
             [ 0.014,  -0.042,   0.0433], [ 0.1382, -0.0188,  0.0598], [-0.026, -0.184,  -0.0516], [-0.1508, -0.2177, -0.0546], [ 0.040,  -0.137,  -0.1848],
@@ -376,7 +425,7 @@ function get_crystallographic_info(phase::String)
             [ 0.5104,  0.2733, -0.0961], [ 0.5184,  1.0275,  0.0326]
         ]
         parameters_unit = [ [ 7.784, 8.201, 10.380 ], [ 90.0, 90.0, 96.5 ] ]
-    elseif phase == "I-ALPHA" || phase == "Ia" || phase == "Iα"
+    elseif phase == "Ia" || phase == "Iα"
         atomnames = [ "C1", "H1", "C2", "H2", "C3", "H3", "C4", "H4", "C5", "H5", "C6", "H61", "H62", "O4", "O2", "O3", "O5", "O6", "HO2", "HO3", "HO6" ]
         asymmetric_unit = [
             [ 0.254,  -0.054,   0.031 ], [0.1973, -0.1585, -0.1140], [ 0.193,  -0.143,   0.234 ], [ 0.2550, -0.0383,  0.3792], [ 0.022, -0.174,   0.114],
@@ -403,7 +452,7 @@ function get_crystallographic_info(phase::String)
             [ 0.886,   0.418,  -0.067 ]  
         ]
         parameters_unit = [ [ 8.10, 9.03, 10.31 ], [ 90.0, 90.0, 117.1 ] ]
-    elseif phase == "III" || phase == "III_i" || phase == "III_I"
+    elseif phase == "III" || phase == "III_I" || phase == "III_i" || phase == "IIIi"
         atomnames = [ "C1", "C2", "C3", "C4", "C5", "C6", "O2", "O3", "O4", "O5", "O6", "H1", "H2", "H3", "H4", "H5", "H61", "H62", "HO2", "HO3", "HO6" ]
         asymmetric_unit = [
            [ 0.050961,  0.057262, 0.380527], [ 0.191389,  0.196135, 0.287129], [ 0.047193,  0.160362, 0.153425], [ 0.009263, -0.031267,  0.112801],

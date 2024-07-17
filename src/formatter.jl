@@ -1,3 +1,28 @@
+"""
+
+    _exporting_XYZfile(atoms::Vector{Vector{String}}, x::Vector{Vector{Float64}}, y::Vector{Vector{Float64}}, z::Vector{Vector{Float64}}; vmd="vmd", natoms=nothing, xyzfile=nothing)
+    _exporting_XYZfile(atoms::Vector{String}, x::Vector{Float64}, y::Vector{Float64}, z::Vector{Float64}; vmd="vmd", natoms=nothing, xyzfile=nothing)
+    _exporting_XYZfile(atoms::Vector{String}, xyzcoords::Vector{Vector{Float64}}; vmd="vmd", natoms=nothing, xyzfile=nothing)
+
+This function is able to save the atomic information (labels + cartesian coordinates) on XYZ file.
+
+## Arguments
+
+- `atoms (::Vector{Vector{String}}, ::Vector{String})`: atoms names of the systems
+- `x, y, z (::Vector{Vector{Float64}}, ::Vector{Float64})`: cartesian coordinates of the system
+- `xyzcoords::Vector{Vector{Float64}}`: (x,y,z) of the cartesian coordinates
+
+### Examples
+
+```jldoctest
+
+julia > _exporting_XYZfile(atoms, x, y, z)
+julia > _exporting_XYZfile(atoms, xyz)
+
+```
+
+"""
+
 function _exporting_XYZfile(atoms::Vector{Vector{String}}, x::Vector{Vector{Float64}}, y::Vector{Vector{Float64}}, z::Vector{Vector{Float64}}; vmd="vmd", natoms=nothing, xyzfile=nothing)
     newatoms = reduce(vcat, atoms)
     newx = reduce(vcat, x); newy = reduce(vcat, y); newz = reduce(vcat, z);
@@ -35,6 +60,30 @@ function _exporting_XYZfile(atoms::Vector{String}, x::Vector{Float64}, y::Vector
     return xyzfile, vmdoutput
 
 end
+
+
+
+"""
+
+    _PDBfragment_cleaning(atoms::Vector{String}, pdbfile::String, new_pdbfile::String)
+
+Clean the raw PDB file and export a new one with the right configuration needed for CHARMM force field.
+
+## Arguments
+
+- `atoms::Vector{String}`: atoms names of the systems
+- `x, y, z (::Vector{Vector{Float64}}, ::Vector{Float64})`: cartesian coordinates of the system
+- `xyzcoords::Vector{Vector{Float64}}`: (x,y,z) of the cartesian coordinates
+
+### Examples
+
+```jldoctest
+
+julia > _PDBfragment_cleaning(atoms, "/tmp/old.pdb", "/tmp/new.pdb")
+
+```
+
+"""
 
 function _PDBfragment_cleaning(atoms::Vector{String}, pdbfile::String, new_pdbfile::String)
 
@@ -85,9 +134,31 @@ function _PDBfragment_cleaning(atoms::Vector{String}, pdbfile::String, new_pdbfi
 end
 
 
+"""
+
+    _XYZfragments_2_PDB(xyzfile::String, selection::String; vmd="vmd")
+
+Convert each fragment on XYZ file on an unique raw PDB file. The filename will be exported, so there is
+a way to edit the PDB data.
+
+## Arguments
+
+- `xyzfile::String`: the XYZ filename.
+- `vmdselection::String`: the VMD selection type.
+
+### Examples
+
+```jldoctest
+
+julia > _XYZfragments_2_PDB("system.xyz", fragment_list)
+
+```
+
+"""
+
 function _XYZfragments_2_PDB(xyzfile::String, selection::String; vmd="vmd")
     
-    rawname = tempname()
+    filename = tempname()
 
     vmdinput_file = tempname() * ".tcl"
     vmdinput = open(vmdinput_file, "w")
@@ -96,79 +167,12 @@ function _XYZfragments_2_PDB(xyzfile::String, selection::String; vmd="vmd")
     units = split(selection, " ")
     for u in units
         Base.write(vmdinput, "set sel [ atomselect top \"fragment $u\" ] \n")
-        Base.write(vmdinput, "\$sel writepdb \"$(rawname * "_" * u * ".pdb")\" \n")
+        Base.write(vmdinput, "\$sel writepdb \"$(filename * "_" * u * ".pdb")\" \n")
     end
     Base.write(vmdinput, "exit \n")
     Base.close(vmdinput)
     vmdoutput = split(Base.read(`$vmd -dispdev text -e $vmdinput_file`, String), "\n")
     
-    return rawname, vmdoutput
-
-end
-
-function _convert_XYZ2PDB(xyzfile::String, vmdselection::String; vmd="vmd", pdbfile=nothing)
-    
-    if isnothing(pdbfile); pdbfile = tempname() * "pdb"; end
-    vmdinput_file = tempname() * ".tcl"
-    vmdinput = open(vmdinput_file, "w")
-
-    Base.write(vmdinput, "mol new \"$xyzfile\" \n")
-    Base.write(vmdinput, "set sel [ atomselect top \"$vmdselection\" ] \n")
-    Base.write(vmdinput, "\$sel writepdb \"$pdbfile\" \n")
-    Base.write(vmdinput, "exit \n")
-    Base.close(vmdinput)
-
-    vmdoutput = split(Base.read(`$vmd -dispdev text -e $vmdinput_file`, String), "\n")
-    
-    return pdbfile, vmdoutput
-end
-
-
-function Z_propagation(atoms, x, y, z, zsize, phase)
-
-    xcoords = Float64[]; ycoords = Float64[]; zcoords = Float64[]; atomnames = String[];
-    parameters = get_crystallographic_info(phase)[3]
- 
-    # Iβ
-    if phase == "I-BETA" || phase == "Ib" || phase == "Iβ"
-        c = parameters[1][3];
-        for k in collect(1:1:zsize)
-            append!(atomnames, atoms); append!(xcoords, x); append!(ycoords, y); append!(zcoords, z .+ c*(k-1));
-        end        
-    end
-
-    return atomnames, xcoords, ycoords, zcoords
-
-end
-
-
-function XY_coord_trimming(atoms::Vector{Vector{String}}, x::Vector{Vector{Float64}}, y::Vector{Vector{Float64}}, z::Vector{Vector{Float64}}, cell_dim::Vector{Int64}, phase::String)
-
-    atomnames, xcoords, ycoords, zcoords = String[], Float64[], Float64[], Float64[]
-    xsize, ysize = cell_dim[1], cell_dim[2]
-
-    units = 1
-
-    if phase == "I-BETA" || phase == "Ib" || phase == "Iβ"
-        for j in collect(1:1:ysize), i in collect(1:1:xsize)
-            atomstemp, xtemp, ytemp, ztemp = atoms[units], x[units], y[units], z[units]
-            _atomselect_indexes = (eachindex(atomstemp) .== 0)
-            if ((i == 1) && (j != ysize)) || ((i != 1) && (i != xsize) && (j == 1))
-                _atomselect_indexes = (eachindex(atomstemp) .>= 64) .& (eachindex(atomstemp) .<= 84)
-            end
-            if ((j != 1) && (i == xsize)) || ((i != 1) && (i != xsize) && (j == ysize))
-                _atomselect_indexes = (eachindex(atomstemp) .>= 22) .& (eachindex(atomstemp) .<= 42)
-            end
-            if ((i == 1) && (j == ysize)) || ((j == 1) && (i == xsize))
-                _atomselect_indexes = ((eachindex(atomstemp) .>= 22) .& (eachindex(atomstemp) .<= 42)) .| ((eachindex(atomstemp) .>= 64) .& (eachindex(atomstemp) .<= 84))
-            end
-            append!(atomnames, atomstemp[.!(_atomselect_indexes)])
-            append!(xcoords, xtemp[.!(_atomselect_indexes)]); append!(ycoords, ytemp[.!(_atomselect_indexes)]); append!(zcoords, ztemp[.!(_atomselect_indexes)]);
-
-            units += 1
-        end
-    else error("The phase $phase is not implemented yet."); end
-    
-    return atomnames, xcoords, ycoords, zcoords
+    return vmdoutput, filename
 
 end

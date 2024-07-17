@@ -8,11 +8,21 @@ const DEFAULT_CARB_TOPOLOGY_FILE = "$(@__DIR__)/toppar/top_all36_carb.rtf"
 # main cellulose builder function
 include("./cellulose.jl")
 
-include("./atomnames.jl")
-include("./cleaning.jl")
-include("./crystallographic.jl")
+## editing the default atomnames
+include("./editing_atomnames.jl")
+
+## crystalographic tools to deal with the crystalline cellulose
+include("./crystaltoolkit.jl")
+
+
 include("./formatter.jl")
-include("./nfragments.jl")
-include("./systemgenerator.jl")
+include("./exporting_systems.jl")
+include("./PBC.jl")
+
+## picking the number of structure fragments inside a VMD structure loading output
+include("./picking_fragments.jl")
+
+## cleaning the temporary files
+include("./cleaning_tmpfiles.jl")
 
 end

@@ -2,14 +2,10 @@
 
     picking_fragments(vmdoutput)
 
-Cleaning all the *.pdb, *.tcl, and *xyz temporary files inside the /tmp folder.
-Usualy, the VMD output has the type `Vector{SubString{String}}`.
+Picking the number of fragments (e.g. cellulose chains) inside the structure loaded on VMD. Usualy,
+the VMD output has the type `Vector{SubString{String}}` such as:
 
-### Examples
-
-```julia-repl
-
-julia > picking_fragments(vmdoutput)
+```julia
 1817-element Vector{SubString{String}}:
  "Info) VMD for LINUXAMD64, version 1.9.4a57 (April 27, 2022)"
  "Info) http://www.ks.uiuc.edu/Research/vmd/                         "
@@ -39,13 +35,26 @@ julia > picking_fragments(vmdoutput)
  "Info) VMD for LINUXAMD64, version 1.9.4a57 (April 27, 2022)"
  "Info) Exiting normally."
  ""
+```
+## Arguments
+
+- `vmdoutput::Vector{SubString{String}}`: output of the structure loaded on VMD.
+
+### Examples
+
+```jldoctest
+
+julia > picking_fragments(vmdoutput)
+julia > 59
 
 ```
 
 """
 
 function picking_fragments(vmdoutput)
+
     nfragments = nothing
+    
     for id in eachindex(vmdoutput)
         str = string(vmdoutput[id])
         if occursin("Fragments:", str)
@@ -54,5 +63,7 @@ function picking_fragments(vmdoutput)
             error("The VMD output file does not contain the number of fragments.")
         end
     end
+    
     return nfragments
+    
 end
