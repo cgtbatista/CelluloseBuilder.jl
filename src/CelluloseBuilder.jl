@@ -3,7 +3,11 @@ module CelluloseBuilder
 export cellulosebuilder
 
 # Write your package code here.
-const DEFAULT_CARB_TOPOLOGY_FILE = "$(@__DIR__)/toppar/top_all36_carb.rtf"
+const DEFAULT_CARB_TOPOLOGY_FILE = "$(@__DIR__)/toppar/cellulose.rtf"
+
+# future input format
+struct CelluloseBuilderInput end
+export CelluloseBuilderInput
 
 # main cellulose builder function
 include("./cellulose.jl")

@@ -95,7 +95,7 @@ function cellulosebuilder(a::Int64, b::Int64, c::Int64; phase="Iβ", pbc=nothing
     println("")
 
     println("   3 - Periodic boundary conditions (PBC) on the $n_fragments fragments: $(pbc)...")
-    vmdxyz, frag_sel, frag_units = transformingPBC(n_fragments, xyzsize[1], xyzsize[2], phase=phase, pbc=pbc, xyzfile=xyzfile, vmd=vmd)
+    vmdxyz, frag_sel, frag_units, vmdoutput2 = transformingPBC(n_fragments, xyzsize[1], xyzsize[2], phase=phase, pbc=pbc, xyzfile=xyzfile, vmd=vmd)
     println("")
 
     println("   4 - Generating the PSF/PDB files:")    
@@ -107,12 +107,12 @@ function cellulosebuilder(a::Int64, b::Int64, c::Int64; phase="Iβ", pbc=nothing
     for u in units
         pdbname = pdb_basename * "_" * u * ".pdb"
         new_pdbname = tmpfile * "_" * u * ".pdb"
-        _PDBfragment_cleaning(atomstype, pdbname, new_pdbname)
+        _cleaning_PDBfragment(atomstype, pdbname, new_pdbname)
         push!(tmpfragments, new_pdbname)
     end
     println("       + using the CHARMM topology file to build the final PDB/PSF with the fragments")
 
-    vmdoutput2 = _exporting_PDBfile(2*xyzsize[3], tmpfragments, topology_file=topology_file, covalent=covalent, vmd=vmd)
+    vmdoutput3 = _exporting_PDBfile(2*xyzsize[3], tmpfragments, topology_file=topology_file, covalent=covalent, vmd=vmd)
     
     cleaning_tmpfiles("cellulose")
     println("")

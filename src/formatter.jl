@@ -65,7 +65,7 @@ end
 
 """
 
-    _PDBfragment_cleaning(atoms::Vector{String}, pdbfile::String, new_pdbfile::String)
+    _cleaning_PDBfragment(atoms::Vector{String}, pdbfile::String, new_pdbfile::String)
 
 Clean the raw PDB file and export a new one with the right configuration needed for CHARMM force field.
 
@@ -79,13 +79,13 @@ Clean the raw PDB file and export a new one with the right configuration needed 
 
 ```jldoctest
 
-julia > _PDBfragment_cleaning(atoms, "/tmp/old.pdb", "/tmp/new.pdb")
+julia > _cleaning_PDBfragment(atoms, "/tmp/old.pdb", "/tmp/new.pdb")
 
 ```
 
 """
 
-function _PDBfragment_cleaning(atoms::Vector{String}, pdbfile::String, new_pdbfile::String)
+function _cleaning_PDBfragment(atoms::Vector{String}, pdbfile::String, new_pdbfile::String)
 
     ith_atom = 1; resid = 1;
 
