@@ -165,6 +165,6 @@ function transformingPBC(nfrag::Int64, xsize::Int64, ysize::Int64, style::String
     end
 
 
-    return new_xyzfile, sel_fragments, n_fragments, vmdoutput
+    return xyz, sel_fragments, n_fragments, vmdoutput
 
 end
