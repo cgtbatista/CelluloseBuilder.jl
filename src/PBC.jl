@@ -218,3 +218,174 @@ function transformingPBC(style::String, nsize::Int64; phase="Iβ", fibril=nothin
     return xyz, sel_fragments, n_fragments, vmdoutput
 
 end
+
+
+"""
+
+    gettingPBC(xsize::Int64, ysize::Int64, zsize::Int64, phase::String; pbc=nothing)
+    gettingPBC(xyzsizes::Vector{Int64}, phase::String; pbc=nothing)
+    gettingPBC(style::String, j::Int64, k::Int64, phase::String)
+    gettingPBC(units::Int64, phase::String)
+
+This function aims to return the crystallographic information for the setted cellulose phase. The information is related to the CHARMM atomnames, the unit cell
+parameters and the fractional coordinates of the asymetric unit.
+
+## Arguments
+
+- `xyzsizes::Vector{Int64}`: The number of unit cells along x, y and z axes (`a`, `b` and `c`).
+- `xsize::Int64`: The number of unit cells along x axis (`a`).
+- `ysize::Int64`: The number of unit cells units along y axis (`b`).
+- `zsize::Int64`: The number of unit cells units along z axis (`c`).
+- `style::String`: Type of special cellulose monolayer (monolayer, center or origin).
+- `units::Int64`: The number of fibril cellobiose units.
+- `j::Int64` and `k::Int64`: The number of unit cell units.
+- `phase::String`: The cellulose phase. It could be `Iβ`, `Iα`, `II` or `III`.
+- `pbc=nothing`: The periodic boundary conditions to be applied. It's could be around `:A`, `:B`, or both directions `:ALL`. The default is `nothing`.
+
+### Examples
+
+```jldoctest
+
+julia > gettingPBC(5, 7, 8, "Iβ")
+julia > gettingPBC([ 5, 7, 8 ], "Iβ")
+
+```
+
+"""
+
+
+function gettingPBC(xsize::Int64, ysize::Int64, zsize::Int64, phase::String; pbc=nothing)
+    if phase == "Ib" || phase == "Iβ"
+        if pbc == :all || pbc == :All || pbc == :ALL
+            xsize += 1; ysize += 1;
+            println("         periodic boundary conditions will be applied in a and b crystalographic directions.")
+            println("         surfaces (1 0 0), (2 0 0), (0 1 0), and (0 2 0) will be exposed!")
+        elseif pbc == :a || pbc == :A
+            xsize += 1;
+            println("         periodic boundary conditions will be applied in a crystalographic direction.")
+            println("         surfaces (1 0 0), (2 0 0), and (0 1 0) will be exposed!")
+        elseif pbc == :b || pbc == :B
+            ysize += 1;
+            println("         periodic boundary conditions will be applied in b crystalographic direction.")
+            println("         surfaces (1 0 0), (0 1 0), and (0 2 0) will be exposed!")
+        elseif isnothing(pbc)
+            println("         periodic boundary conditions will not be special applied.")
+            println("         default translational symmetry will be applied with the surfaces (1 0 0) and (0 1 0) exposed!")
+        end
+    elseif phase == "Ia" || phase == "Iα"
+        if !isnothing(pbc)
+            println("         periodic boundary conditions $pbc will not be applied in the Iα phase, because it is not valid!")
+            println("         default translational symmetry will be applied with the surfaces (1 0 0) and (0 1 0) exposed!")
+        else
+            println("         periodic boundary conditions will not be special applied.")
+            println("         default translational symmetry will be applied with the surfaces (1 0 0) and (0 1 0) exposed!")
+        end
+    elseif phase == "II"
+        if pbc == :all || pbc == :All || pbc == :ALL
+            xsize += 1;
+            println("         periodic boundary conditions will be applied in a and b crystalographic directions.")
+            println("         surfaces (1 0 0), (2 0 0), (0 1 0), and (0 2 0) will be exposed!")
+        elseif pbc == :a || pbc == :A
+            xsize += 1;
+            println("         periodic boundary conditions will be applied in a crystalographic direction.")
+            println("         surfaces (1 0 0), (2 0 0), and (0 1 0) will be exposed!")
+        elseif pbc == :b || pbc == :B
+            ysize += 1;
+            println("         periodic boundary conditions will be applied in b crystalographic direction.")
+            println("         surfaces (1 0 0), (0 1 0), and (0 2 0) will be exposed!")
+        elseif isnothing(pbc)
+            println("         periodic boundary conditions will not be special applied.")
+            println("         default translational symmetry will be applied with the surfaces (1 0 0) and (0 1 0) exposed!")
+        end
+    elseif phase == "III" || phase == "III_I" || phase == "III_i" || phase == "IIIi"
+        if !isnothing(pbc)
+            println("         periodic boundary conditions $pbc will not be applied in the Iα phase, because it is not valid!")
+            println("         default translational symmetry will be applied with the surfaces (1 0 0) and (0 1 0) exposed!")
+        else
+            println("         periodic boundary conditions will not be special applied.")
+            println("         default translational symmetry will be applied with the surfaces (1 0 0) and (0 1 0) exposed!")
+        end
+    else
+        error("The phase $phase is not implemented yet.")
+    end
+    return [xsize, ysize, zsize]
+end
+
+function gettingPBC(units::Int64, phase::String)
+    
+    if phase == "Ib" || phase == "Iβ" || phase == "II"
+
+        xsize = 5; ysize = 7; zsize = units;
+        xbasisvector = 0; ybasisvector = 0; zbasisvector = zsize;
+        
+    elseif phase == "Ia" || phase == "Iα"
+
+        xsize = 7; ysize = 6; zsize = units;
+        xbasisvector = zsize; ybasisvector = 0; zbasisvector = 0;
+
+    else
+        error("The phase $phase cannot be used as a base for elementary fibril.")
+    end
+
+    println("         periodic boundary conditions will be applied to build the elementary fibril.")
+    println("         number of cellobiose residues per cellulose chain is $zsize.")
+
+    return [xsize, ysize, zsize], [xbasisvector, ybasisvector, zbasisvector]
+end
+
+
+function gettingPBC(style::String, j::Int64, k::Int64, phase::String)
+    
+    if phase == "Ib" || phase == "Iβ"
+
+        if style == "center"
+            xsize = 2; ysize = j+1; zsize = k;
+            xbasisvector = 1; ybasisvector = j; zbasisvector = k;
+            println("         building monolayer composed of $j cellulose units.")
+            println("         `center` labelled cellulose with $zsize cellobiose units!")
+        elseif style == "origin"
+            xsize = 2; ysize = j; zsize = k;
+            xbasisvector = 1; ybasisvector = j; zbasisvector = k;
+            println("         building monolayer composed of $j cellulose units.")
+            println("         `origin` labelled cellulose with $zsize cellobiose units!")
+        else
+            error("The option $style is not available for the $phase phase or is not available at all...")
+        end
+
+    elseif phase == "Ia" || phase == "Iα"
+        
+        if style == "monolayer"
+            xsize = j; ysize = j; zsize = k;
+            xbasisvector = zsize; ybasisvector = 0; zbasisvector = 0;
+            println("         building monolayer composed of $j cellulose units.")
+            println("         `monolayer` labelled cellulose with $zsize cellobiose units!")
+        else 
+            error("The option $style is not available for the $phase phase or is not available at all...")
+        end
+
+    elseif phase == "II"
+
+        if style == "center"
+            xsize = j+1; ysize = 2; zsize = k;
+            xbasisvector = j; ybasisvector = 1; zbasisvector = k;
+            println("         building monolayer composed of $j cellulose units.")
+            println("         `center` labelled cellulose with $zsize cellobiose units!")
+        elseif style == "origin"
+            xsize = j; ysize = 2; zsize = k;
+            xbasisvector = j; ybasisvector = 1; zbasisvector = k;
+            println("         building monolayer composed of $j cellulose units.")
+            println("         `origin` labelled cellulose with $zsize cellobiose units!")
+        else 
+            error("The option $style is not available for the $phase phase or is not available at all...")
+        end
+
+    else
+        error("The style $style is not implemented on $phase cellulose polymorph.")
+    end
+    return [xsize, ysize, zsize], [xbasisvector, ybasisvector, zbasisvector]
+end
+
+function gettingPBC(xyzsizes::Vector{Int64}, phase::String; pbc=nothing)
+    xsize = xyzsizes[1]; ysize = xyzsizes[2]; zsize = xyzsizes[3];
+    return gettingPBC(xsize, ysize, zsize, phase; pbc=pbc)
+end

@@ -27,11 +27,31 @@ function _Z_propagation_coords(atoms::Vector{String}, x::Vector{Float64}, y::Vec
  
     # Iβ
     if phase == "Ib" || phase == "Iβ"
+
         c = parameters[1][3];
         for k in collect(1:1:zsize)
             append!(atomnames, atoms); append!(xcoords, x); append!(ycoords, y); append!(zcoords, z .+ c*(k-1));
-        end        
-    end
+        end
+
+    elseif phase == "Ia" || phase == "Iα"
+
+        atomnames, xcoords, ycoords, zcoords = atoms, x, y, z
+
+    elseif phase == "II"
+
+        c = parameters[1][3];
+        for k in collect(1:1:zsize)
+            append!(atomnames, atoms); append!(xcoords, x); append!(ycoords, y); append!(zcoords, z .+ c*(k-1));
+        end
+
+    elseif phase == "III" || phase == "III_I" || phase == "III_i" || phase == "IIIi"
+
+        c = parameters[1][3];
+        for k in collect(1:1:zsize)
+            append!(atomnames, atoms); append!(xcoords, x); append!(ycoords, y); append!(zcoords, z .+ c*(k-1));
+        end
+
+    else error("The phase $phase is not implemented yet."); end
 
     return atomnames, xcoords, ycoords, zcoords
 
@@ -67,6 +87,7 @@ function _XY_trimming_coords(atoms::Vector{Vector{String}}, x::Vector{Vector{Flo
     units = 1
 
     if phase == "Ib" || phase == "Iβ"
+
         for j in collect(1:1:ysize), i in collect(1:1:xsize)
             atomstemp, xtemp, ytemp, ztemp = atoms[units], x[units], y[units], z[units]
             _atomselect_indexes = (eachindex(atomstemp) .== 0)
@@ -84,6 +105,35 @@ function _XY_trimming_coords(atoms::Vector{Vector{String}}, x::Vector{Vector{Flo
 
             units += 1
         end
+        
+    elseif phase == "Ia" || phase == "Iα"
+
+        atomnames, xcoords, ycoords, zcoords = atoms, x, y, z
+
+    elseif phase == "II"
+
+        for j in collect(1:1:ysize), i in collect(1:1:xsize)
+            atomstemp, xtemp, ytemp, ztemp = atoms[units], x[units], y[units], z[units]
+            _atomselect_indexes = (eachindex(atomstemp) .== 0)
+            if ((i == 1) && (j != ysize)) || ((i != 1) && (i != xsize) && (j == 1))
+                _atomselect_indexes = (eachindex(atomstemp) .>= 55) .& (eachindex(atomstemp) .<= 72)
+            end
+            if ((j != 1) && (i == xsize)) || ((i != 1) && (i != xsize) && (j == ysize))
+                _atomselect_indexes = (eachindex(atomstemp) .>= 19) .& (eachindex(atomstemp) .<= 36)
+            end
+            if ((i == 1) && (j == ysize)) || ((j == 1) && (i == xsize))
+                _atomselect_indexes = ((eachindex(atomstemp) .>= 19) .& (eachindex(atomstemp) .<= 36)) .| ((eachindex(atomstemp) .>= 55) .& (eachindex(atomstemp) .<= 72))
+            end
+            append!(atomnames, atomstemp[.!(_atomselect_indexes)])
+            append!(xcoords, xtemp[.!(_atomselect_indexes)]); append!(ycoords, ytemp[.!(_atomselect_indexes)]); append!(zcoords, ztemp[.!(_atomselect_indexes)]);
+
+            units += 1
+        end
+
+    elseif phase == "III" || phase == "III_I" || phase == "III_i" || phase == "IIIi"
+
+        atomnames, xcoords, ycoords, zcoords = atoms, x, y, z
+
     else error("The phase $phase is not implemented yet."); end
     
     return atomnames, xcoords, ycoords, zcoords
@@ -139,97 +189,6 @@ end
 function gettingBasisVectors(lattice_vector::Vector{Int64}, phase::String)
     uc_parameters = get_crystallographic_info(phase)[3]
     return gettingBasisVectors(lattice_vector, uc_parameters)
-end
-
-
-
-"""
-
-    gettingPBC(xsize::Int64, ysize::Int64, zsize::Int64, phase::String; pbc=nothing)
-    gettingPBC(xyzsizes::Vector{Int64}, phase::String; pbc=nothing)
-
-This function aims to return the crystallographic information for the setted cellulose phase. The information is related to the CHARMM atomnames, the unit cell
-parameters and the fractional coordinates of the asymetric unit.
-
-## Arguments
-
-- `xyzsizes::Vector{Int64}`: The number of unit cells along x, y and z axes (`a`, `b` and `c`).
-- `xsize::Int64`: The number of unit cells along x axis (`a`).
-- `ysize::Int64`: The number of unit cells units along y axis (`b`).
-- `zsize::Int64`: The number of unit cells units along z axis (`c`).
-- `phase::String`: The cellulose phase. It could be `Iβ`, `Iα`, `II` or `III`.
-- `pbc=nothing`: The periodic boundary conditions to be applied. It's could be around `:A`, `:B`, or both directions `:ALL`. The default is `nothing`.
-
-### Examples
-
-```jldoctest
-
-julia > gettingPBC(5, 7, 8, "Iβ")
-julia > gettingPBC([ 5, 7, 8 ], "Iβ")
-
-```
-
-"""
-
-
-function gettingPBC(xsize::Int64, ysize::Int64, zsize::Int64,  phase::String; pbc=nothing)
-    if phase == "Ib" || phase == "Iβ"
-        if pbc == :all || pbc == :All || pbc == :ALL
-            xsize += 1; ysize += 1;
-            println("         periodic boundary conditions will be applied in a and b crystalographic directions.")
-            println("         surfaces (1 0 0), (2 0 0), (0 1 0), and (0 2 0) will be exposed!")
-        elseif pbc == :a || pbc == :A
-            xsize += 1;
-            println("         periodic boundary conditions will be applied in a crystalographic direction.")
-            println("         surfaces (1 0 0), (2 0 0), and (0 1 0) will be exposed!")
-        elseif pbc == :b || pbc == :B
-            ysize += 1;
-            println("         periodic boundary conditions will be applied in b crystalographic direction.")
-            println("         surfaces (1 0 0), (0 1 0), and (0 2 0) will be exposed!")
-        elseif isnothing(pbc)
-            println("         periodic boundary conditions will not be special applied.")
-            println("         default translational symmetry will be applied with the surfaces (1 0 0) and (0 1 0) exposed!")
-        end
-    elseif phase == "Ia" || phase == "Iα"
-        if !isnothing(pbc)
-            println("         periodic boundary conditions $pbc will not be applied in the Iα phase, because it is not valid!")
-            println("         default translational symmetry will be applied with the surfaces (1 0 0) and (0 1 0) exposed!")
-        else
-            println("         periodic boundary conditions will not be special applied.")
-            println("         default translational symmetry will be applied with the surfaces (1 0 0) and (0 1 0) exposed!")
-        end
-    elseif phase == "II"
-        if pbc == :all || pbc == :All || pbc == :ALL
-            xsize += 1;
-            println("         periodic boundary conditions will be applied in a and b crystalographic directions.")
-            println("         surfaces (1 0 0), (2 0 0), (0 1 0), and (0 2 0) will be exposed!")
-        elseif pbc == :a || pbc == :A
-            xsize += 1;
-            println("         periodic boundary conditions will be applied in a crystalographic direction.")
-            println("         surfaces (1 0 0), (2 0 0), and (0 1 0) will be exposed!")
-        elseif pbc == :b || pbc == :B
-            ysize += 1;
-            println("         periodic boundary conditions will be applied in b crystalographic direction.")
-            println("         surfaces (1 0 0), (0 1 0), and (0 2 0) will be exposed!")
-        elseif isnothing(pbc)
-            println("         periodic boundary conditions will not be special applied.")
-            println("         default translational symmetry will be applied with the surfaces (1 0 0) and (0 1 0) exposed!")
-        end
-    elseif phase == "III" || phase == "III_I" || phase == "III_i" || phase == "IIIi"
-        if !isnothing(pbc)
-            println("         periodic boundary conditions $pbc will not be applied in the Iα phase, because it is not valid!")
-            println("         default translational symmetry will be applied with the surfaces (1 0 0) and (0 1 0) exposed!")
-        else
-            println("         periodic boundary conditions will not be special applied.")
-            println("         default translational symmetry will be applied with the surfaces (1 0 0) and (0 1 0) exposed!")
-        end
-    end
-    return [xsize, ysize, zsize]
-end
-
-function gettingPBC(xyzsizes::Vector{Int64}, phase::String; pbc=nothing)
-    xsize = xyzsizes[1]; ysize = xyzsizes[2]; zsize = xyzsizes[3];
-    return gettingPBC(xsize, ysize, zsize, phase; pbc=pbc)
 end
 
 
