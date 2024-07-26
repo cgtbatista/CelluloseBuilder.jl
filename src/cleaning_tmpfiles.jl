@@ -27,6 +27,7 @@ function cleaning_tmpfiles(filename::String; destination_path=pwd())
     mv(joinpath(tmp_path, "$filename.xyz"), joinpath(destination_path, "$filename.xyz"), force=true)
     mv(joinpath(tmp_path, "$filename.psf"), joinpath(destination_path, "$filename.psf"), force=true)
     mv(joinpath(tmp_path, "$filename.pdb"), joinpath(destination_path, "$filename.pdb"), force=true)
+    mv(joinpath(tmp_path, "$filename.tcl"), joinpath(destination_path, "$filename.tcl"), force=true)
 
     files = readdir(tmp_path)
     for file in files

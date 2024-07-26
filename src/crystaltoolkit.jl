@@ -25,7 +25,6 @@ function _Z_propagation_coords(atoms::Vector{String}, x::Vector{Float64}, y::Vec
     xcoords = Float64[]; ycoords = Float64[]; zcoords = Float64[]; atomnames = String[];
     parameters = get_crystallographic_info(phase)[3]
  
-    # Iβ
     if phase == "Ib" || phase == "Iβ"
 
         c = parameters[1][3];
@@ -39,8 +38,8 @@ function _Z_propagation_coords(atoms::Vector{String}, x::Vector{Float64}, y::Vec
 
     elseif phase == "II"
 
-        c = parameters[1][3];
-        for k in collect(1:1:zsize)
+        c = parameters[1][3]; max_k = zsize + 1;
+        for k in collect(2:1:max_k)
             append!(atomnames, atoms); append!(xcoords, x); append!(ycoords, y); append!(zcoords, z .+ c*(k-1));
         end
 
@@ -108,7 +107,10 @@ function _XY_trimming_coords(atoms::Vector{Vector{String}}, x::Vector{Vector{Flo
         
     elseif phase == "Ia" || phase == "Iα"
 
-        atomnames, xcoords, ycoords, zcoords = atoms, x, y, z
+        for (at,i,j,k) in zip(atoms, x, y, z)
+            append!(atomnames, at)
+            append!(xcoords, i); append!(ycoords, j); append!(zcoords, k);
+        end
 
     elseif phase == "II"
 
@@ -132,7 +134,10 @@ function _XY_trimming_coords(atoms::Vector{Vector{String}}, x::Vector{Vector{Flo
 
     elseif phase == "III" || phase == "III_I" || phase == "III_i" || phase == "IIIi"
 
-        atomnames, xcoords, ycoords, zcoords = atoms, x, y, z
+        for (at,i,j,k) in zip(atoms, x, y, z)
+            append!(atomnames, at)
+            append!(xcoords, i); append!(ycoords, j); append!(zcoords, k);
+        end
 
     else error("The phase $phase is not implemented yet."); end
     

@@ -19,17 +19,17 @@ julia > transformingPBC(59, 5, 7)
 
 """
 
-function _exporting_PDBfile(n::Int64, tmpfile_list::Vector{String}; topology_file="toppar/top_all36_carb.rtf", covalent=true, vmd="vmd")
+function _exporting_PDBfile(n::Int64, tmpfile_list::Vector{String}; phase="Iβ", covalent=true, vmd="vmd", topology_file="toppar/top_all36_carb.rtf")
 
     fraglist = collect(1:1:length(tmpfile_list))
-    monomer = 0; prev_monomer = 0;
+    monomer, prev_monomer = 0, 0;
 
     pdb = joinpath(tempdir(), "cellulose.pdb")
     psf = joinpath(tempdir(), "cellulose.psf")
-    tcl_script = joinpath(tempdir(), "patching.tcl")
+    tcl = joinpath(tempdir(), "cellulose.tcl")
 
             
-    vmdinput = Base.open(tcl_script, "w")
+    vmdinput = Base.open(tcl, "w")
     
     Base.write(vmdinput, "package require psfgen \n")
     Base.write(vmdinput, "topology $(topology_file) \n")
@@ -62,7 +62,7 @@ function _exporting_PDBfile(n::Int64, tmpfile_list::Vector{String}; topology_fil
     Base.write(vmdinput, "writepsf $(psf) \n")
     Base.write(vmdinput, "writepdb $(pdb) \n")
     Base.close(vmdinput)
-    vmdoutput = Base.split(Base.read(`$vmd -dispdev text -e $(tcl_script)`, String), "\n")
+    vmdoutput = Base.split(Base.read(`$vmd -dispdev text -e $(tcl)`, String), "\n")
 
 
     return vmdoutput
