@@ -25,6 +25,8 @@ function _check_inversion(filename::String; vmd="vmd")
         end
     end
 
+    println("$filename -> $inversion_value")
+
     return inversion_value
 
 end
