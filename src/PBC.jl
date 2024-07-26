@@ -163,11 +163,31 @@ function transformingPBC(nfrag::Int64, xsize::Int64, ysize::Int64; phase="Iβ", 
 
     elseif phase == "Ia" || phase == "Iα"
 
-        mv(xyzfile, xyz, force=true)
+        remainder = collect(0:1:(nfrag-1))
+        sel_fragments = join(remainder, " "); n_fragments = length(remainder);
+        vmdinput_file = tempname() * ".tcl"
+        
+        vmdinput = open(vmdinput_file, "w")
+        Base.write(vmdinput, "mol new \"$xyzfile\" \n")
+        Base.write(vmdinput, "set sel [ atomselect top \"fragment $sel_fragments\" ] \n")
+        Base.write(vmdinput, "\$sel writexyz \"$xyz\" \n")
+        Base.write(vmdinput, "exit \n")
+        Base.close(vmdinput)
+        vmdoutput = split(Base.read(`$vmd -dispdev text -e $vmdinput_file`, String), "\n")
 
     elseif phase == "III" || phase == "III_I" || phase == "III_i" || phase == "IIIi"
         
-        mv(xyzfile, xyz, force=true)
+        remainder = collect(0:1:(nfrag-1))
+        sel_fragments = join(remainder, " "); n_fragments = length(remainder);
+        vmdinput_file = tempname() * ".tcl"
+        
+        vmdinput = open(vmdinput_file, "w")
+        Base.write(vmdinput, "mol new \"$xyzfile\" \n")
+        Base.write(vmdinput, "set sel [ atomselect top \"fragment $sel_fragments\" ] \n")
+        Base.write(vmdinput, "\$sel writexyz \"$xyz\" \n")
+        Base.write(vmdinput, "exit \n")
+        Base.close(vmdinput)
+        vmdoutput = split(Base.read(`$vmd -dispdev text -e $vmdinput_file`, String), "\n")
 
     else
         error("The phase $phase is not implemented yet.")
