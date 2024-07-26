@@ -44,7 +44,7 @@ function _exporting_PDBfile(n::Int64, tmpfile_list::Vector{String}; phase="Iβ",
         if phase == "II" && _inversion_patch_token
             while monomer > 1
                 prev_monomer = monomer - 1
-                Base.write(vmdinput, "patch 14bb $segname:$prev_monomer $segname:$prev_monomer \n")
+                Base.write(vmdinput, "patch 14bb $segname:$prev_monomer $segname:$monomer \n")
                 monomer -= 1
                 if monomer == 1 && covalent == true
                     Base.write(vmdinput, "patch 14bb $segname:$n $segname:$monomer \n")
