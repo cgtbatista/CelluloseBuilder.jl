@@ -182,7 +182,7 @@ function cellulosebuilder(monolayer::String, units::Int64, ncellobiose::Int64; p
     println("")
 
     println("   3 - Periodic boundary conditions (PBC) on the $n_fragments fragments: $(pbc)...")
-    vmdxyz, frag_sel, frag_units, vmdoutput2 = transformingPBC(n_fragments, xyzsize[1], xyzsize[2], phase=phase, pbc=pbc, xyzfile=xyzfile, vmd=vmd)
+    vmdxyz, frag_sel, frag_units, vmdoutput2 = transformingPBC(monolayer, xyzsize[2], phase=phase, xyzfile=xyzfile, vmd=vmd)
     println("")
 
     println("   4 - Generating the PSF/PDB files:")    

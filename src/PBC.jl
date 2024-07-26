@@ -178,7 +178,7 @@ function transformingPBC(nfrag::Int64, xsize::Int64, ysize::Int64; phase="Iβ", 
 
 end
 
-function transformingPBC(style::String, nsize::Int64; phase="Iβ", fibril=nothing, xyzfile="file.xyz", vmd="vmd")
+function transformingPBC(style::String, nsize::Int64; phase="Iβ", fibril=nothing, xyzfile="filename.xyz", vmd="vmd")
     
     xyz = joinpath(tempdir(), "cellulose.xyz") ## the new and last XYZ file!
 
