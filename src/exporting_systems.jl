@@ -1,4 +1,4 @@
-function _check_inversion(filename::String)
+function _check_inversion(filename::String; vmd="vmd")
 
     tcl = tempname() * ".tcl"
     inversion_value = 0
@@ -63,7 +63,7 @@ function _exporting_PDBfile(n::Int64, tmpfile_list::Vector{String}; phase="Iβ",
     segid_token = zeros(Int64, length(tmpfile_list))
     if check_inversion
         for frag in fraglist
-            segid_token[frag] = _check_inversion(tmpfile_list[frag])
+            segid_token[frag] = _check_inversion(tmpfile_list[frag], vmd=vmd)
         end
     end
             
