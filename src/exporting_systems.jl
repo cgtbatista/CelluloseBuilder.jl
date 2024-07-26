@@ -18,7 +18,7 @@ function _check_inversion(filename::String; vmd="vmd")
 
     for id in eachindex(vmdoutput)
         str = string(vmdoutput[id])
-        if occursin("Inversion:", str)
+        if occursin("Invertion:", str)
             inversion_value = parse(Int64, split(str)[2])
         elseif isnothing(inversion_value) && id == length(vmdoutput)
             error("The VMD output file does not contain the inversion code.")
