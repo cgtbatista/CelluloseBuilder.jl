@@ -144,6 +144,7 @@ function cellulosebuilder(monolayer::String, units::Int64, ncellobiose::Int64; p
     println("")
     println("")
     xyzsize, basisvectors = gettingPBC(monolayer, units, ncellobiose, phase)
+    xsize, ysize, zsize = xyzsize[1], xyzsize[2], xyzsize[3]
 
     ## DEALING W/ UNIT CELLS -----------------------------------------------------------------
     println("   ... BASIS VECTORS")
