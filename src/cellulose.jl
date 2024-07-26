@@ -114,7 +114,12 @@ function cellulosebuilder(a::Int64, b::Int64, c::Int64; phase="Iβ", pbc=nothing
     if phase == "Iβ" || phase == "Ib" || phase == "II"
         monomers = 2*xyzsize[3]
     else monomers = xyzsize[3] end
-    vmdoutput3 = _exporting_PDBfile(monomers, tmpfragments, phase=phase, covalent=covalent, vmd=vmd, topology_file=topology_file)
+
+    if phase == "II"
+        vmdoutput3 = _exporting_PDBfile(monomers, tmpfragments, phase=phase, covalent=covalent, vmd=vmd, topology_file=topology_file, check_inversion=true)
+    else
+        vmdoutput3 = _exporting_PDBfile(monomers, tmpfragments, phase=phase, covalent=covalent, vmd=vmd, topology_file=topology_file)
+    end
     
     cleaning_tmpfiles("cellulose")
     println("")
