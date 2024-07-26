@@ -19,7 +19,7 @@ julia > transformingPBC(59, 5, 7)
 
 """
 
-function _exporting_PDBfile(n::Int64, tmpfile_list::Vector{String}; phase="Iβ", covalent=true, vmd="vmd", topology_file="toppar/top_all36_carb.rtf")
+function _exporting_PDBfile(n::Int64, tmpfile_list::Vector{String}; phase="Iβ", covalent=true, vmd="vmd", topology_file=DEFAULT_CARB_TOPOLOGY_FILE)
 
     fraglist = collect(1:1:length(tmpfile_list))
     monomer, prev_monomer = 0, 0;
@@ -40,15 +40,27 @@ function _exporting_PDBfile(n::Int64, tmpfile_list::Vector{String}; phase="Iβ",
         Base.write(vmdinput, "    pdb $(tmpfile_list[frag]) \n")
         Base.write(vmdinput, "} \n")
         monomer = n
-        while monomer > 1
-            prev_monomer = monomer - 1
-            Base.write(vmdinput, "patch 14bb $segname:$monomer $segname:$prev_monomer \n")
-            monomer -= 1
-            if monomer == 1 && covalent == true
-                Base.write(vmdinput, "patch 14bb $segname:$monomer $segname:$n \n")
+        _inversion_patch_token = frag%2 == 0
+        if phase == "II" && _inversion_patch_token
+            while monomer > 1
+                prev_monomer = monomer - 1
+                Base.write(vmdinput, "patch 14bb $segname:$prev_monomer $segname:$prev_monomer \n")
+                monomer -= 1
+                if monomer == 1 && covalent == true
+                    Base.write(vmdinput, "patch 14bb $segname:$n $segname:$monomer \n")
+                end
+            end
+        else
+            while monomer > 1
+                prev_monomer = monomer - 1
+                Base.write(vmdinput, "patch 14bb $segname:$monomer $segname:$prev_monomer \n")
+                monomer -= 1
+                if monomer == 1 && covalent == true
+                    Base.write(vmdinput, "patch 14bb $segname:$monomer $segname:$n \n")
+                end
             end
         end
-    end
+ end
     Base.write(vmdinput, " \n")
     Base.write(vmdinput, "regenerate angles dihedrals \n")
     Base.write(vmdinput, " \n")
