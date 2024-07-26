@@ -9,7 +9,7 @@ function _check_inversion(filename::String; vmd="vmd")
     Base.write(vmdinput, " \n")
     Base.write(vmdinput, "set sel [atomselect top \"resid 1 and name C5 O5\"] \n")
     Base.write(vmdinput, "set diff_value [expr [lindex \$sel 1] - [lindex \$sel 0] ] \n")
-    Base.write(vmdinput, "if { \$diff_value < 0 } { puts \"Invertion: 1\" } else { puts \"Invertion: 0\" } \n")
+    Base.write(vmdinput, "if { \$diff_value < 0 } { puts \"Inverting: 1\" } else { puts \"Inverting: 0\" } \n")
     Base.write(vmdinput, " \n")
     Base.write(vmdinput, "exit \n")
     Base.close(vmdinput)
@@ -18,10 +18,11 @@ function _check_inversion(filename::String; vmd="vmd")
 
     for id in eachindex(vmdoutput)
         str = string(vmdoutput[id])
-        if occursin("Invertion:", str)
+        if occursin("Inverting:", str)
+            println(str)
             inversion_value = parse(Int64, split(str)[2])
         elseif isnothing(inversion_value) && id == length(vmdoutput)
-            error("The VMD output file does not contain the inversion code.")
+            error("The VMD output file does not contain the inverting code.")
         end
     end
 
