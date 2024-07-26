@@ -1,6 +1,6 @@
 function _check_inversion(filename::String)
 
-    tcl = tmpfile() * ".tcl"
+    tcl = tempname() * ".tcl"
     inversion_value = 0
 
     vmdinput = Base.open(tcl, "w")
