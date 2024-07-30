@@ -111,7 +111,7 @@ function cellulosebuilder(a::Int64, b::Int64, c::Int64; phase="Iβ", pbc=nothing
         push!(tmpfragments, new_pdbname)
     end
     println("       + using the CHARMM topology file to build the final PDB/PSF with the fragments")
-    if phase == "Iβ" || phase == "Ib" || phase == "II"
+    if phase == "Iβ" || phase == "Ib" || phase == "II" || phase == "Iα" || phase == "Ia"
         monomers = 2*xyzsize[3]
     else monomers = xyzsize[3] end
 
@@ -148,11 +148,12 @@ function cellulosebuilder(monolayer::String, units::Int64, ncellobiose::Int64; p
     if covalent; println("COVALENT TURNNED ON -- CONSIDERING THE PERIODIC COVALENT BONDING ACROSS THE BOX BORDERS..."); end
     println("")
     println("")
-    xyzsize, basisvectors = gettingPBC(monolayer, units, ncellobiose, phase)
+    xyzsize, lattice = gettingPBC(monolayer, units, ncellobiose, phase)
     xsize, ysize, zsize = xyzsize[1], xyzsize[2], xyzsize[3]
 
     ## DEALING W/ UNIT CELLS -----------------------------------------------------------------
     println("   ... BASIS VECTORS")
+    basisvectors = gettingBasisVectors(lattice, phase)
     println("")
     println("           X -- $(round.(basisvectors[1], digits=1))")
     println("           Y -- $(round.(basisvectors[2], digits=1))")

@@ -151,42 +151,45 @@ function transformingPBC(nfrag::Int64, xsize::Int64, ysize::Int64; phase="Iβ", 
         end
 
         sel_fragments = join(remainder, " "); n_fragments = length(remainder);
-        vmdinput_file = tempname() * ".tcl"
         
+        vmdinput_file = tempname() * ".tcl"
         vmdinput = open(vmdinput_file, "w")
         Base.write(vmdinput, "mol new \"$xyzfile\" \n")
         Base.write(vmdinput, "set sel [ atomselect top \"fragment $sel_fragments\" ] \n")
         Base.write(vmdinput, "\$sel writexyz \"$xyz\" \n")
         Base.write(vmdinput, "exit \n")
         Base.close(vmdinput)
+        
         vmdoutput = split(Base.read(`$vmd -dispdev text -e $vmdinput_file`, String), "\n")
 
     elseif phase == "Ia" || phase == "Iα"
 
         remainder = collect(0:1:(nfrag-1))
         sel_fragments = join(remainder, " "); n_fragments = length(remainder);
-        vmdinput_file = tempname() * ".tcl"
         
+        vmdinput_file = tempname() * ".tcl"
         vmdinput = open(vmdinput_file, "w")
         Base.write(vmdinput, "mol new \"$xyzfile\" \n")
         Base.write(vmdinput, "set sel [ atomselect top \"fragment $sel_fragments\" ] \n")
         Base.write(vmdinput, "\$sel writexyz \"$xyz\" \n")
         Base.write(vmdinput, "exit \n")
         Base.close(vmdinput)
+
         vmdoutput = split(Base.read(`$vmd -dispdev text -e $vmdinput_file`, String), "\n")
 
     elseif phase == "III" || phase == "III_I" || phase == "III_i" || phase == "IIIi"
         
         remainder = collect(0:1:(nfrag-1))
         sel_fragments = join(remainder, " "); n_fragments = length(remainder);
-        vmdinput_file = tempname() * ".tcl"
         
+        vmdinput_file = tempname() * ".tcl"
         vmdinput = open(vmdinput_file, "w")
         Base.write(vmdinput, "mol new \"$xyzfile\" \n")
         Base.write(vmdinput, "set sel [ atomselect top \"fragment $sel_fragments\" ] \n")
         Base.write(vmdinput, "\$sel writexyz \"$xyz\" \n")
         Base.write(vmdinput, "exit \n")
         Base.close(vmdinput)
+        
         vmdoutput = split(Base.read(`$vmd -dispdev text -e $vmdinput_file`, String), "\n")
 
     else
@@ -336,12 +339,12 @@ function gettingPBC(units::Int64, phase::String)
     if phase == "Ib" || phase == "Iβ" || phase == "II"
 
         xsize = 5; ysize = 7; zsize = units;
-        xbasisvector = 0; ybasisvector = 0; zbasisvector = zsize;
+        xlattice = 0; ylattice = 0; zlattice = zsize;
         
     elseif phase == "Ia" || phase == "Iα"
 
         xsize = 7; ysize = 6; zsize = units;
-        xbasisvector = zsize; ybasisvector = 0; zbasisvector = 0;
+        xlattice = zsize; ylattice = 0; zlattice = 0;
 
     else
         error("The phase $phase cannot be used as a base for elementary fibril.")
@@ -350,7 +353,7 @@ function gettingPBC(units::Int64, phase::String)
     println("         periodic boundary conditions will be applied to build the elementary fibril.")
     println("         number of cellobiose residues per cellulose chain is $zsize.")
 
-    return [xsize, ysize, zsize], [xbasisvector, ybasisvector, zbasisvector]
+    return [xsize, ysize, zsize], [xlattice, ylattice, zlattice]
 end
 
 
@@ -360,12 +363,12 @@ function gettingPBC(style::String, j::Int64, k::Int64, phase::String)
 
         if style == "center"
             xsize = 2; ysize = j+1; zsize = k;
-            xbasisvector = 1; ybasisvector = j; zbasisvector = k;
+            xlattice = 1; ylattice = j; zlattice = k;
             println("         building monolayer composed of $j cellulose units.")
             println("         `center` labelled cellulose with $zsize cellobiose units!")
         elseif style == "origin"
             xsize = 2; ysize = j; zsize = k;
-            xbasisvector = 1; ybasisvector = j; zbasisvector = k;
+            xlattice = 1; ylattice = j; zlattice = k;
             println("         building monolayer composed of $j cellulose units.")
             println("         `origin` labelled cellulose with $zsize cellobiose units!")
         else
@@ -376,7 +379,7 @@ function gettingPBC(style::String, j::Int64, k::Int64, phase::String)
         
         if style == "monolayer"
             xsize = j; ysize = j; zsize = k;
-            xbasisvector = zsize; ybasisvector = 0; zbasisvector = 0;
+            xlattice = zsize; ylattice = 0; zlattice = 0;
             println("         building monolayer composed of $j cellulose units.")
             println("         `monolayer` labelled cellulose with $zsize cellobiose units!")
         else 
@@ -387,12 +390,12 @@ function gettingPBC(style::String, j::Int64, k::Int64, phase::String)
 
         if style == "center"
             xsize = j+1; ysize = 2; zsize = k;
-            xbasisvector = j; ybasisvector = 1; zbasisvector = k;
+            xlattice = j; ylattice = 1; zlattice = k;
             println("         building monolayer composed of $j cellulose units.")
             println("         `center` labelled cellulose with $zsize cellobiose units!")
         elseif style == "origin"
             xsize = j; ysize = 2; zsize = k;
-            xbasisvector = j; ybasisvector = 1; zbasisvector = k;
+            xlattice = j; ylattice = 1; zlattice = k;
             println("         building monolayer composed of $j cellulose units.")
             println("         `origin` labelled cellulose with $zsize cellobiose units!")
         else 
@@ -402,7 +405,7 @@ function gettingPBC(style::String, j::Int64, k::Int64, phase::String)
     else
         error("The style $style is not implemented on $phase cellulose polymorph.")
     end
-    return [xsize, ysize, zsize], [xbasisvector, ybasisvector, zbasisvector]
+    return [xsize, ysize, zsize], [xlattice, ylattice, zlattice]
 end
 
 function gettingPBC(xyzsizes::Vector{Int64}, phase::String; pbc=nothing)
