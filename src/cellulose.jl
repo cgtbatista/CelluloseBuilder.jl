@@ -121,7 +121,7 @@ function cellulosebuilder(a::Int64, b::Int64, c::Int64; phase="Iβ", pbc=nothing
         vmdoutput3 = _exporting_PDBfile(monomers, tmpfragments, phase=phase, covalent=covalent, vmd=vmd, topology_file=topology_file)
     end
     
-    #cleaning_tmpfiles("cellulose")
+    cleaning_tmpfiles("cellulose")
     println("")
     println("   ... it is done!")
 
