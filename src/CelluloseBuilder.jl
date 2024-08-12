@@ -21,7 +21,6 @@ include("./editing_atomnames.jl")
 ## crystalographic tools to deal with the crystalline cellulose
 include("./crystaltoolkit.jl")
 
-
 include("./formatter.jl")
 include("./exporting_systems.jl")
 include("./PBC.jl")
