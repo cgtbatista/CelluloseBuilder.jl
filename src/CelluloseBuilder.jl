@@ -31,4 +31,6 @@ include("./picking_fragments.jl")
 ## cleaning the temporary files
 include("./cleaning_tmpfiles.jl")
 
+include("./topology_file.jl")
+
 end
