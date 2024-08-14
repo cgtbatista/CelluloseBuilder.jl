@@ -207,7 +207,7 @@ function gettingBasisVectors(lattice_vector::Vector{Int64}, uc_parameters::Vecto
     zbasisvector = [
         lattice_vector[3]*cosd(beta),
         lattice_vector[3]*c*(cosd(alpha) - cosd(beta)*cosd(gamma))/sind(gamma),
-        lattice_vector[3]*c*sqrt(1 - cosd(alpha)^2 - cosd(beta)^2 - cosd(gamma)^2 + 2*cosd(alpha)*cosd(beta)*cosd(gamma))/sind(gamma)
+        lattice_vector[3]*c*sqrt(1 - cosd(beta)^2 - ((cosd(alpha)-cosd(beta)*cosd(gamma))/sind(gamma))^2)
     ]
     return [ xbasisvector, ybasisvector, zbasisvector ]
 end
