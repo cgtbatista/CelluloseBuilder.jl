@@ -53,7 +53,13 @@ function cellulosebuilder(a::Int64, b::Int64, c::Int64; phase="Iβ", pbc=nothing
     println("")
     println("")
     xsize, ysize, zsize = a, b, c
-    lattice = [a, b, c]
+    if phase == "Iβ" || phase == "Ib" || phase == "II" || phase == "III" || phase == "III_I" || phase == "III_i" || phase == "IIIi"
+        lattice = [a, b, c]
+    end
+    if phase == "Iα" || phase == "Ia"
+        lattice = [c, b, a]
+    end
+    
 
     ## DEALING W/ UNIT CELLS -----------------------------------------------------------------
     println("   ... BASIS VECTORS")

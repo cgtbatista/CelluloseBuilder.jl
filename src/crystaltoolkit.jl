@@ -214,12 +214,7 @@ end
 
 function gettingBasisVectors(lattice_vector::Vector{Int64}, phase::String)
     uc_parameters = get_crystallographic_info(phase)[3]
-    if phase == "Iα" || phase == "Ia"
-        a = lattice_vector[3]; b = lattice_vector[2]; c = lattice_vector[1]
-    else
-        a = lattice_vector[1]; b = lattice_vector[2]; c = lattice_vector[3]
-    end
-    return gettingBasisVectors([a,b,c], uc_parameters)
+    return gettingBasisVectors(lattice_vector, uc_parameters)
 end
 
 
