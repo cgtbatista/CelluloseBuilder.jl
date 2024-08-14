@@ -313,7 +313,7 @@ julia > unitcell2cartesian(xyzsize, phase)
 
 """
 
-function unitcell2cartesian(cell_dim::Vector{Int64}, fractional_coords::Vector{Vector{Float64}}, uc_parameters::Vector{Vector{Float64}})
+function unitcell2cartesian(cell_dim::Vector{Int64}, fractional_coords::Vector{Vector{Float64}}, uc_parameters::Vector{Vector{Float64}}; inclined=true)
     
     x = Vector{Float64}[]; y = Vector{Float64}[]; z = Vector{Float64}[]; ## Vector of vectors to store the cartesian coordinates for each unit cell
     
@@ -321,11 +321,11 @@ function unitcell2cartesian(cell_dim::Vector{Int64}, fractional_coords::Vector{V
     α = uc_parameters[2][1]; β = uc_parameters[2][2]; γ = uc_parameters[2][3];
     V_unitcell = a*b*c*sqrt(1 - cosd(α)^2 - cosd(β)^2 - cosd(γ)^2 + 2*cosd(α)*cosd(β)*cosd(γ));
 
-    if length(cell_dim) == 3
+    if inclined == true
         
-        xsize, ysize, zsize = cell_dim[1], cell_dim[2], cell_dim[3]
+        xsize, ysize, zsize = cell_dim[3], cell_dim[2], cell_dim[1] ## parallelepiped
         
-        for k in collect(1:1:xsize), j in collect(1:1:ysize), i in collect(1:1:zsize)
+        for k in collect(1:1:zsize), j in collect(1:1:ysize), i in collect(1:1:xsize)
             xtemp, ytemp, ztemp = Float64[], Float64[], Float64[]
             istep, jstep, kstep = convert(Float64, i-1), convert(Float64, j-1), convert(Float64, k-1)
             for fcoord in fractional_coords
@@ -337,7 +337,7 @@ function unitcell2cartesian(cell_dim::Vector{Int64}, fractional_coords::Vector{V
             push!(x, xtemp); push!(y, ytemp); push!(z, ztemp);
         end
 
-    elseif length(cell_dim) == 2
+    else
         
         xsize, ysize = cell_dim[1], cell_dim[2]
         
@@ -352,7 +352,7 @@ function unitcell2cartesian(cell_dim::Vector{Int64}, fractional_coords::Vector{V
             end; push!(x, xtemp); push!(y, ytemp); push!(z, ztemp);
         end
 
-    else error("The number of cell dimensions must be 2 (x, y) or 3 (x, y, z)."); end
+    end
 
     return x, y, z
 end
@@ -360,7 +360,8 @@ end
 function unitcell2cartesian(cell_dim::Vector{Int64}, phase::String)
     fractional_coords = transform_AsymUnits(phase)
     uc_parameters = get_crystallographic_info(phase)[3]
-    return unitcell2cartesian(cell_dim, fractional_coords, uc_parameters)
+    if phase == "Ia" || phase == "Iα"; inclined_value=true; else inclined_value=false; end
+    return unitcell2cartesian(cell_dim, fractional_coords, uc_parameters, inclined=inclined_value)
 end
 
 
