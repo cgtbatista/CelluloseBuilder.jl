@@ -170,47 +170,47 @@ julia > gettingBasisVectors([ xsize, ysize, zsize ], "Iα")
 
 """
 
-##function gettingBasisVectors(lattice_vector::Vector{Int64}, uc_parameters::Vector{Vector{Float64}})
-##    a = uc_parameters[1][1]; b = uc_parameters[1][2]; c = uc_parameters[1][3];              ## the coefficients of the unit cell parameters
-##    alpha = uc_parameters[2][1]; beta = uc_parameters[2][2]; gamma = uc_parameters[2][3];   ## the unit cell angles
-##    xbasisvector = [
-##        lattice_vector[1]*a*sind(beta)*sqrt(1-(cotd(alpha)*cotd(beta)-cscd(alpha)*cscd(beta)*cosd(gamma))^2),
-##        0.,
-##        0.
-##    ]
-##    ybasisvector = [
-##        lattice_vector[2]*a*(cscd(alpha)*cosd(gamma)-cotd(alpha)*cosd(beta)),
-##        lattice_vector[2]*b*sind(alpha),
-##        0.
-##    ]
-##    zbasisvector = [
-##        lattice_vector[3]*a*cosd(beta),
-##        lattice_vector[3]*b*cosd(alpha),
-##        lattice_vector[3]*c
-##    ]
-##    return [ xbasisvector, ybasisvector, zbasisvector ]
-##end
-
 function gettingBasisVectors(lattice_vector::Vector{Int64}, uc_parameters::Vector{Vector{Float64}})
     a = uc_parameters[1][1]; b = uc_parameters[1][2]; c = uc_parameters[1][3];              ## the coefficients of the unit cell parameters
     alpha = uc_parameters[2][1]; beta = uc_parameters[2][2]; gamma = uc_parameters[2][3];   ## the unit cell angles
     xbasisvector = [
-        lattice_vector[1]*a,
+        lattice_vector[1]*a*sind(beta)*sqrt(1-(cotd(alpha)*cotd(beta)-cscd(alpha)*cscd(beta)*cosd(gamma))^2),
         0.,
         0.
     ]
     ybasisvector = [
-        lattice_vector[2]*b*cosd(gamma),
-        lattice_vector[2]*b*sind(gamma),
+        lattice_vector[2]*a*(cscd(alpha)*cosd(gamma)-cotd(alpha)*cosd(beta)),
+        lattice_vector[2]*b*sind(alpha),
         0.
     ]
     zbasisvector = [
-        lattice_vector[3]*cosd(beta),
-        lattice_vector[3]*c*(cosd(alpha) - cosd(beta)*cosd(gamma))/sind(gamma),
-        lattice_vector[3]*c*sqrt(1 - cosd(beta)^2 - ((cosd(alpha)-cosd(beta)*cosd(gamma))/sind(gamma))^2)
+        lattice_vector[3]*a*cosd(beta),
+        lattice_vector[3]*b*cosd(alpha),
+        lattice_vector[3]*c
     ]
     return [ xbasisvector, ybasisvector, zbasisvector ]
 end
+
+##function gettingBasisVectors(lattice_vector::Vector{Int64}, uc_parameters::Vector{Vector{Float64}})
+##    a = uc_parameters[1][1]; b = uc_parameters[1][2]; c = uc_parameters[1][3];              ## the coefficients of the unit cell parameters
+##    alpha = uc_parameters[2][1]; beta = uc_parameters[2][2]; gamma = uc_parameters[2][3];   ## the unit cell angles
+##    xbasisvector = [
+##        lattice_vector[1]*a,
+##        0.,
+##        0.
+##    ]
+##    ybasisvector = [
+##        lattice_vector[2]*b*cosd(gamma),
+##        lattice_vector[2]*b*sind(gamma),
+##        0.
+##    ]
+##    zbasisvector = [
+##        lattice_vector[3]*cosd(beta),
+##        lattice_vector[3]*c*(cosd(alpha) - cosd(beta)*cosd(gamma))/sind(gamma),
+##        lattice_vector[3]*c*sqrt(1 - cosd(beta)^2 - ((cosd(alpha)-cosd(beta)*cosd(gamma))/sind(gamma))^2)
+##    ]
+##    return [ xbasisvector, ybasisvector, zbasisvector ]
+##end
 
 function gettingBasisVectors(lattice_vector::Vector{Int64}, phase::String)
     uc_parameters = get_crystallographic_info(phase)[3]
