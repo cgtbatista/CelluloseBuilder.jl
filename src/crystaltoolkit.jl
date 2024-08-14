@@ -325,7 +325,7 @@ function unitcell2cartesian(cell_dim::Vector{Int64}, fractional_coords::Vector{V
         
         xsize, ysize, zsize = cell_dim[1], cell_dim[2], cell_dim[3]
         
-        for k in collect(1:1:xsize), j in collect(1:1:ysize), i in collect(1:1:(2*zsize))
+        for k in collect(1:1:xsize), j in collect(1:1:ysize), i in collect(1:1:zsize)
             xtemp, ytemp, ztemp = Float64[], Float64[], Float64[]
             istep, jstep, kstep = convert(Float64, i-1), convert(Float64, j-1), convert(Float64, k-1)
             for fcoord in fractional_coords
