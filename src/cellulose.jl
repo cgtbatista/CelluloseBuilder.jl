@@ -81,7 +81,7 @@ function cellulosebuilder(a::Int64, b::Int64, c::Int64; phase="Iβ", pbc=nothing
     println("       + transforming the asymmetric unit to the cartesian coordinates for every [a,b,c] = [$xsize,$ysize,$zsize] Å.")
     xinit, yinit, zinit = unitcell2cartesian(xyzsize, phase)
     println("       + atomic labels for $phase.")
-    atomsinit, atomstype = atomsvecString(phase, xyzsize[1], xyzsize[2])
+    atomsinit, atomstype = atomsvecString(phase, length(xinit))
     println("")
 
     println("   2 - Extending the cellulose modifications of the atoms:")
@@ -169,7 +169,7 @@ function cellulosebuilder(monolayer::String, units::Int64, ncellobiose::Int64; p
     println("       + transforming the asymmetric unit to the cartesian coordinates for every [a,b,c] = [$xsize,$ysize,$zsize] Å.")
     xinit, yinit, zinit = unitcell2cartesian(xyzsize, phase)
     println("       + atomic labels for $phase.")
-    atomsinit, atomstype = atomsvecString(phase, xyzsize[1], xyzsize[2])
+    atomsinit, atomstype = atomsvecString(phase, length(xinit))
     println("")
 
     println("   2 - Extending the cellulose modifications of the atoms:")

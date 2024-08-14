@@ -37,12 +37,12 @@ function atomsvecString(atomnames::Vector{String}, n::Int64, nblock::Int64)
     return labels
 end
 
-function atomsvecString(phase::String, xsize::Int64, ysize::Int64)
+function atomsvecString(phase::String, nblock::Int64)
     atomnames = map(_atomsvec_pick_first, get_crystallographic_info(phase)[1])
-    if phase == "Ib" || phase == "Iβ"; n = 4; nblock=xsize*ysize; end
-    if phase == "Ia" || phase == "Iα"; n = 2; nblock=2*xsize*ysize; end
-    if phase == "II"; n = 4; nblock=xsize*ysize; end
-    if phase == "III" || phase == "III_I" || phase == "III_i" || phase == "IIIi"; n = 2; nblock=xsize*ysize; end
+    if phase == "Ib" || phase == "Iβ"; n = 4; end
+    if phase == "Ia" || phase == "Iα"; n = 2; end
+    if phase == "II"; n = 4; end
+    if phase == "III" || phase == "III_I" || phase == "III_i" || phase == "IIIi"; n = 2; end
     return atomsvecString(atomnames, n, nblock), get_crystallographic_info(phase)[1]
 end
 

@@ -323,9 +323,9 @@ function unitcell2cartesian(cell_dim::Vector{Int64}, fractional_coords::Vector{V
 
     if inclined == true
         
-        xsize, ysize, zsize = cell_dim[3], cell_dim[2], cell_dim[1] ## parallelepiped
+        xsize, ysize, zsize = cell_dim[1], cell_dim[2], cell_dim[3] ## parallelepiped
         
-        for k in collect(1:1:zsize), j in collect(1:1:ysize), i in collect(1:1:xsize)
+        for k in collect(1:1:xsize), j in collect(1:1:ysize), i in collect(1:1:zsize)
             xtemp, ytemp, ztemp = Float64[], Float64[], Float64[]
             istep, jstep, kstep = convert(Float64, i-1), convert(Float64, j-1), convert(Float64, k-1)
             for fcoord in fractional_coords
@@ -360,8 +360,8 @@ end
 function unitcell2cartesian(cell_dim::Vector{Int64}, phase::String)
     fractional_coords = transform_AsymUnits(phase)
     uc_parameters = get_crystallographic_info(phase)[3]
-    if phase == "Ia" || phase == "Iα"; inclined_value=true; else inclined_value=false; end
-    return unitcell2cartesian(cell_dim, fractional_coords, uc_parameters, inclined=inclined_value)
+    if phase == "Ia" || phase == "Iα"; i_value=true; else i_value=false; end
+    return unitcell2cartesian(cell_dim, fractional_coords, uc_parameters, inclined=i_value)
 end
 
 
