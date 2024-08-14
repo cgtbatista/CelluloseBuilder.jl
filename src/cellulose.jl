@@ -79,13 +79,7 @@ function cellulosebuilder(a::Int64, b::Int64, c::Int64; phase="Iβ", pbc=nothing
     xyzsize = gettingPBC([xsize, ysize, zsize], phase, pbc=pbc)
     println("       + appling transformations on fractional coordinates needed for the phase $phase.")
     println("       + transforming the asymmetric unit to the cartesian coordinates for every [a,b,c] = [$xsize,$ysize,$zsize] Å.")
-    ## PHASES CAN DIFFER...
-    if phase == "Ib" || phase == "Iβ" || phase == "II" || phase == "III" || phase == "III_I" || phase == "III_i" || phase == "IIIi"
-        xinit, yinit, zinit = unitcell2cartesian(xyzsize[1:2], phase)
-    end
-    if phase == "Ia" || phase == "Iα"
-        xinit, yinit, zinit = unitcell2cartesian(xyzsize, phase)
-    end
+    xinit, yinit, zinit = unitcell2cartesian(xyzsize, phase)
     println("       + atomic labels for $phase.")
     atomsinit, atomstype = atomsvecString(phase, xyzsize[1], xyzsize[2])
     println("")
@@ -173,12 +167,7 @@ function cellulosebuilder(monolayer::String, units::Int64, ncellobiose::Int64; p
     println("   1 - Getting the initial unit cell coordinates and atomic labels:")
     println("       + imposing translational symmetry for $pbc.")
     println("       + transforming the asymmetric unit to the cartesian coordinates for every [a,b,c] = [$xsize,$ysize,$zsize] Å.")
-    if phase == "Ib" || phase == "Iβ" || phase == "II" || phase == "III" || phase == "III_I" || phase == "III_i" || phase == "IIIi"
-        xinit, yinit, zinit = unitcell2cartesian(xyzsize[1:2], phase)
-    end
-    if phase == "Ia" || phase == "Iα"
-        xinit, yinit, zinit = unitcell2cartesian(xyzsize, phase)
-    end
+    xinit, yinit, zinit = unitcell2cartesian(xyzsize, phase)
     println("       + atomic labels for $phase.")
     atomsinit, atomstype = atomsvecString(phase, xyzsize[1], xyzsize[2])
     println("")
