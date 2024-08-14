@@ -211,7 +211,7 @@ function transformingPBC(style::String, nsize::Int64; phase="Iβ", fibril=nothin
 
         if style == "center"
             xyz, sel_fragments, n_fragments, vmdoutput = _PBC_conditional_center(xyz, boundary, remainder, xyzfile=xyzfile, vmd=vmd, nsize=nsize)
-        elseif sytle == "origin"
+        elseif style == "origin"
             xyz, sel_fragments, n_fragments, vmdoutput = _PBC_conditional_origin(xyz, boundary, remainder, xyzfile=xyzfile, vmd=vmd, nsize=nsize)
         elseif style == "fibril"
             xyz, sel_fragments, n_fragments, vmdoutput = _PBC_conditional_fibril(xyz, xyzfile=xyzfile, vmd=vmd, fibril=fibril)
