@@ -70,7 +70,7 @@ function _PBC_conditional_monolayer(xyz::String, nsize::Int64, remainder::Vector
     return xyz, sel_fragments, n_fragments, vmdoutput
 end
 
-function _PBC_conditional_fibril(xyz::String; xyzfile="filename.xyz", vmd="vmd", fibril=nothing)
+function _PBC_conditional_fibril(xyz::String; xyzfile="filename.xyz", vmd="vmd", phase="Iβ", fibril=nothing)
 
     if isnothing(fibril)
         if phase == "Iβ" || phase == "Ib"
@@ -228,7 +228,7 @@ function transformingPBC(style::String, xyzsize::Vector{Int64}; phase="Iβ", fib
         elseif style == "origin"
             xyz, sel_fragments, n_fragments, vmdoutput = _PBC_conditional_origin(xyz, xyzsize[2], remainder, xyzfile=xyzfile, vmd=vmd, phase=phase)
         elseif style == "fibril"
-            xyz, sel_fragments, n_fragments, vmdoutput = _PBC_conditional_fibril(xyz, xyzfile=xyzfile, vmd=vmd, fibril=fibril)
+            xyz, sel_fragments, n_fragments, vmdoutput = _PBC_conditional_fibril(xyz, xyzfile=xyzfile, vmd=vmd, fibril=fibril, phase=phase)
         else
             error("The phase $phase does not supports $style, only the styles center, origin and fibril.")
         end
@@ -240,7 +240,7 @@ function transformingPBC(style::String, xyzsize::Vector{Int64}; phase="Iβ", fib
         elseif style == "origin"
             xyz, sel_fragments, n_fragments, vmdoutput = _PBC_conditional_origin(xyz, xyzsize[1], remainder, xyzfile=xyzfile, vmd=vmd, phase=phase)
         elseif style == "fibril"
-            xyz, sel_fragments, n_fragments, vmdoutput = _PBC_conditional_fibril(xyz, xyzfile=xyzfile, vmd=vmd, fibril=fibril)
+            xyz, sel_fragments, n_fragments, vmdoutput = _PBC_conditional_fibril(xyz, xyzfile=xyzfile, vmd=vmd, fibril=fibril, phase=phase)
         else
             error("The phase $phase does not supports $style, only the styles center, origin and fibril.")
         end
@@ -250,7 +250,7 @@ function transformingPBC(style::String, xyzsize::Vector{Int64}; phase="Iβ", fib
         if style == "monolayer"
             xyz, sel_fragments, n_fragments, vmdoutput = _PBC_conditional_monolayer(xyz, xyzsize[2], remainder, xyzfile=xyzfile, vmd=vmd)
         elseif style == "fibril"
-            xyz, sel_fragments, n_fragments, vmdoutput = _PBC_conditional_fibril(xyz, xyzfile=xyzfile, vmd=vmd, fibril=fibril)
+            xyz, sel_fragments, n_fragments, vmdoutput = _PBC_conditional_fibril(xyz, xyzfile=xyzfile, vmd=vmd, fibril=fibril, phase=phase)
         else
             error("The phase $phase does not supports $style, only the styles monolayer and fibril.")
         end
