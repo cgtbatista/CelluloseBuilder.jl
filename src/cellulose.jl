@@ -100,7 +100,7 @@ function cellulosebuilder(a::Int64, b::Int64, c::Int64; phase="Iβ", pbc=nothing
 
     println("   4 - Generating the PSF/PDB files:")    
     println("       + writing the PDBs for each of those $frag_units fragment units.")
-    pdb_basename = _XYZfragments_2_PDB(vmdxyz, frag_sel, vmd=vmd)[2]
+    pdb_basename = _XYZfragments_2_PDB(vmdxyz, frag_sel, frag_units, vmd=vmd)[2]
     println("       + cleaning each fragment PDB.")
     units = Base.split(frag_sel, " ");
     tmpfragments = String[]; tmpfile = tempname();
