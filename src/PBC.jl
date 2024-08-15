@@ -248,7 +248,7 @@ function transformingPBC(style::String, xyzsize::Vector{Int64}; phase="Iβ", fib
     elseif phase == "Ia" || phase == "Iα"
 
         if style == "monolayer"
-            xyz, sel_fragments, n_fragments, vmdoutput = _PBC_conditional_monolayer(xyz, nsize, remainder, xyzfile=xyzfile, vmd=vmd)
+            xyz, sel_fragments, n_fragments, vmdoutput = _PBC_conditional_monolayer(xyz, xyzsize[2], remainder, xyzfile=xyzfile, vmd=vmd)
         elseif style == "fibril"
             xyz, sel_fragments, n_fragments, vmdoutput = _PBC_conditional_fibril(xyz, xyzfile=xyzfile, vmd=vmd, fibril=fibril)
         else
