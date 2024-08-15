@@ -74,11 +74,11 @@ function _PBC_conditional_fibril(xyz::String; xyzfile="filename.xyz", vmd="vmd",
 
     if isnothing(fibril)
         if phase == "Iβ" || phase == "Ib"
-            remainder = "18 27 36 10 19 28 37 11 20 29 38 47 3 12 21 30 39 48 4 13 22 31 40 49 5 14 23 32 41 15 24 33 42 16 25 34"
+            remainder = split("18 27 36 10 19 28 37 11 20 29 38 47 3 12 21 30 39 48 4 13 22 31 40 49 5 14 23 32 41 15 24 33 42 16 25 34", " ")
         elseif phase == "II"
-            remainder = "3 4 5 6 7 8 9 14 15 16 17 18 19 20 21 22 23 24 26 27 28 29 30 31 32 33 34 35 36 41 42 43 44 45 46 47"
+            remainder = split("3 4 5 6 7 8 9 14 15 16 17 18 19 20 21 22 23 24 26 27 28 29 30 31 32 33 34 35 36 41 42 43 44 45 46 47", " ")
         elseif phase == "Iα" || phase == "Ia"
-            remainder = "2 3 4 5 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 36 37 38 39"
+            remainder = split("2 3 4 5 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 36 37 38 39", " ")
         end
     end
 
@@ -362,11 +362,16 @@ end
 
 function gettingPBC(units::Int64, phase::String)
     
-    if phase == "Ib" || phase == "Iβ" || phase == "II"
+    if phase == "Ib" || phase == "Iβ"
 
         xsize = 5; ysize = 7; zsize = units;
         xlattice = 0; ylattice = 0; zlattice = zsize;
-        
+    
+    elseif phase == "II"
+
+        xsize = 7; ysize = 5; zsize = units;
+        xlattice = 0; ylattice = 0; zlattice = zsize;
+
     elseif phase == "Ia" || phase == "Iα"
 
         xsize = 7; ysize = 6; zsize = units;
