@@ -113,7 +113,7 @@ function cellulosebuilder(a::Int64, b::Int64, c::Int64; phase="Iβ", pbc=nothing
     println("       + using the CHARMM topology file to build the final PDB/PSF with the fragments")
     if phase == "Iβ" || phase == "Ib" || phase == "II" || phase == "Iα" || phase == "Ia"
         monomers = 2*xyzsize[3]
-    else monomers = xyzsize[3] end
+    else monomers = xyzsize[3] end ### O III_I tá certo???? Contar o número de monômeros em cada cadeia depois...
 
     if phase == "II"
         vmdoutput3 = _exporting_PDBfile(monomers, tmpfragments, phase=phase, covalent=covalent, vmd=vmd, topology_file=topology_file, check_inversion=true)
@@ -183,7 +183,7 @@ function cellulosebuilder(monolayer::String, units::Int64, ncellobiose::Int64; p
     println("")
 
     println("   3 - Periodic boundary conditions (PBC) on the $n_fragments fragments: $(pbc)...")
-    vmdxyz, frag_sel, frag_units, vmdoutput2 = transformingPBC(monolayer, xyzsize[2], phase=phase, xyzfile=xyzfile, vmd=vmd)
+    vmdxyz, frag_sel, frag_units, vmdoutput2 = transformingPBC(monolayer, xyzsize, phase=phase, xyzfile=xyzfile, vmd=vmd)
     println("")
 
     println("   4 - Generating the PSF/PDB files:")    

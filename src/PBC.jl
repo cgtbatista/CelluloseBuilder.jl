@@ -1,8 +1,12 @@
-function _PBC_conditional_center(xyz::String, boundary::Int64, remainder::Vector{Int64}; xyzfile="filename.xyz", vmd="vmd", nsize=1)
+function _PBC_conditional_center(xyz::String, nsize::Int64, remainder::Vector{Int64}; xyzfile="filename.xyz", vmd="vmd", phase="Iβ")
 
-    for b in collect(boundary:1:nsize)
-        if b > nsize-1; continue; end
-        n = 2*(b-1)+1
+    for chain in collect(1:1:nsize)
+        if chain > nsize-1; continue; end
+        if phase == "Ib" || phase == "Iβ"
+            n = 3*(chain-1)+1
+        elseif phase == "II"
+            n = 2*(chain-1)+1
+        end
         push!(remainder, convert(Int64, n))
     end
 
@@ -20,10 +24,14 @@ function _PBC_conditional_center(xyz::String, boundary::Int64, remainder::Vector
     return xyz, sel_fragments, n_fragments, vmdoutput
 end
 
-function _PBC_conditional_origin(xyz::String, boundary::Int64, remainder::Vector{Int64}; xyzfile="filename.xyz", vmd="vmd", nsize=1)
+function _PBC_conditional_origin(xyz::String, nsize::Int64, remainder::Vector{Int64}; xyzfile="filename.xyz", vmd="vmd", phase="Iβ")
 
-    for b in collect(boundary:1:nsize)
-        n = 2*(b-1)
+    for chain in collect(1:1:nsize)
+        if phase == "Ib" || phase == "Iβ"
+            n = 3*(chain-1)
+        elseif phase == "II"
+            n = 2*(chain-1)
+        end
         push!(remainder, convert(Int64, n))
     end
 
@@ -41,10 +49,10 @@ function _PBC_conditional_origin(xyz::String, boundary::Int64, remainder::Vector
     return xyz, sel_fragments, n_fragments, vmdoutput
 end
 
-function _PBC_conditional_monolayer(xyz::String, boundary::Int64, remainder::Vector{Int64}; xyzfile="filename.xyz", vmd="vmd", nsize=1)
+function _PBC_conditional_monolayer(xyz::String, nsize::Int64, remainder::Vector{Int64}; xyzfile="filename.xyz", vmd="vmd")
 
-    for b in collect(boundary:1:nsize)
-        n = b*(nsize-1)
+    for chain in collect(1:1:nsize)
+        n = chain*(nsize-1)
         push!(remainder, convert(Int64, n))
     end
 
@@ -65,7 +73,13 @@ end
 function _PBC_conditional_fibril(xyz::String; xyzfile="filename.xyz", vmd="vmd", fibril=nothing)
 
     if isnothing(fibril)
-        remainder = "3 4 5 6 7 8 9 14 15 16 17 18 19 20 21 22 23 24 26 27 28 29 30 31 32 33 34 35 36 41 42 43 44 45 46 47"
+        if phase == "Iβ" || phase == "Ib"
+            remainder = "18 27 36 10 19 28 37 11 20 29 38 47 3 12 21 30 39 48 4 13 22 31 40 49 5 14 23 32 41 15 24 33 42 16 25 34"
+        elseif phase == "II"
+            remainder = "3 4 5 6 7 8 9 14 15 16 17 18 19 20 21 22 23 24 26 27 28 29 30 31 32 33 34 35 36 41 42 43 44 45 46 47"
+        elseif phase == "Iα" || phase == "Ia"
+            remainder = "2 3 4 5 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 36 37 38 39"
+        end
     end
 
     sel_fragments = join(remainder, " "); n_fragments = length(remainder);
@@ -201,18 +215,30 @@ function transformingPBC(nfrag::Int64, xsize::Int64, ysize::Int64; phase="Iβ", 
 
 end
 
-function transformingPBC(style::String, nsize::Int64; phase="Iβ", fibril=nothing, xyzfile="filename.xyz", vmd="vmd")
+function transformingPBC(style::String, xyzsize::Vector{Int64}; phase="Iβ", fibril=nothing, xyzfile="filename.xyz", vmd="vmd")
     
     xyz = joinpath(tempdir(), "cellulose.xyz") ## the new and last XYZ file!
 
     boundary=1; remainder=Int64[];
     
-    if phase == "Ib" || phase == "Iβ" || phase == "II"
+    if phase == "Ib" || phase == "Iβ"
 
         if style == "center"
-            xyz, sel_fragments, n_fragments, vmdoutput = _PBC_conditional_center(xyz, boundary, remainder, xyzfile=xyzfile, vmd=vmd, nsize=nsize)
+            xyz, sel_fragments, n_fragments, vmdoutput = _PBC_conditional_center(xyz, xyzsize[2], remainder, xyzfile=xyzfile, vmd=vmd, phase=phase)
         elseif style == "origin"
-            xyz, sel_fragments, n_fragments, vmdoutput = _PBC_conditional_origin(xyz, boundary, remainder, xyzfile=xyzfile, vmd=vmd, nsize=nsize)
+            xyz, sel_fragments, n_fragments, vmdoutput = _PBC_conditional_origin(xyz, xyzsize[2], remainder, xyzfile=xyzfile, vmd=vmd, phase=phase)
+        elseif style == "fibril"
+            xyz, sel_fragments, n_fragments, vmdoutput = _PBC_conditional_fibril(xyz, xyzfile=xyzfile, vmd=vmd, fibril=fibril)
+        else
+            error("The phase $phase does not supports $style, only the styles center, origin and fibril.")
+        end
+
+    elseif phase == "II"
+
+        if style == "center"
+            xyz, sel_fragments, n_fragments, vmdoutput = _PBC_conditional_center(xyz, xyzsize[1], remainder, xyzfile=xyzfile, vmd=vmd, phase=phase)
+        elseif style == "origin"
+            xyz, sel_fragments, n_fragments, vmdoutput = _PBC_conditional_origin(xyz, xyzsize[1], remainder, xyzfile=xyzfile, vmd=vmd, phase=phase)
         elseif style == "fibril"
             xyz, sel_fragments, n_fragments, vmdoutput = _PBC_conditional_fibril(xyz, xyzfile=xyzfile, vmd=vmd, fibril=fibril)
         else
@@ -222,7 +248,7 @@ function transformingPBC(style::String, nsize::Int64; phase="Iβ", fibril=nothin
     elseif phase == "Ia" || phase == "Iα"
 
         if style == "monolayer"
-            xyz, sel_fragments, n_fragments, vmdoutput = _PBC_conditional_monolayer(xyz, boundary, remainder, xyzfile=xyzfile, vmd=vmd, nsize=nsize)
+            xyz, sel_fragments, n_fragments, vmdoutput = _PBC_conditional_monolayer(xyz, nsize, remainder, xyzfile=xyzfile, vmd=vmd)
         elseif style == "fibril"
             xyz, sel_fragments, n_fragments, vmdoutput = _PBC_conditional_fibril(xyz, xyzfile=xyzfile, vmd=vmd, fibril=fibril)
         else
