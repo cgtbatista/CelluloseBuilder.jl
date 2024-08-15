@@ -230,7 +230,7 @@ function cellulosebuilder(monomers::Int64; phase="Iβ", fibril=nothing, pbc=noth
     
     ## HEADER   ------------------------------------------------------------------------------
     println("")
-    println("GENERETING $phase CELLULOSE MONOLAYER ($monolayer)!")
+    println("GENERETING $phase CELLULOSE FIBRIL!")
     if covalent; println("COVALENT TURNNED ON -- CONSIDERING THE PERIODIC COVALENT BONDING ACROSS THE BOX BORDERS..."); end
     println("")
     println("")
