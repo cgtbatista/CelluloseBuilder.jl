@@ -176,3 +176,25 @@ function _XYZfragments_2_PDB(xyzfile::String, selection::String; vmd="vmd")
     return vmdoutput, filename
 
 end
+
+function _XYZfragments_2_PDB(xyzfile::String, selection::String, units::Int64; vmd="vmd")
+    
+    filename = tempname()
+
+    vmdinput_file = tempname() * ".tcl"
+    vmdinput = open(vmdinput_file, "w")
+
+    Base.write(vmdinput, "mol new \"$xyzfile\" \n")
+    fragments = split(selection, " ")
+    for u in collect(1:1:units)
+        frag = fragments[u]
+        Base.write(vmdinput, "set sel [ atomselect top \"fragment $(u-1)\" ] \n")
+        Base.write(vmdinput, "\$sel writepdb \"$(filename * "_" * frag * ".pdb")\" \n")
+    end
+    Base.write(vmdinput, "exit \n")
+    Base.close(vmdinput)
+    vmdoutput = split(Base.read(`$vmd -dispdev text -e $vmdinput_file`, String), "\n")
+    
+    return vmdoutput, filename
+
+end
