@@ -132,10 +132,11 @@ end
 
 function cellulosebuilder(monolayer::String, nchains::Int64, monomers::Int64; phase="Iβ", pbc=nothing, covalent=true, vmd="vmd", topology_file=DEFAULT_CARB_TOPOLOGY_FILE)
 
+    ncellobiose = Int64(monomers/2)
     if monolayer != "monolayer" && monolayer != "center" && monolayer != "origin"
         error("The monolayer type must be `monolayer`, `center`, or `origin`.")
     end
-    if nchains < 1 || monomers/2 < 1
+    if nchains < 1 || ncellobiose < 1
         error("The number of chains and cellobiose must be greater or equal than 1.")
     end
     if !isnothing(pbc)
@@ -148,7 +149,7 @@ function cellulosebuilder(monolayer::String, nchains::Int64, monomers::Int64; ph
     if covalent; println("COVALENT TURNNED ON -- CONSIDERING THE PERIODIC COVALENT BONDING ACROSS THE BOX BORDERS..."); end
     println("")
     println("")
-    xyzsize, lattice = gettingPBC(monolayer, nchains, monomers/2, phase)
+    xyzsize, lattice = gettingPBC(monolayer, nchains, ncellobiose, phase)
     xsize, ysize, zsize = xyzsize[1], xyzsize[2], xyzsize[3]
 
     ## DEALING W/ UNIT CELLS -----------------------------------------------------------------
