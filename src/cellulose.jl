@@ -2,8 +2,8 @@
 """
 
     cellulosebuilder(a::Int64, b::Int64, c::Int64; phase="Iβ", pbc=nothing, covalent=true, vmd="vmd", topology_file=DEFAULT_CARB_TOPOLOGY_FILE)
-    cellulosebuilder(monolayer::String, units::Int64, ncellobiose::Int64; phase="Iβ", pbc=nothing, covalent=true, vmd="vmd", topology_file=DEFAULT_CARB_TOPOLOGY_FILE)
-    cellulosebuilder(type::String, ncellobiose::Int64; phase="I-BETA", pbc=:nothing, pcb_c=:true)
+    cellulosebuilder(monolayer::String, nchains::Int64, monomers::Int64; phase="Iβ", pbc=nothing, covalent=true, vmd="vmd", topology_file=DEFAULT_CARB_TOPOLOGY_FILE)
+    cellulosebuilder(type::String, monomers::Int64; phase="I-BETA", pbc=:nothing, pcb_c=:true)
 
 Cellulose-builder builds Cartesian coordinates files for cellulose crystalline domains and plant cell wall cellulose elementary fibrils in PDB format.
 
@@ -15,12 +15,12 @@ Cellulose-builder builds Cartesian coordinates files for cellulose crystalline d
 
 # Method II
 - `monolayer::String`: The type of. It could be `center`, `origin`, or `monolayer`.
-- `units::Int64`: The number of cellulose units in the monolayer.
-- `ncellobiose::Int64`: The number of cellobiose units along the cellulose unit.
+- `nchains::Int64`: The number of cellulose units in the monolayer.
+- `monomers::Int64`: The number of cellobiose units along the cellulose unit.
 
 # Method III
 - `type::String`: The type of cellulose to be built. It could be `crystalline` or `fibril`.
-- `ncellobiose::Int64`: The number of cellobiose units along the cellulose unit.
+- `monomers::Int64`: The number of cellobiose units along the cellulose unit.
 
 # Default arguments
 - `phase`: The cellulose phase to be built. The default is `I-BETA`, but it could be.
@@ -130,13 +130,13 @@ function cellulosebuilder(a::Int64, b::Int64, c::Int64; phase="Iβ", pbc=nothing
 end
 
 
-function cellulosebuilder(monolayer::String, units::Int64, ncellobiose::Int64; phase="Iβ", pbc=nothing, covalent=true, vmd="vmd", topology_file=DEFAULT_CARB_TOPOLOGY_FILE)
+function cellulosebuilder(monolayer::String, nchains::Int64, monomers::Int64; phase="Iβ", pbc=nothing, covalent=true, vmd="vmd", topology_file=DEFAULT_CARB_TOPOLOGY_FILE)
 
     if monolayer != "monolayer" && monolayer != "center" && monolayer != "origin"
         error("The monolayer type must be `monolayer`, `center`, or `origin`.")
     end
-    if units < 1 || ncellobiose < 1
-        error("The number of units and cellobiose must be greater than 1.")
+    if nchains < 1 || 2*monomers < 1
+        error("The number of chains and cellobiose must be greater or equal than 1.")
     end
     if !isnothing(pbc)
         pbc=nothing
@@ -148,7 +148,7 @@ function cellulosebuilder(monolayer::String, units::Int64, ncellobiose::Int64; p
     if covalent; println("COVALENT TURNNED ON -- CONSIDERING THE PERIODIC COVALENT BONDING ACROSS THE BOX BORDERS..."); end
     println("")
     println("")
-    xyzsize, lattice = gettingPBC(monolayer, units, ncellobiose, phase)
+    xyzsize, lattice = gettingPBC(monolayer, nchains, 2*monomers, phase)
     xsize, ysize, zsize = xyzsize[1], xyzsize[2], xyzsize[3]
 
     ## DEALING W/ UNIT CELLS -----------------------------------------------------------------
@@ -200,9 +200,9 @@ function cellulosebuilder(monolayer::String, units::Int64, ncellobiose::Int64; p
     end
     println("       + using the CHARMM topology file to build the final PDB/PSF with the fragments")
     if phase == "Iβ" || phase == "Ib" || phase == "II"
-        monomers = 2*xyzsize[3]
-    else monomers = xyzsize[3] end
-    vmdoutput3 = _exporting_PDBfile(monomers, tmpfragments, phase=phase, covalent=covalent, vmd=vmd, topology_file=topology_file)
+        n_monomers = 2*xyzsize[3]
+    else n_monomers = xyzsize[3] end
+    vmdoutput3 = _exporting_PDBfile(n_monomers, tmpfragments, phase=phase, covalent=covalent, vmd=vmd, topology_file=topology_file)
     
     cleaning_tmpfiles("cellulose")
     println("")
