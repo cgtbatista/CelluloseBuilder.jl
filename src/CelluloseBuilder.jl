@@ -7,7 +7,7 @@ export _exporting_XYZfile, _exporting_PDBfile, transformingPBC, _XYZfragments_2_
 export _cellulose_topfile
 
 # Write your package code here.
-const DEFAULT_CARB_TOPOLOGY_FILE = "$(@__DIR__)/toppar/cellulose.rtf"
+##const DEFAULT_CARB_TOPOLOGY_FILE = "$(@__DIR__)/toppar/cellulose.rtf"
 
 # future input format
 struct CelluloseBuilderInput end
