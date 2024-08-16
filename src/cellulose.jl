@@ -129,8 +129,6 @@ function cellulosebuilder(a::Int64, b::Int64, c::Int64; phase="Iβ", pbc=nothing
 
 end
 
-###################################################
-
 function cellulosebuilder(monolayer::String, nchains::Int64, monomers::Int64; phase="Iβ", pbc=nothing, covalent=true, vmd="vmd", topology_file=DEFAULT_CARB_TOPOLOGY_FILE)
 
     ncellobiose = Int64(monomers/2)
@@ -214,15 +212,12 @@ function cellulosebuilder(monolayer::String, nchains::Int64, monomers::Int64; ph
 
 end
 
-
-###################################################
-
 function cellulosebuilder(monomers::Int64; phase="Iβ", fibril=nothing, pbc=nothing, covalent=true, vmd="vmd", topology_file=DEFAULT_CARB_TOPOLOGY_FILE)
 
     ncellobiose = Int64(monomers/2)
 
     if ncellobiose < 1 || ncellobiose%2 == 1
-        error("The number of cellobiose units must be greater or equal than 1, while the number of monomers must be an even number.")
+        error("The number of cellobiose units must be equal or greater than 1, while the number of monomers must be an even number.")
     end
     if !isnothing(pbc)
         pbc=nothing

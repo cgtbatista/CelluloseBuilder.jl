@@ -72,13 +72,37 @@ end
 
 function _PBC_conditional_fibril(xyz::String; xyzfile="filename.xyz", vmd="vmd", phase="Iβ", fibril=nothing)
 
-    if isnothing(fibril)
-        if phase == "Iβ" || phase == "Ib"
+    if phase == "Iβ" || phase == "Ib"
+        if isnothing(fibril)
             remainder = split("18 27 36 10 19 28 37 11 20 29 38 47 3 12 21 30 39 48 4 13 22 31 40 49 5 14 23 32 41 15 24 33 42 16 25 34", " ")
-        elseif phase == "II"
+        elseif fibril == "234432"
+            remainder = split("19 28 20 29 38 12 21 30 39 13 22 31 40 14 23 32 24 33", " ")
+        elseif fibril == "333333"
+            remainder = split("20 29 38 12 21 30 22 31 40 14 23 32 24 33 42 16 25 34", " ")
+        elseif fibril == "12333321"
+            remainder = split("18 10 19 11 20 29 12 21 30 22 31 40 23 32 41 33 42 34", " ")
+        elseif fibril == "33333333"
+            remainder = split("18 27 36 10 19 28 20 29 38 12 21 30 22 31 40 14 23 32 24 33 42 16 25 34", " ")
+        elseif fibril == "23454321"
+            remainder = split("27 36 19 28 37 20 29 38 47 12 21 30 39 48 22 31 40 49 23 32 41 33 42 34", " ")
+        end
+    elseif phase == "II"
+        if isnothing(fibril)
             remainder = split("3 4 5 6 7 8 9 14 15 16 17 18 19 20 21 22 23 24 26 27 28 29 30 31 32 33 34 35 36 41 42 43 44 45 46 47", " ")
-        elseif phase == "Iα" || phase == "Ia"
+        end
+    elseif phase == "Iα" || phase == "Ia"
+        if isnothing(fibril)
             remainder = split("2 3 4 5 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 36 37 38 39", " ")
+        elseif fibril == "234432"
+            remainder = split("13 14 15 16 18 19 20 21 22 24 25 26 27 28 30 31 32 33", " ")
+        elseif fibril == "333333"
+            remainder = split("14 15 19 20 21 22 24 25 26 27 28 29 31 32 33 34 38 39", " ")
+        elseif fibril == "12333321"
+            remainder = split("7 8 9 13 14 15 19 20 21 25 26 27 31 32 33 37 38 39", " ")
+        elseif fibril == "33333333"
+            remainder = split("2 7 8 9 12 13 14 15 16 18 19 20 21 22 23 25 26 27 28 29 32 33 34 39", " ")
+        elseif fibril == "23454321"
+            remainder = split("12 13 14 15 16 18 19 20 21 22 24 25 26 27 28 30 31 32 33 34 36 37 38 39", " ")
         end
     end
 

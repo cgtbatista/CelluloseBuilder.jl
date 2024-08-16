@@ -4,7 +4,7 @@ export cellulosebuilder
 
 export gettingBasisVectors, gettingPBC, unitcell2cartesian, atomsvecString, _XY_trimming_coords, _Z_propagation_coords
 export _exporting_XYZfile, _exporting_PDBfile, transformingPBC, _XYZfragments_2_PDB, _cleaning_PDBfragment
-export DEFAULT_CARB_TOPOLOGY_FILE
+export _cellulose_topfile
 
 # Write your package code here.
 const DEFAULT_CARB_TOPOLOGY_FILE = "$(@__DIR__)/toppar/cellulose.rtf"
@@ -32,6 +32,10 @@ include("./picking_fragments.jl")
 ## cleaning the temporary files
 include("./cleaning_tmpfiles.jl")
 
+## CHARMM topology
 include("./topology_file.jl")
+
+## getting the surface
+include("./surface.jl")
 
 end
