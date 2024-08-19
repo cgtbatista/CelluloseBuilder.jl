@@ -10,7 +10,15 @@ export _cellulose_topfile
 ##const DEFAULT_CARB_TOPOLOGY_FILE = "$(@__DIR__)/toppar/cellulose.rtf"
 
 # future input format
-struct CelluloseBuilderInput end
+struct CelluloseBuilderInput
+    phase::String
+    pbc
+    covalent::Bool
+    topologyfile::String
+    atomnames::Vector{String}
+    asym_coords::Vector{Vector{Float64}}
+    uc_parameters::Vector{Vector{Float64}}
+end
 export CelluloseBuilderInput
 
 # main cellulose builder function
