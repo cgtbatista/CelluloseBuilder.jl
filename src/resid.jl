@@ -13,7 +13,7 @@ function get_residuePDB(residue::String; pdbname=nothing)
         pdbname = tempname() * ".pdb"
     end
 
-    pdb = Base.open(filename, "w")
+    pdb = Base.open(pdbname, "w")
 
     Base.write(pdb, "CRYST1    0.000    0.000    0.000  90.00  90.00  90.00 P 1           1\n")
 
@@ -46,8 +46,197 @@ function get_residuePDB(residue::String; pdbname=nothing)
 
 end
 
-function get_petncellulose()
-    return nothing
+function patching(chain_pdbname::String, resid::Vector{Int64}, chainname::String, segid::String; decoration="PETN", filename=nothing, vmd="vmd", topology=DEFAULT_CARB_TOPOLOGY_FILE)
+
+    if isnothing(filename)
+        filename = tempname()
+        psfname = filename * ".psf"
+        pdbname = filename * ".pdb"
+    end
+
+    tcl = tempname() * ".tcl"
+
+    vmdinput = Base.open(tcl, "w")
+
+    Base.write(vmdinput, "package require psfgen\n")
+    
+    if typeof(topology) == Vector{String}
+        for top in topology
+            Base.write(vmdinput, "topology $top\n")
+        end
+    else
+        Base.write(vmdinput, "topology $topology\n")
+    end
+    
+    Base.write(vmdinput, "\n")
+    Base.write(vmdinput, "readpsf $(split(chain_pdbname, ".")[1] * ".psf")\n")
+    Base.write(vmdinput, "coordpdb $chain_pdbname\n\n")
+
+    pdbnames = []
+    for i in resid
+        new_patch = matching_residue(chain_pdbname, i, chainname, segid, decoration=decoration)
+        pdbnames = append!(pdbnames, new_patch)
+
+        Base.write(vmdinput, "segment $segid { pdb $new_patch }\n")
+        Base.write(vmdinput, "patch PCEL $segid:$i T:$i\n")
+        Base.write(vmdinput, "\n")
+    end
+
+    Base.write(vmdinput, "regenerate angles dihedrals\n")
+
+    for pdb in pdbnames
+        Base.write(vmdinput, "coordpdb $pdb $segid\n")
+    end
+
+    Base.write(vmdinput, "\n")
+    Base.write(vmdinput, "guesscoord\n\n")
+    Base.write(vmdinput, "writepsf $psfname\n")
+    Base.write(vmdinput, "writepdb $pdbname\n")
+    Base.write(vmdinput, "exit\n")
+
+    Base.close(vmdinput)
+    vmdoutput = Base.split(Base.read(`$vmd -dispdev text -e $(tcl)`, String), "\n")
+
+
+    return vmdoutput
 end
 
+function matching_residue(chain_pdbname::String, resid::Int64, chainname::String, segid::String; decoration="PETN", pdbname=nothing, new_pdbname=nothing)
+  
+    res_pdbname = isnothing(pdbname) ? get_residuePDB(decoration) : pdbname
+    res = PDBTools.readPDB(res_pdbname)  
+
+    idxs, ref0_coord, ref1_coord, ini0_coord, ini1_coord = decoration_library(chain_pdbname, res_pdbname, decoration, resid=resid, segid=segid)
+
+    # Rotating the residue coordinates following the β-Glc residue orientation...
+    println("checking 1")
+    v_residue = ini1_coord - ini0_coord
+    v_target = ref0_coord - ref1_coord
+    rotated_coords = rotate_residue(
+            PDBTools.coor.(res),
+            ref1_coord,
+            R_matrix(v_target, v_residue)
+        )
+    # Translating the residue coordinates to the specify position...
+    v_trans = ref0_coord - rotated_coords[idxs[3]][1]
+    translated_coords = translate_residue(
+            rotated_coords, v_trans
+        )
+
+    for at in eachindex(translated_coords)
+        res[at].x = translated_coords[at][1]
+        res[at].y = translated_coords[at][2]
+        res[at].z = translated_coords[at][3]
+        res[at].chain = chainname
+        res[at].resnum = resid
+        res[at].segname = "T"
+    end
+
+    new_pdbname = isnothing(new_pdbname) ? tempname() * ".pdb" : new_pdbname
+    PDBTools.writePDB(res, new_pdbname)
+
+    return new_pdbname
+
+end
+
+"""
+    decoration_library(chain_pdbname, decoration_pdbname, decoration::String)
+
+    This function is a library of decorations that can be added to the cellulose chain. The decorations are: PETN...
+"""
+function decoration_library(chain_pdbname, decoration_pdbname, decoration::String; resid=1, segid=nothing)
+
+    main_chain = PDBTools.readPDB(chain_pdbname)
+    side_resid = PDBTools.readPDB(decoration_pdbname)
+
+    segid = isnothing(segid) ? main_chain[1].segname : segid
+
+    if decoration == "PETN"
+        idx1 = PDBTools.index.(
+                PDBTools.select(main_chain, by = (atom -> atom.name == "O6" && atom.resnum == resid && atom.segname == segid))
+            )
+
+        idx2 = PDBTools.index.(
+                PDBTools.select(main_chain, by = (atom -> atom.name == "HO6" && atom.resnum == resid && atom.segname == segid))
+            )
+
+        idx3 = PDBTools.index.(
+                PDBTools.select(side_resid, by = (atom -> atom.name == "P"))
+            )
+        
+        idx4 = PDBTools.index.(
+                PDBTools.select(side_resid, by = (atom -> atom.name == "O1"))
+            )
+    end
+
+    coord1 = PDBTools.coor.(main_chain)[idx1][1]
+    coord2 = PDBTools.coor.(main_chain)[idx2][1]
+    coord3 = PDBTools.coor.(side_resid)[idx3][1]
+    coord4 = PDBTools.coor.(side_resid)[idx4][1]
+
+    return [idx1, idx2, idx3, idx4], coord1, coord2, coord3, coord4
+
+end
+
+"""
+    R_matrix(v1, v2)
+
+    Picks two vectors and gives the rotation matrix `R` needed to rotate the vector v2 on v1 (the mirror vector).
+    If the ```||v_cross|| ≈ 0```, we do not need to rotate the residue. Otherwise, we will pick a generalize rotation matrix `R`.
+"""
+function R_matrix(v1, v2)
+
+    # Normalizing the vectors
+    v1 /= norm(v1)
+    v2 /= norm(v2)
+
+    # cross rotation vector
+    crossvector = cross(v1, v2)
+    θ = acos(
+            clamp(dot(v1, v2), -1.0, 1.0)
+        ) # just to ensure the angle domain
+
+
+    # checking with there is need in computation of the cross matrix
+    if norm(crossvector) ≈ 0
+        return I(3) # return the identity
+    else
+        crossvector /= norm(crossvector)
+    end
+
+    # cross matrix
+    CrossMatrix = [ 0 -crossvector[3] crossvector[2]; crossvector[3] 0 -crossvector[1]; -crossvector[2] crossvector[1] 0 ]
+    R = I(3) + sin(θ) * CrossMatrix + (1-cos(θ)) * (CrossMatrix * CrossMatrix)
+
+    return R
+
+end
+
+"""
+    translate_residue(coords, translation_vector)
+
+    Translate the residue coordinates by a given directional vector.
+"""
+function translate_residue(coords, translation_vector)
+
+    for xyz in eachindex(coords)
+        coords[xyz] += translation_vector
+    end
+
+    return coords
+end
+
+"""
+    rotate_residue(coords, reference, rotation_matrix)
+
+    Rotate the residue coordinates by a given rotation matrix. The `ref_center` is a reference point that we will lock while rotating the other atoms.
+"""
+function rotate_residue(coords, ref_center, rotation_matrix)
+
+    for xyz in eachindex(coords)
+        coords[xyz] = ref_center + rotation_matrix * (coords[xyz] - ref_center)
+    end
+
+    return coords
+end
 
