@@ -75,17 +75,22 @@ function patching(chain_pdbname::String, resid::Vector{Int64}, chainname::String
     pdbnames = []
     for i in resid
         new_patch = matching_residue(chain_pdbname, i, chainname, segid, decoration=decoration)
-        pdbnames = append!(pdbnames, new_patch)
+        pdbnames = push!(pdbnames, new_patch)
 
         Base.write(vmdinput, "segment $segid { pdb $new_patch }\n")
-        Base.write(vmdinput, "patch PCEL $segid:$i T:$i\n")
+        Base.write(vmdinput, "patch PCEL $segid:$i TMP:$i\n")
         Base.write(vmdinput, "\n")
     end
 
     Base.write(vmdinput, "regenerate angles dihedrals\n")
 
+    max_resnum = maximum(PDBTools.resnum.(PDBTools.readPDB(chain_pdbname)))
+
     for pdb in pdbnames
-        Base.write(vmdinput, "coordpdb $pdb $segid\n")
+        max_resnum += 1
+
+        newpdb = updating_resid(pdb, max_resnum)
+        Base.write(vmdinput, "coordpdb $newpdb $segid\n")
     end
 
     Base.write(vmdinput, "\n")
@@ -109,7 +114,6 @@ function matching_residue(chain_pdbname::String, resid::Int64, chainname::String
     idxs, ref0_coord, ref1_coord, ini0_coord, ini1_coord = decoration_library(chain_pdbname, res_pdbname, decoration, resid=resid, segid=segid)
 
     # Rotating the residue coordinates following the β-Glc residue orientation...
-    println("checking 1")
     v_residue = ini1_coord - ini0_coord
     v_target = ref0_coord - ref1_coord
     rotated_coords = rotate_residue(
@@ -129,11 +133,26 @@ function matching_residue(chain_pdbname::String, resid::Int64, chainname::String
         res[at].z = translated_coords[at][3]
         res[at].chain = chainname
         res[at].resnum = resid
-        res[at].segname = "T"
+        res[at].segname = "TMP"
     end
 
     new_pdbname = isnothing(new_pdbname) ? tempname() * ".pdb" : new_pdbname
     PDBTools.writePDB(res, new_pdbname)
+
+    return new_pdbname
+
+end
+
+function updating_resid(pdbname::String, resid::Int64;new_pdbname=nothing)
+  
+    pdb = PDBTools.readPDB(pdbname)  
+
+    for at in pdb
+        at.resnum = resid
+    end
+
+    new_pdbname = isnothing(new_pdbname) ? tempname() * ".pdb" : new_pdbname
+    PDBTools.writePDB(pdb, new_pdbname)
 
     return new_pdbname
 
