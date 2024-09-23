@@ -46,7 +46,11 @@ function get_residuePDB(residue::String; pdbname=nothing)
 
 end
 
-function patching(chain_pdbname::String, resid::Vector{Int64}, chainname::String, segid::String; decoration="PETN", filename=nothing, vmd="vmd", topology=DEFAULT_CARB_TOPOLOGY_FILE)
+function patching(
+    chain_pdbname::String, resid::Vector{Int64}, chain_name::String, segid::String;
+    decoration="PETN", new_segid=nothing, new_resid=nothing, new_chain_name=nothing,
+    filename=nothing, patches_pdbname=nothing,
+    vmd="vmd", topology=DEFAULT_CARB_TOPOLOGY_FILE)
 
     if isnothing(filename)
         filename = tempname()
@@ -58,8 +62,7 @@ function patching(chain_pdbname::String, resid::Vector{Int64}, chainname::String
 
     vmdinput = Base.open(tcl, "w")
 
-    Base.write(vmdinput, "package require psfgen\n")
-    
+    Base.write(vmdinput, "package require psfgen\n") 
     if typeof(topology) == Vector{String}
         for top in topology
             Base.write(vmdinput, "topology $top\n")
@@ -67,46 +70,90 @@ function patching(chain_pdbname::String, resid::Vector{Int64}, chainname::String
     else
         Base.write(vmdinput, "topology $topology\n")
     end
-    
     Base.write(vmdinput, "\n")
-    Base.write(vmdinput, "readpsf $(split(chain_pdbname, ".")[1] * ".psf")\n")
+
+    Base.write(vmdinput, "readpsf $(replace(chain_pdbname, ".pdb" => ".psf"))\n")
     Base.write(vmdinput, "coordpdb $chain_pdbname\n\n")
 
-    pdbnames = []
+    patchings = Vector{Int64}[]; pdb_decorations = String[]
+    ith_patch = maximum(PDBTools.resnum.(pdb))
     for i in resid
-        new_patch = matching_residue(chain_pdbname, i, chainname, segid, decoration=decoration)
-        pdbnames = push!(pdbnames, new_patch)
-
-        Base.write(vmdinput, "segment $segid { pdb $new_patch }\n")
-        Base.write(vmdinput, "patch PCEL $segid:$i TMP:$i\n")
-        Base.write(vmdinput, "\n")
+        ith_patch += ith_patch
+        new_patch = matching_residue(chain_pdbname, i, chain_name, segid, decoration=decoration, new_resid=ith_patch, new_chain_name=new_chain_name, new_segid=new_segid)
+        push!(patchings, [i, ith_patch])
+        push!(pdb_decorations, new_patch)
     end
 
-    Base.write(vmdinput, "regenerate angles dihedrals\n")
+    patches_pdb = combinePDBs(pdb_decorations, new_pdbfile=patches_pdbname)
 
-    max_resnum = maximum(PDBTools.resnum.(PDBTools.readPDB(chain_pdbname)))
+    Base.write(vmdinput, "segment $new_segid { pdb $patches_pdb }\n")
 
-    for pdb in pdbnames
-        max_resnum += 1
-
-        newpdb = updating_resid(pdb, max_resnum)
-        Base.write(vmdinput, "coordpdb $newpdb $segid\n")
+    for patch in patchings
+        Base.write(vmdinput, "patch PCEL $segid:$(patch[1]) $new_segid:$(patch[2])\n")
     end
-
     Base.write(vmdinput, "\n")
+
+    Base.write(vmdinput, "regenerate angles dihedrals\n")  
+    Base.write(vmdinput, "coordpdb $patches_pdb $new_segid\n")
     Base.write(vmdinput, "guesscoord\n\n")
     Base.write(vmdinput, "writepsf $psfname\n")
-    Base.write(vmdinput, "writepdb $pdbname\n")
+    Base.write(vmdinput, "writepdb $pdbname\n\n")
+
+    Base.write(vmdinput, "mol new     $psfname\n")
+    Base.write(vmdinput, "mol addfile $pdbname\n\n")
+    Base.write(vmdinput, "set sel [atomselect top \"all\"]\n")
+    Base.write(vmdinput, "\$sel set segid \"$segid\"\n\n")
+    Base.write(vmdinput, "\$sel writepsf $psfname\n\n")
+    Base.write(vmdinput, "\$sel writepdb $pdbname\n\n")
     Base.write(vmdinput, "exit\n")
 
     Base.close(vmdinput)
+
     vmdoutput = Base.split(Base.read(`$vmd -dispdev text -e $(tcl)`, String), "\n")
 
-
     return vmdoutput
+
 end
 
-function matching_residue(chain_pdbname::String, resid::Int64, chainname::String, segid::String; decoration="PETN", pdbname=nothing, new_pdbname=nothing)
+function combinePDBs(pdbfiles::Vector{String}; new_pdbfile=nothing)
+
+    new_pdbfile = isnothing(new_pdbfile) ? tempname() * ".pdb" : new_pdbfile
+    pdb = Base.open(new_pdbfile, "w")
+
+    Base.write(pdb, "REMARK  1 PDBCOMBINE\n")
+
+    atom_index = 1
+
+    for pdbfile in pdbfiles
+
+        tmpPDB = PDBTools.readPDB(pdbfile)
+        for i in eachindex(tmpPDB)
+            tmpPDB[i].index = atom_index
+            tmpPDB[i].index_pdb = atom_index
+            atom_index += 1
+        end
+
+        PDBTools.writePDB(tmpPDB, pdbfile)
+
+        lines = readlines(pdbfile)
+        content = lines[2:end-1]
+        for line in content
+            Base.write(pdb, "$line\n")
+        end
+
+    end
+
+    Base.write(pdb, "END\n")
+    Base.close(pdb)
+
+    return new_pdbfile
+    
+end
+
+function matching_residue(chain_pdbname::String, resid::Int64, chain_name::String, segid::String; decoration="PETN",
+        new_resid=nothing, new_chain_name=nothing, new_segid=nothing,
+        pdbname=nothing, new_pdbname=nothing
+    )
   
     res_pdbname = isnothing(pdbname) ? get_residuePDB(decoration) : pdbname
     res = PDBTools.readPDB(res_pdbname)  
@@ -122,7 +169,7 @@ function matching_residue(chain_pdbname::String, resid::Int64, chainname::String
             R_matrix(v_target, v_residue)
         )
     # Translating the residue coordinates to the specify position...
-    v_trans = ref0_coord - rotated_coords[idxs[3]][1]
+    v_trans = ref0_coord - rotated_coords[idxs[3]]
     translated_coords = translate_residue(
             rotated_coords, v_trans
         )
@@ -131,19 +178,24 @@ function matching_residue(chain_pdbname::String, resid::Int64, chainname::String
         res[at].x = translated_coords[at][1]
         res[at].y = translated_coords[at][2]
         res[at].z = translated_coords[at][3]
-        res[at].chain = chainname
-        res[at].resnum = resid
-        res[at].segname = "TMP"
+        res[at].chain = ifelse(isnothing(new_chain_name), chain_name, new_chain_name)
+        res[at].resnum = ifelse(isnothing(new_resid), resid, new_resid)
     end
 
     new_pdbname = isnothing(new_pdbname) ? tempname() * ".pdb" : new_pdbname
     PDBTools.writePDB(res, new_pdbname)
 
+    vmdoutput = updating_segid(
+            new_pdbname,
+            ifelse(isnothing(new_segid), segid, new_segid),
+            new_pdbname=new_pdbname
+        ) ## não sei o porquê, mas não consigo salvar o nome do segmento no PDBTools: `res[at].segname = ifelse(isnothing(new_segid), segid, new_segid)`
+
     return new_pdbname
 
 end
 
-function updating_resid(pdbname::String, resid::Int64;new_pdbname=nothing)
+function updating_resid(pdbname::String, resid::Int64; new_pdbname=nothing)
   
     pdb = PDBTools.readPDB(pdbname)  
 
@@ -155,6 +207,31 @@ function updating_resid(pdbname::String, resid::Int64;new_pdbname=nothing)
     PDBTools.writePDB(pdb, new_pdbname)
 
     return new_pdbname
+
+end
+
+function updating_segid(pdbname::String, segid::String; new_pdbname=nothing, vmd="vmd")
+  
+    if isnothing(new_pdbname)
+        new_pdbname = tempname() * ".pdb"
+    end
+
+    tcl = tempname() * ".tcl"
+
+    vmdinput = Base.open(tcl, "w")
+
+    Base.write(vmdinput, "mol new $pdbname\n")
+    Base.write(vmdinput, "set sel [atomselect top \"all\"]\n")
+    Base.write(vmdinput, "\$sel set segid \"$segid\"\n")
+    Base.write(vmdinput, "\n")
+    Base.write(vmdinput, "\$sel writepdb $new_pdbname\n")
+    Base.write(vmdinput, "exit\n")
+
+    Base.close(vmdinput)
+
+    vmdoutput = Base.split(Base.read(`$vmd -dispdev text -e $(tcl)`, String), "\n")
+
+    return vmdoutput
 
 end
 
@@ -173,25 +250,27 @@ function decoration_library(chain_pdbname, decoration_pdbname, decoration::Strin
     if decoration == "PETN"
         idx1 = PDBTools.index.(
                 PDBTools.select(main_chain, by = (atom -> atom.name == "O6" && atom.resnum == resid && atom.segname == segid))
-            )
+            )[1]
 
         idx2 = PDBTools.index.(
                 PDBTools.select(main_chain, by = (atom -> atom.name == "HO6" && atom.resnum == resid && atom.segname == segid))
-            )
+            )[1]
 
         idx3 = PDBTools.index.(
                 PDBTools.select(side_resid, by = (atom -> atom.name == "P"))
-            )
+            )[1]
         
         idx4 = PDBTools.index.(
                 PDBTools.select(side_resid, by = (atom -> atom.name == "O1"))
-            )
+            )[1]
     end
 
-    coord1 = PDBTools.coor.(main_chain)[idx1][1]
-    coord2 = PDBTools.coor.(main_chain)[idx2][1]
-    coord3 = PDBTools.coor.(side_resid)[idx3][1]
-    coord4 = PDBTools.coor.(side_resid)[idx4][1]
+    ## main
+    coord1 = PDBTools.coor.(main_chain)[idx1]
+    coord2 = PDBTools.coor.(main_chain)[idx2]
+    ## decoration
+    coord3 = PDBTools.coor.(side_resid)[idx3]
+    coord4 = PDBTools.coor.(side_resid)[idx4]
 
     return [idx1, idx2, idx3, idx4], coord1, coord2, coord3, coord4
 
