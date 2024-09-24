@@ -5,6 +5,7 @@ export cellulosebuilder
 export gettingBasisVectors, gettingPBC, unitcell2cartesian, atomsvecString, _XY_trimming_coords, _Z_propagation_coords
 export _exporting_XYZfile, _exporting_PDBfile, transformingPBC, _XYZfragments_2_PDB, _cleaning_PDBfragment
 export _cellulose_topfile
+export updating_segid
 
 # Write your package code here.
 ##const DEFAULT_CARB_TOPOLOGY_FILE = "$(@__DIR__)/toppar/cellulose.rtf"
@@ -45,5 +46,7 @@ include("./topology_file.jl")
 
 ## getting the surface
 include("./surface.jl")
+
+include("./resid.jl")
 
 end
