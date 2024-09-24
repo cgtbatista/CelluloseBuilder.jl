@@ -235,6 +235,30 @@ function updating_segid(pdbname::String, segid::String; new_pdbname=nothing, vmd
 
 end
 
+function honeycomb_assembly(center::Vector{Float64}, r::Float64; space=12.)
+
+    centers = Float64[]
+
+    # Coordenadas da fibrila central
+    x0, y0, z0 = center[1], center[2], center[3]
+
+    # Lista para armazenar os centros das 7 fibrilas
+    centers = []
+
+    adj_space = space + 2 * r
+    
+    push!(centers, [x0, y0, z0])
+    push!(centers, [x0 - adj_space, y0, z0])
+    push!(centers, [x0 + adj_space, y0, z0])
+    push!(centers, [x0 - adj_space/2, y0 + adj_space * √3/2, z0])
+    push!(centers, [x0 + adj_space/2, y0 + adj_space * √3/2, z0])
+    push!(centers, [x0 - adj_space/2, y0 - adj_space * √3/2, z0])
+    push!(centers, [x0 + adj_space/2, y0 - adj_space * √3/2, z0])
+
+    return centers
+
+end
+
 function updating_segid(psfname::String, pdbname::String, segid::String; new_name=nothing, vmd="vmd")
   
     if isnothing(new_name)
