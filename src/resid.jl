@@ -235,6 +235,37 @@ function updating_segid(pdbname::String, segid::String; new_pdbname=nothing, vmd
 
 end
 
+function updating_segid(psfname::String, pdbname::String, segid::String; new_name=nothing, vmd="vmd")
+  
+    if isnothing(new_name)
+        new_psfname = tempname() * ".psf"
+        new_pdbname = tempname() * ".pdb"
+    else
+        new_psfname = new_name * ".psf"
+        new_pdbname = new_name * ".pdb"
+    end
+
+    tcl = tempname() * ".tcl"
+
+    vmdinput = Base.open(tcl, "w")
+
+    Base.write(vmdinput, "mol new $psfname\n")
+    Base.write(vmdinput, "mol addfile $pdbname\n")
+    Base.write(vmdinput, "set sel [atomselect top \"all\"]\n")
+    Base.write(vmdinput, "\$sel set segid \"$segid\"\n")
+    Base.write(vmdinput, "\n")
+    Base.write(vmdinput, "\$sel writepsf $new_psfname\n")
+    Base.write(vmdinput, "\$sel writepdb $new_pdbname\n")
+    Base.write(vmdinput, "exit\n")
+
+    Base.close(vmdinput)
+
+    vmdoutput = Base.split(Base.read(`$vmd -dispdev text -e $(tcl)`, String), "\n")
+
+    return vmdoutput
+
+end
+
 """
     decoration_library(chain_pdbname, decoration_pdbname, decoration::String)
 
