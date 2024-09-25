@@ -37,7 +37,7 @@ julia >
 
 """
 
-function cellulosebuilder(a::Int64, b::Int64, c::Int64; phase="Iβ", pbc=nothing, covalent=true, vmd="vmd", topology_file=_cellulose_topfile())
+function cellulosebuilder(a::Int64, b::Int64, c::Int64; phase="Iβ", pbc=nothing, covalent=true, vmd="vmd", topology_file=generate_cellulose_topology())
 
     if a <= 1 || b <= 1 || c < 1
         error("The dimensions of the unit cell must be greater than 1. Only c can be 1.")
@@ -129,7 +129,7 @@ function cellulosebuilder(a::Int64, b::Int64, c::Int64; phase="Iβ", pbc=nothing
 
 end
 
-function cellulosebuilder(monolayer::String, nchains::Int64, monomers::Int64; phase="Iβ", pbc=nothing, covalent=true, vmd="vmd", topology_file=_cellulose_topfile())
+function cellulosebuilder(monolayer::String, nchains::Int64, monomers::Int64; phase="Iβ", pbc=nothing, covalent=true, vmd="vmd", topology_file=generate_cellulose_topology())
 
     ncellobiose = Int64(monomers/2)
     if monolayer != "monolayer" && monolayer != "center" && monolayer != "origin"
@@ -212,7 +212,7 @@ function cellulosebuilder(monolayer::String, nchains::Int64, monomers::Int64; ph
 
 end
 
-function cellulosebuilder(monomers::Int64; phase="Iβ", fibril=nothing, pbc=nothing, covalent=true, vmd="vmd", topology_file=_cellulose_topfile())
+function cellulosebuilder(monomers::Int64; phase="Iβ", fibril=nothing, pbc=nothing, covalent=true, vmd="vmd", topology_file=generate_cellulose_topology())
 
     ncellobiose = Int64(monomers/2)
 

@@ -1,10 +1,21 @@
 module CelluloseBuilder
 
+import StaticArrays
+
+import PDBTools
+import MolSimToolkit
+import Packmol
+
+import LinearAlgebra: cross, norm, dot
+
+# using PDBTools, MolSimToolkit, StaticArrays, Packmol, LinearAlgebra, Test
+## exported .jl functions
+
 export cellulosebuilder
 
 export gettingBasisVectors, gettingPBC, unitcell2cartesian, atomsvecString, _XY_trimming_coords, _Z_propagation_coords
 export _exporting_XYZfile, _exporting_PDBfile, transformingPBC, _XYZfragments_2_PDB, _cleaning_PDBfragment
-export _cellulose_topfile
+export generate_cellulose_topology
 export updating_segid
 
 # Write your package code here.
@@ -41,12 +52,15 @@ include("./picking_fragments.jl")
 ## cleaning the temporary files
 include("./cleaning_tmpfiles.jl")
 
-## CHARMM topology
-include("./topology_file.jl")
+## Misc. tools to deal help the system building
+include("./tools-assembly.jl")
+include("./tools-maths.jl")
+include("./tools-patching.jl")
+include("./tools-pdb.jl")
+include("./tools-topology.jl")
 
 ## getting the surface
-include("./surface.jl")
-
-include("./resid.jl")
+include("./vdw-surface.jl")
+include("./residue-library.jl")
 
 end
