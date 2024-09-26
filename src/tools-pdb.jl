@@ -137,6 +137,34 @@ function updatingPDB(psfname::String, pdbname::String, new_value::String; vmd_co
 
     vmdoutput = Base.split(Base.read(`$vmd -dispdev text -e $(tcl)`, String), "\n")
 
-    return vmdoutput
+    return new_psfname, new_pdbname, vmdoutput
 
 end
+
+function updatingPDB(pdbname::String, new_value::String; vmd_column="segid", new_pdbname=nothing, vmd="vmd")
+  
+    new_pdbname = isnothing(new_pdbname) ? new_pdbname = tempname() * ".pdb" : new_pdbname
+
+    tcl = tempname() * ".tcl"
+
+    vmdinput = Base.open(tcl, "w")
+
+    Base.write(vmdinput, "mol new $pdbname\n")
+    Base.write(vmdinput, "set sel [atomselect top \"all\"]\n")
+    Base.write(vmdinput, "\$sel set $vmd_column \"$new_value\"\n")
+    Base.write(vmdinput, "\n")
+    Base.write(vmdinput, "\$sel writepdb $new_pdbname\n")
+    Base.write(vmdinput, "exit\n")
+
+    Base.close(vmdinput)
+
+    vmdoutput = Base.split(Base.read(`$vmd -dispdev text -e $(tcl)`, String), "\n")
+
+    return new_pdbname, vmdoutput
+
+end
+
+function dummy_chains()
+    return "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"
+end
+
