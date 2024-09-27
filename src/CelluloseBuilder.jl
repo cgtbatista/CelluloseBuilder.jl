@@ -6,6 +6,7 @@ import PDBTools
 import MolSimToolkit
 import Packmol
 
+import LsqFit
 import LinearAlgebra: cross, norm, dot
 
 # using PDBTools, MolSimToolkit, StaticArrays, Packmol, LinearAlgebra, Test

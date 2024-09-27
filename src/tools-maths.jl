@@ -111,3 +111,88 @@ function honeycomb_positions(center::Vector{Float64}, r::Float64, nlayers::Int64
 
     return points
 end
+
+
+"""
+
+    antoine_parameters(T::Float64, component::String)
+
+    Returns the vapor pressure based on Antoine equation for a given temperature `T` and component `component` (if you want to guess the parameters).
+    Commonly, the coefficients are based on a fitting using temperature is given on Celsius degree (°C).
+"""
+function p_antoine(T::Float64; component="water", guess=true, A=nothing, B=nothing, C=nothing)
+  
+    if !guess
+        if isnothing(A) || isnothing(B) || isnothing(C)
+            error("You need to provide all the Antoine parameters for the component.")
+        end
+    else
+        A, B, C = antoine_parameters(T, component)
+    end
+
+    x = A - B / (C + T)
+    return (10 ^ x) / 750.062
+end
+
+"""
+    
+        antoine_parameters(T::Float64, component::String)
+    
+        Returns the Antoine parameters for a given temperature `T` and component `component`.
+"""
+function antoine_parameters(T::Float64, component::String; initial_coefficients=[8.0, 1800.0, 240.0])
+
+    # Antoine equation: log10(P) = A - B / (C + T)
+    antoine_model(T, coefficients) = coefficients[1] .- coefficients[2] ./ (coefficients[3] .+ T)
+
+    # Dados de temperatura (em °C) e pressão (convertida para log10(P))
+    if component == "water" || component == "Water"
+        if 1. <= T <= 97.98
+            temperature = [
+                1.00, 8.46, 15.92, 23.38, 30.84, 38.30, 45.76, 53.22, 60.68, 68.14, 75.6, 83.06, 90.52, 97.98
+            ]
+            pressure = [
+                0.00651326, 0.0110022, 0.018010, 0.028652, 0.044401, 0.0671718, 0.099396, 0.144111, 0.20504,
+                0.286684, 0.394403, 0.534498, 0.714286, 0.942169
+            ] * 750.062
+        elseif 105.44 <= T <= 374.0
+            temperature = [
+                105.44, 112.90, 120.36, 127.82, 135.28, 142.74, 150.20, 157.66, 165.12, 172.58, 
+                180.04, 187.50, 194.96, 202.42, 209.88, 217.34, 224.80, 232.26, 239.72, 247.18, 
+                254.64, 262.10, 269.56, 277.02, 284.48, 291.94, 299.40, 306.86, 314.32, 321.78, 
+                329.24, 336.70, 344.16, 351.62, 359.08, 366.54, 374.00
+            ]
+            pressure = [
+                1.2299, 1.57724, 2.00219, 2.51746, 3.13699, 3.87597, 4.7509, 5.77952, 6.98083, 8.37506, 
+                9.98367, 11.8292, 13.9355, 16.3272, 19.0302, 22.0711, 25.4776, 29.2781, 33.5016, 38.178, 
+                43.3375, 49.011, 55.2296, 62.0249, 69.4288, 77.473, 86.1897, 95.6108, 105.768, 116.694, 
+                128.42, 140.977, 154.397, 168.709, 183.945, 200.133, 217.304
+            ] * 750.062
+        else
+            error("Temperature out of range.")
+        end
+    else
+        error("Component not found.")
+    end
+
+    # Convert pressures to log10(P)
+    log_pressure = log10.(pressure)
+
+    # Ajuste dos dados usando o modelo de Antoine
+    fit = LsqFit.curve_fit(antoine_model, temperature, log_pressure, initial_coefficients)
+
+    # Parâmetros ajustados
+    parameters = fit.param
+
+    return parameters[1], parameters[2], parameters[3]
+end
+
+function V_vapor(T::Float64, N::Int64; Z=1.)
+
+    p = p_antoine(T)
+
+    L = 6.02214076 * 10^(23)    ## 1/mol - Avogadro's constant
+    R = 0.0831451               ## bar × L / (K · mol) - gas constant
+
+    return Z * N * R * (T + 273.15) / (p * L)
+end
