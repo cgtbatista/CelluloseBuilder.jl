@@ -19,20 +19,22 @@ export _exporting_XYZfile, _exporting_PDBfile, transformingPBC, _XYZfragments_2_
 export generate_cellulose_topology
 export updating_segid
 
+export MacrofibrilAssembly
+
 # Write your package code here.
 ##const DEFAULT_CARB_TOPOLOGY_FILE = "$(@__DIR__)/toppar/cellulose.rtf"
 
-# future input format
-struct CelluloseBuilderInput
-    phase::String
-    pbc
-    covalent::Bool
-    topologyfile::String
-    atomnames::Vector{String}
-    asym_coords::Vector{Vector{Float64}}
-    uc_parameters::Vector{Vector{Float64}}
-end
-export CelluloseBuilderInput
+## future input format...
+## struct CelluloseBuilderInput
+##     phase::String
+##     pbc
+##     covalent::Bool
+##     topologyfile::String
+##     atomnames::Vector{String}
+##     asym_coords::Vector{Vector{Float64}}
+##     uc_parameters::Vector{Vector{Float64}}
+## end
+## export CelluloseBuilderInput
 
 # main cellulose builder function
 include("./cellulose.jl")
@@ -52,6 +54,8 @@ include("./picking_fragments.jl")
 
 ## cleaning the temporary files
 include("./cleaning_tmpfiles.jl")
+
+include("./getPDB.jl")
 
 ## Misc. tools to deal help the system building
 include("./tools-assembly.jl")

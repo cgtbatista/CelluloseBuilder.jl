@@ -154,7 +154,7 @@ function antoine_parameters(T::Float64, component::String; initial_coefficients=
             pressure = [
                 0.00651326, 0.0110022, 0.018010, 0.028652, 0.044401, 0.0671718, 0.099396, 0.144111, 0.20504,
                 0.286684, 0.394403, 0.534498, 0.714286, 0.942169
-            ] * 750.062
+            ] * 750.062 ## from bar to mmHg
         elseif 105.44 <= T <= 374.0
             temperature = [
                 105.44, 112.90, 120.36, 127.82, 135.28, 142.74, 150.20, 157.66, 165.12, 172.58, 
@@ -187,12 +187,38 @@ function antoine_parameters(T::Float64, component::String; initial_coefficients=
     return parameters[1], parameters[2], parameters[3]
 end
 
-function V_vapor(T::Float64, N::Int64; Z=1.)
+function V_vapor(T::Float64, N::Int64; Z=1.,
+        component="water", guess=true, A=nothing, B=nothing, C=nothing                  # p_antoine flags
+    )
 
-    p = p_antoine(T)
+    p = p_antoine(T, component=component, guess=guess, A=A, B=B, C=C)
 
-    L = 6.02214076 * 10^(23)    ## 1/mol - Avogadro's constant
-    R = 0.0831451               ## bar × L / (K · mol) - gas constant
+    N_Avogadro = 6.02214076 * 10^(23)    ## mol^(-1)
+    R = .0831451                         ## bar × L / (K · mol)
 
-    return Z * N * R * (T + 273.15) / (p * L)
+    n = Float64(N) / N_Avogadro
+
+    V = Z * n * R * (T + 273.15) / p
+
+    ## converting L -> Å³
+    return V * 10^(27)
+end
+
+function fibril_radii(pdbname::String, habit::String)
+    
+    pdb = PDBTools.readPDB(pdbname)
+
+    if habit == "234432"
+        atom1 = PDBTools.select(pdb, by = (atom ->
+                atom.segname == "M17" && atom.resnum == 1 && atom.name == "HO6")
+            )
+        atom2 = PDBTools.select(pdb, by = (atom ->
+                atom.segname == "M2" && atom.resnum == 1 && atom.name == "HO2")
+            )
+    else
+        throw(ArgumentError("There is no implementation to the $habit fibril..."))
+    end
+    
+    return 0.5 * norm(coor(atom1)-coor(atom2))
+
 end
