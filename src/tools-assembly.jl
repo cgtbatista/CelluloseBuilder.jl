@@ -24,7 +24,7 @@ function MacrofibrilAssembly(
     pkminput = Base.open(inp, "w")
 
     Base.write(pkminput, "## Packmol -- creating cellulose macrofibrils\n\n")
-    Base.write(pkminput, "tolerance 2.0\n")
+    Base.write(pkminput, "tolerance $tol\n")
     Base.write(pkminput, "filetype  pdb\n")
     Base.write(pkminput, "\n")
     Base.write(pkminput, "output    $outfile\n")
@@ -62,35 +62,41 @@ function MacrofibrilAssembly(
     return outfile, vmdoutput
 end
 
-function fibril_segid(psfname::String, pdbname::String, old_starting::String, new_starting::String; new_pdbname=nothing, vmd="vmd")
-  
-    new_pdbname = isnothing(new_pdbname) ? new_pdbname = tempname() * ".pdb" : new_pdbname
-    new_psfname = replace(new_pdbname, ".pdb" => ".psf")
+function SystemBoxSolvation(
+        solute_pdbname::String, solvent_pdbname::String, boxlength::Float64;
+        N=1, center=zeros(3), tol=2., seed=-1, outfile=nothing, vmd="vmd"
+    )
 
-    pdb_segnames = PDBTools.segname.(PDBTools.readPDB(pdbname))
-    new_segnames = replace.(pdb_segnames, old_starting => new_starting)
-
-    tcl = tempname() * ".tcl"
-
-    vmdinput = Base.open(tcl, "w")
-
-    Base.write(vmdinput, "mol new $psfname\n")
-    Base.write(vmdinput, "mol addfile $pdbname\n")
-    Base.write(vmdinput, "\n")
-    
-    for ith_segids in eachindex(new_segnames)
-        Base.write(vmdinput, "[atomselect top \"index $(ith_segids-1)\"] set segid \"$(new_segnames[ith_segids])\"\n")
+    if isnothing(outfile)
+        outfile = tempname() * ".pdb"
     end
+
+    inp = replace(outfile, ".pdb" => ".inp")
+    pkminput = Base.open(inp, "w")
+
+    Base.write(pkminput, "## Packmol -- creating cellulose macrofibrils\n\n")
+    Base.write(pkminput, "tolerance $tol\n")
+    Base.write(pkminput, "seed      $seed\n")
+    Base.write(pkminput, "filetype  pdb\n")
+    Base.write(pkminput, "\n")
+    Base.write(pkminput, "output    $outfile\n")
     
-    Base.write(vmdinput, "\n")
-    Base.write(vmdinput, "[atomselect top \"all\"] writepsf $new_psfname\n")
-    Base.write(vmdinput, "[atomselect top \"all\"] writepdb $new_pdbname\n")
-    Base.write(vmdinput, "exit\n")
+    Base.write(pkminput, "structure $solute_pdbname\n")
+    Base.write(pkminput, "  number 1\n")
+    Base.write(pkminput, "  center\n")
+    Base.write(pkminput, "  fixed $(center[1]) $(center[2]) $(center[3]) 0. 0. 0.\n")   ## solute
+    Base.write(pkminput, "end structure\n\n")
 
-    Base.close(vmdinput)
+    Base.write(pkminput, "structure $solvent_pdbname\n")
+    Base.write(pkminput, "  number $N\n")
+    lower_threshold = String("$(center[1] - .5 * boxlength) $(center[2] - .5 * boxlength) $(center[3] - .5 * boxlength)")
+    upper_threshold = String("$(center[1] + .5 * boxlength) $(center[1] + .5 * boxlength) $(center[1] + .5 * boxlength)")
+    Base.write(pkminput, "  inside box $lower_threshold, $upper_threshold\n")
+    Base.write(pkminput, "end structure\n\n")
 
-    vmdoutput = Base.split(Base.read(`$vmd -dispdev text -e $(tcl)`, String), "\n")
+    Base.close(pkminput)
 
-    return new_psfname, new_pdbname, vmdoutput
+    Packmol.run_packmol(inp)
 
+    return outfile
 end

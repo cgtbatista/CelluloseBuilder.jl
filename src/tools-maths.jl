@@ -187,7 +187,7 @@ function antoine_parameters(T::Float64, component::String; initial_coefficients=
     return parameters[1], parameters[2], parameters[3]
 end
 
-function V_vapor(T::Float64, N::Int64; Z=1.,
+function V_steam(T::Float64, N::Int64; Z=1.,
         component="water", guess=true, A=nothing, B=nothing, C=nothing                  # p_antoine flags
     )
 
@@ -204,21 +204,44 @@ function V_vapor(T::Float64, N::Int64; Z=1.,
     return V * 10^(27)
 end
 
-function fibril_radii(pdbname::String, habit::String)
+
+function N_box(V::Float64, density::Float64; MM_solvent = 18.015, solute=false, V_solute=10.)
+
+    N_avogadro = 6.02214076E+23
+    atomic_density = (density / MM_solvent) * 10^(-24) * N_avogadro ## n molecules /A³
+
+    if !solute
+        N = V * atomic_density
+    else
+        N = (V - V_solute) * atomic_density
+    end
+
+    return Int64(round(N))
+
+end
+
+function fibril_dimensions(pdbname::String, habit::String)
     
     pdb = PDBTools.readPDB(pdbname)
 
     if habit == "234432"
-        atom1 = PDBTools.select(pdb, by = (atom ->
+        atom1 = PDBTools.select(pdb, atom ->
                 atom.segname == "M17" && atom.resnum == 1 && atom.name == "HO6")
-            )
-        atom2 = PDBTools.select(pdb, by = (atom ->
+        atom2 = PDBTools.select(pdb, atom ->
                 atom.segname == "M2" && atom.resnum == 1 && atom.name == "HO2")
-            )
+        min_resid = minimum(PDBTools.resnum.(pdb))
+        max_resid = maximum(PDBTools.resnum.(pdb))
+        atom3 = PDBTools.select(pdb, atom ->
+                atom.segname == "M1" && atom.resnum == min_resid && atom.name == "HO4")
+        atom4 = PDBTools.select(pdb, atom ->
+            atom.segname == "M1" && atom.resnum == max_resid && atom.name == "HO1")
     else
         throw(ArgumentError("There is no implementation to the $habit fibril..."))
     end
     
-    return 0.5 * norm(coor(atom1)-coor(atom2))
+    r_fibril = 0.5 * norm(PDBTools.coor(atom1)-PDBTools.coor(atom2))
+    l_fibril = norm(PDBTools.coor(atom3)-PDBTools.coor(atom4))
+
+    return round(r_fibril, digits=1), round(l_fibril, digits=1)
 
 end

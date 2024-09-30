@@ -164,6 +164,39 @@ function updatingPDB(pdbname::String, new_value::String; vmd_column="segid", new
 
 end
 
+function fibril_segid(psfname::String, pdbname::String, old_starting::String, new_starting::String; new_pdbname=nothing, vmd="vmd")
+  
+    new_pdbname = isnothing(new_pdbname) ? new_pdbname = tempname() * ".pdb" : new_pdbname
+    new_psfname = replace(new_pdbname, ".pdb" => ".psf")
+
+    pdb_segnames = PDBTools.segname.(PDBTools.readPDB(pdbname))
+    new_segnames = replace.(pdb_segnames, old_starting => new_starting)
+
+    tcl = tempname() * ".tcl"
+
+    vmdinput = Base.open(tcl, "w")
+
+    Base.write(vmdinput, "mol new $psfname\n")
+    Base.write(vmdinput, "mol addfile $pdbname\n")
+    Base.write(vmdinput, "\n")
+    
+    for ith_segids in eachindex(new_segnames)
+        Base.write(vmdinput, "[atomselect top \"index $(ith_segids-1)\"] set segid \"$(new_segnames[ith_segids])\"\n")
+    end
+    
+    Base.write(vmdinput, "\n")
+    Base.write(vmdinput, "[atomselect top \"all\"] writepsf $new_psfname\n")
+    Base.write(vmdinput, "[atomselect top \"all\"] writepdb $new_pdbname\n")
+    Base.write(vmdinput, "exit\n")
+
+    Base.close(vmdinput)
+
+    vmdoutput = Base.split(Base.read(`$vmd -dispdev text -e $(tcl)`, String), "\n")
+
+    return new_psfname, new_pdbname, vmdoutput
+
+end
+
 function dummy_chains()
     return "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"
 end
