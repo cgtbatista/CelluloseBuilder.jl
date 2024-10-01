@@ -197,6 +197,99 @@ function fibril_segid(psfname::String, pdbname::String, old_starting::String, ne
 
 end
 
+
+"""
+"""
+function leftoverPDBs(pdbname::String; resname="TIP3", segname="WAT")
+    
+    pdbfiles = []
+    
+    if typeof(resname) != Vector{String}
+        resname = [resname]
+    end
+
+    if !isnothing(segname) && (typeof(segname) != Vector{String})
+        segname = [segname]
+    end
+
+    if !isnothing(segname) && (length(resname) != length(segname))
+        throw(ArgumentError("The length of the segname must be the same as the resname..."))
+    end
+
+    for ith_resname in eachindex(resname)
+
+        pdb = PDBTools.readPDB(pdbname,
+                    only = (atom -> atom.resname == resname[ith_resname])
+                )
+        
+        chains = unique(PDBTools.chain.(pdb))
+
+        for chain in chains
+            chain_pdb = PDBTools.select(pdb,
+                    by = (atom -> atom.chain == chain)
+                ); chain_pdbname = tempname() * ".pdb"
+
+            PDBTools.writePDB(chain_pdb, chain_pdbname)
+
+            if isnothing(segname)
+                new_segment = String("$(resname[ith_resname][1:3])$chain")
+            else
+                new_segment = String("$(segname[ith_resname])$chain")
+            end
+
+            push!(pdbfiles, (new_segment, chain_pdbname))
+        end
+
+    end
+
+    return pdbfiles
+
+end
+
+
+
+# Essa função tá perigosa, pelo memory leak do TCL
+
+# function updating_SystemIndexes(psfname::String, pdbname::String; ref_pdbname=nothing, outfile=nothing, vmd="vmd")
+    
+#     if isnothing(ref_pdbname)
+#         throw(ArgumentError("There is no meaning in update the system with the same indexes..."))
+#     end
+    
+#     pdb = PDBTools.readPDB(ref_pdbname)
+#     new_indexes = PDBTools.index.(pdb)
+
+#     if isnothing(outfile)
+#         outfile = tempname() * ".pdb"
+#     end
+
+#     tcl = tempname() * ".tcl"
+
+#     vmdinput = Base.open(tcl, "w")
+
+#     Base.write(vmdinput, "mol new $psfname\n")
+#     Base.write(vmdinput, "mol addfile $pdbname\n\n")
+    
+#     for idx in eachindex(new_indexes)
+#         vmd_idx = idx-1
+#         Base.write(vmdinput, "set sel [atomselect top \"index $vmd_idx\"]\n")
+#         Base.write(vmdinput, "\$sel set index $(new_indexes[idx])\n")
+#     end
+
+#     Base.write(vmdinput, "[atomselect top \"all\"] writepsf $(replace(outfile, ".pdb" => ".psf"))\n")
+#     Base.write(vmdinput, "[atomselect top \"all\"] writepdb $outfile\n\n")
+
+#     Base.write(vmdinput, "exit\n")
+
+#     Base.close(vmdinput)
+
+#     vmdoutput = Base.split(Base.read(`$vmd -dispdev text -e $(tcl)`, String), "\n")
+
+#     return outfile, replace(outfile, ".pdb" => ".psf"), vmdoutput
+
+# end
+
+
 function dummy_chains()
     return "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"
 end
