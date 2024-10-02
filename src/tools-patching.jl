@@ -28,6 +28,7 @@ function patching(
     Base.write(vmdinput, "coordpdb $chain_pdbname\n\n")
 
     patchings = Vector{Int64}[]; pdb_decorations = String[]
+    pdb = PDBTools.readPDB(chain_pdbname)
     ith_patch = maximum(PDBTools.resnum.(pdb))
     for i in resid
         ith_patch += ith_patch
