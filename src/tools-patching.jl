@@ -37,7 +37,7 @@ function patching(
         push!(pdb_decorations, new_patch)
     end
 
-    patches_pdb = combinePDBs(pdb_decorations, new_pdbfile=patches_pdbname)
+    patches_pdb = mergingPDBs(pdb_decorations, new_pdbfile=patches_pdbname)
 
     Base.write(vmdinput, "segment $new_segid { pdb $patches_pdb }\n")
 
