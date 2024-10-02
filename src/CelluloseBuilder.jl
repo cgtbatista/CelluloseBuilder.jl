@@ -7,7 +7,7 @@ import MolSimToolkit
 import Packmol
 
 import LsqFit
-import LinearAlgebra: cross, norm, dot
+import LinearAlgebra: cross, norm, dot, I
 
 # using PDBTools, MolSimToolkit, StaticArrays, Packmol, LinearAlgebra, Test
 ## exported .jl functions
