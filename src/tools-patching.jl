@@ -5,16 +5,17 @@ function patching(
     vmd="vmd", topology=DEFAULT_CARB_TOPOLOGY_FILE)
 
     if isnothing(filename)
-        filename = tempname()
-        psfname = filename * ".psf"
-        pdbname = filename * ".pdb"
+        pdbname = tempname() * ".pdb"
+    else
+        pdbname = filename
     end
+    psfname = replace(pdbname, ".pdb" => ".psf")
 
     tcl = tempname() * ".tcl"
 
     vmdinput = Base.open(tcl, "w")
 
-    Base.write(vmdinput, "package require psfgen\n") 
+    Base.write(vmdinput, "package require psfgen\n")
     if typeof(topology) == Vector{String}
         for top in topology
             Base.write(vmdinput, "topology $top\n")
@@ -28,8 +29,11 @@ function patching(
     Base.write(vmdinput, "coordpdb $chain_pdbname\n\n")
 
     patchings = Vector{Int64}[]; pdb_decorations = String[]
+    #push!(pdb_decorations, chain_pdbname)
+
     pdb = PDBTools.readPDB(chain_pdbname)
     ith_patch = maximum(PDBTools.resnum.(pdb))
+
     for i in resid
         ith_patch += ith_patch
         new_patch = matching_residue(chain_pdbname, i, chain_name, segid, decoration=decoration, new_resid=ith_patch, new_chain=new_chain_name, new_segid=new_segid)
