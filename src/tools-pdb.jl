@@ -44,6 +44,38 @@ function mergingPDBs(pdbfiles::Vector{String}; new_pdbfile=nothing)
     
 end
 
+
+##function new_mergingPDBs(pdbfiles::Vector{String}; filename=nothing)
+##    
+##    filename = isnothing(filename) ? tempname() * ".pdb" : filename
+##
+##    pdb = open(expanduser(filename), "w")
+##
+##    println(pdb, "CelluloseBuilder.jl - mergingPDBs function")
+##    atom_index = 0
+##    # atoms::AbstractVector{Atom}
+##
+##    for pdbfile in pdbfiles
+##
+##        atoms = PDBTools.readPDB(pdbfile)
+##
+##        for a in eachindex(atoms)
+##            atom_index += 1
+##            atoms[a].index = atom_index
+##            atoms[a].index_pdb = atom_index
+##            println(pdb, PDBTools.write_atom(atoms[a]))
+##        end
+##
+##    end
+##
+##    println(pdb, "END")
+##
+##    close(pdb)
+##
+##    return filename
+##end
+
+
 function updating_resid(pdbname::String, resid::Int64; new_pdbname=nothing)
   
     pdb = PDBTools.readPDB(pdbname)  
