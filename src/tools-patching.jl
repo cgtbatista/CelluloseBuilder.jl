@@ -5,11 +5,11 @@ function patching(
     vmd="vmd", topology=DEFAULT_CARB_TOPOLOGY_FILE)
 
     if isnothing(filename)
-        pdbname = tempname() * ".pdb"
+        new_pdbname = tempname() * ".pdb"
     else
-        pdbname = filename
+        new_pdbname = filename
     end
-    psfname = replace(pdbname, ".pdb" => ".psf")
+    new_psfname = replace(new_pdbname, ".pdb" => ".psf")
 
     tcl = tempname() * ".tcl"
 
@@ -53,15 +53,15 @@ function patching(
     Base.write(vmdinput, "regenerate angles dihedrals\n")  
     Base.write(vmdinput, "coordpdb $patches_pdb $new_segid\n")
     Base.write(vmdinput, "guesscoord\n\n")
-    Base.write(vmdinput, "writepsf $psfname\n")
-    Base.write(vmdinput, "writepdb $pdbname\n\n")
+    Base.write(vmdinput, "writepsf $new_psfname\n")
+    Base.write(vmdinput, "writepdb $new_pdbname\n\n")
 
-    Base.write(vmdinput, "mol new     $psfname\n")
-    Base.write(vmdinput, "mol addfile $pdbname\n\n")
+    Base.write(vmdinput, "mol new     $new_psfname\n")
+    Base.write(vmdinput, "mol addfile $new_pdbname\n\n")
     Base.write(vmdinput, "set sel [atomselect top \"all\"]\n")
     Base.write(vmdinput, "\$sel set segid \"$segid\"\n\n")
-    Base.write(vmdinput, "\$sel writepsf $psfname\n\n")
-    Base.write(vmdinput, "\$sel writepdb $pdbname\n\n")
+    Base.write(vmdinput, "\$sel writepsf $new_psfname\n\n")
+    Base.write(vmdinput, "\$sel writepdb $new_pdbname\n\n")
     Base.write(vmdinput, "exit\n")
 
     Base.close(vmdinput)

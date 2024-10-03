@@ -56,7 +56,7 @@ include("./picking_fragments.jl")
 ## cleaning the temporary files
 include("./cleaning_tmpfiles.jl")
 
-include("./getPDB.jl")
+include("./getPDB.jl")      # PDBs for residues
 
 ## Misc. tools to deal help the system building
 include("./tools-assembly.jl")
