@@ -108,7 +108,7 @@ function matching_residue(
         tmpPDB[at].z = translated_coords[at][3]
         tmpPDB[at].chain = ""
         tmpPDB[at].resnum = ifelse(isnothing(new_resid), resid, new_resid)
-    end
+    end ## não sei o porquê, mas o PDBTools sempre está adicionando a cadeia X ao PDB final na hora de exportar... :/
 
     new_pdbname = isnothing(new_pdbname) ? tempname() * ".pdb" : new_pdbname
     PDBTools.writePDB(tmpPDB, new_pdbname)
