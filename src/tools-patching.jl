@@ -98,12 +98,13 @@ function matching_residue(
     translated_coords = translate_residue(
             rotated_coords, v_trans
         )
-
+    
+    old_tmpPDB = tmpPDB
     for at in eachindex(translated_coords)
         tmpPDB[at].x = translated_coords[at][1]
         tmpPDB[at].y = translated_coords[at][2]
         tmpPDB[at].z = translated_coords[at][3]
-        tmpPDB[at].chain = ifelse(isnothing(new_chain), chain, new_chain)
+        #tmpPDB[at].chain = ifelse(isnothing(new_chain), chain, new_chain)
         tmpPDB[at].resnum = ifelse(isnothing(new_resid), resid, new_resid)
     end
 
@@ -116,7 +117,7 @@ function matching_residue(
             new_pdbname=new_pdbname
         ) ## não sei o porquê, mas não consigo salvar o nome do segmento no PDBTools: `res[at].segname = ifelse(isnothing(new_segid), segid, new_segid)`
 
-    return new_pdbname
+    return new_pdbname, tmpPDB
 
 end
 
