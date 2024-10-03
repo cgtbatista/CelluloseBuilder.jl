@@ -27,19 +27,19 @@ function decoration_library(main_pdbname::String, decoration_pdbname::String, la
 
     if label == "PETN"
         idx1 = PDBTools.index.(
-                PDBTools.select(main_chain, by = (atom -> atom.name == "O6" && atom.resnum == resid && atom.segname == segid))
+                PDBTools.select(main_chain, (atom -> atom.name == "O6" && atom.resnum == resid && atom.segname == segid))
             )[1]
 
         idx2 = PDBTools.index.(
-                PDBTools.select(main_chain, by = (atom -> atom.name == "HO6" && atom.resnum == resid && atom.segname == segid))
+                PDBTools.select(main_chain, (atom -> atom.name == "HO6" && atom.resnum == resid && atom.segname == segid))
             )[1]
 
         idx3 = PDBTools.index.(
-                PDBTools.select(decoration, by = (atom -> atom.name == "P"))
+                PDBTools.select(decoration, (atom -> atom.name == "P"))
             )[1]
         
         idx4 = PDBTools.index.(
-                PDBTools.select(decoration, by = (atom -> atom.name == "O1"))
+                PDBTools.select(decoration, (atom -> atom.name == "O1"))
             )[1]
     end
 
@@ -65,19 +65,19 @@ function decoration_library(main_pdbname::String, label::String; resid=nothing, 
 
     if label == "PETN"
         idx1 = PDBTools.index.(
-                PDBTools.select(main_chain, by = (atom -> atom.name == "O6" && atom.resnum == resid && atom.segname == segid))
+                PDBTools.select(main_chain, (atom -> atom.name == "O6" && atom.resnum == resid && atom.segname == segid))
             )[1]
 
         idx2 = PDBTools.index.(
-                PDBTools.select(main_chain, by = (atom -> atom.name == "HO6" && atom.resnum == resid && atom.segname == segid))
+                PDBTools.select(main_chain, (atom -> atom.name == "HO6" && atom.resnum == resid && atom.segname == segid))
             )[1]
 
         idx3 = PDBTools.index.(
-                PDBTools.select(decoration, by = (atom -> atom.name == "P"))
+                PDBTools.select(decoration, (atom -> atom.name == "P"))
             )[1]
         
         idx4 = PDBTools.index.(
-                PDBTools.select(decoration, by = (atom -> atom.name == "O1"))
+                PDBTools.select(decoration, (atom -> atom.name == "O1"))
             )[1]
     end
 
