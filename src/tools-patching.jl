@@ -37,7 +37,7 @@ function patching(
     for i in eachindex(resid)
         main_resnum = resid[i]
         decoration_resnum = main_last_resnum + i
-        new_patch = matching_residue(chain_pdbname, i, chain_name, segid, decoration=decoration, new_resid=decoration_resnum, new_chain=new_chain_name, new_segid=new_segid)
+        new_patch = matching_residue(chain_pdbname, i, chain_name, segid, decoration=decoration)
         push!(patchings, [main_resnum, decoration_resnum])
         push!(pdb_decorations, new_patch)
     end
@@ -103,7 +103,7 @@ function matching_residue(
         tmpPDB[at].x = translated_coords[at][1]
         tmpPDB[at].y = translated_coords[at][2]
         tmpPDB[at].z = translated_coords[at][3]
-        tmpPDB[at].chain = ifelse(isnothing(new_chain), chain, new_chain)
+        #tmpPDB[at].chain = ifelse(isnothing(new_chain), chain, new_chain)
         tmpPDB[at].resnum = ifelse(isnothing(new_resid), resid, new_resid)
     end
 
