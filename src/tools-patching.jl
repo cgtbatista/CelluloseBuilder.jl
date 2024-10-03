@@ -106,7 +106,7 @@ function matching_residue(
         tmpPDB[at].x = translated_coords[at][1]
         tmpPDB[at].y = translated_coords[at][2]
         tmpPDB[at].z = translated_coords[at][3]
-        #tmpPDB[at].chain = ifelse(isnothing(new_chain), chain, new_chain)
+        tmpPDB[at].chain = ""
         tmpPDB[at].resnum = ifelse(isnothing(new_resid), resid, new_resid)
     end
 
