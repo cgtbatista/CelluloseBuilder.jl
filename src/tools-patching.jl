@@ -77,7 +77,7 @@ end
 
 function matching_residue(
         main_pdbname::String, resid::Int64, chain::String, segid::String;
-        decoration="PETN", new_resid=nothing, new_chain=nothing, new_segid=nothing, decoration_pdbname=nothing, new_pdbname=nothing
+        decoration="PETN", new_resid=nothing, new_chain="D", new_segid=nothing, decoration_pdbname=nothing, new_pdbname=nothing
     )
   
     decoration_pdbname = isnothing(decoration_pdbname) ? getPDB(decoration) : decoration_pdbname
@@ -103,7 +103,7 @@ function matching_residue(
         tmpPDB[at].x = translated_coords[at][1]
         tmpPDB[at].y = translated_coords[at][2]
         tmpPDB[at].z = translated_coords[at][3]
-        #tmpPDB[at].chain = ifelse(isnothing(new_chain), chain, new_chain)
+        tmpPDB[at].chain = ifelse(isnothing(new_chain), chain, new_chain)
         tmpPDB[at].resnum = ifelse(isnothing(new_resid), resid, new_resid)
     end
 

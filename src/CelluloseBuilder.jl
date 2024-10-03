@@ -18,6 +18,8 @@ export gettingBasisVectors, gettingPBC, unitcell2cartesian, atomsvecString, _XY_
 export _exporting_XYZfile, _exporting_PDBfile, transformingPBC, _XYZfragments_2_PDB, _cleaning_PDBfragment
 export generate_cellulose_topology
 export updating_segid
+
+export getPDB, matching_residue, mergingPDBs
 export patching
 
 export MacrofibrilAssembly
