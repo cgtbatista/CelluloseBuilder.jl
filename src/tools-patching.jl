@@ -32,12 +32,13 @@ function patching(
     #push!(pdb_decorations, chain_pdbname)
 
     pdb = PDBTools.readPDB(chain_pdbname)
-    ith_patch = maximum(PDBTools.resnum.(pdb))
+    main_last_resnum = maximum(PDBTools.resnum.(pdb)) # pode ser melhorado pela seleção
 
-    for i in resid
-        ith_patch += ith_patch
-        new_patch = matching_residue(chain_pdbname, i, chain_name, segid, decoration=decoration, new_resid=ith_patch, new_chain=new_chain_name, new_segid=new_segid)
-        push!(patchings, [i, ith_patch])
+    for i in eachindex(resid)
+        main_resnum = resid[i]
+        decoration_resnum = main_last_resnum + i
+        new_patch = matching_residue(chain_pdbname, i, chain_name, segid, decoration=decoration, new_resid=decoration_resnum, new_chain=new_chain_name, new_segid=new_segid)
+        push!(patchings, [main_resnum, decoration_resnum])
         push!(pdb_decorations, new_patch)
     end
 
