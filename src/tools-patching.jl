@@ -117,7 +117,7 @@ function matching_residue(
             new_pdbname=new_pdbname
         ) ## não sei o porquê, mas não consigo salvar o nome do segmento no PDBTools: `res[at].segname = ifelse(isnothing(new_segid), segid, new_segid)`
 
-    return new_pdbname, tmpPDB
+    return new_pdbname, tmpPDB, PDBTools.readPDB(new_pdbname)
 
 end
 
