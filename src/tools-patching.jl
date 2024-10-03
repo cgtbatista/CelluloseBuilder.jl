@@ -56,12 +56,13 @@ function patching(
     Base.write(vmdinput, "writepsf $new_psfname\n")
     Base.write(vmdinput, "writepdb $new_pdbname\n\n")
 
+    ## Updating the decoration segname (is good that it have the same segname)
     Base.write(vmdinput, "mol new     $new_psfname\n")
     Base.write(vmdinput, "mol addfile $new_pdbname\n\n")
-    Base.write(vmdinput, "set sel [atomselect top \"all\"]\n")
+    Base.write(vmdinput, "set sel [atomselect top \"resname $decoration\"]\n")
     Base.write(vmdinput, "\$sel set segid \"$segid\"\n\n")
-    Base.write(vmdinput, "\$sel writepsf $new_psfname\n\n")
-    Base.write(vmdinput, "\$sel writepdb $new_pdbname\n\n")
+    Base.write(vmdinput, "[atomselect top \"all\"] writepsf $new_psfname\n\n")
+    Base.write(vmdinput, "[atomselect top \"all\"] writepdb $new_pdbname\n\n")
     Base.write(vmdinput, "exit\n")
 
     Base.close(vmdinput)
