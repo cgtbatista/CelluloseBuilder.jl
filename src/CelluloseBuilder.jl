@@ -22,6 +22,8 @@ export updating_segid
 export getPDB, matching_residue, mergingPDBs
 export patching
 
+export V_steam, p_antoine
+
 export MacrofibrilAssembly
 
 # Write your package code here.

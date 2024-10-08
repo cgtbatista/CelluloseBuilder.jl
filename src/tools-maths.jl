@@ -187,21 +187,21 @@ function antoine_parameters(T::Float64, component::String; initial_coefficients=
     return parameters[1], parameters[2], parameters[3]
 end
 
-function V_steam(T::Float64, N::Int64; Z=1.,
+function V_steam(T::Float64, N::Int64; Z=.935,
         component="water", guess=true, A=nothing, B=nothing, C=nothing                  # p_antoine flags
     )
 
     p = p_antoine(T, component=component, guess=guess, A=A, B=B, C=C)
 
-    N_Avogadro = 6.02214076 * 10^(23)    ## mol^(-1)
-    R = .0831451                         ## bar × L / (K · mol)
+    N_Avogadro = 6.02214076E+23          ## mol^(-1)
+    R = 8.31446261815324E-2               ## bar × L / (K · mol)
 
     n = Float64(N) / N_Avogadro
 
     V = Z * n * R * (T + 273.15) / p
 
-    ## converting L -> Å³
-    return V * 10^(27)
+    ## converting from L to Å³
+    return V * 1e27
 end
 
 
