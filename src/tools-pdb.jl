@@ -278,50 +278,6 @@ function leftoverPDBs(pdbname::String; resname="TIP3", segname="WAT")
 
 end
 
-
-
-# Essa função tá perigosa, pelo memory leak do TCL
-
-# function updating_SystemIndexes(psfname::String, pdbname::String; ref_pdbname=nothing, outfile=nothing, vmd="vmd")
-    
-#     if isnothing(ref_pdbname)
-#         throw(ArgumentError("There is no meaning in update the system with the same indexes..."))
-#     end
-    
-#     pdb = PDBTools.readPDB(ref_pdbname)
-#     new_indexes = PDBTools.index.(pdb)
-
-#     if isnothing(outfile)
-#         outfile = tempname() * ".pdb"
-#     end
-
-#     tcl = tempname() * ".tcl"
-
-#     vmdinput = Base.open(tcl, "w")
-
-#     Base.write(vmdinput, "mol new $psfname\n")
-#     Base.write(vmdinput, "mol addfile $pdbname\n\n")
-    
-#     for idx in eachindex(new_indexes)
-#         vmd_idx = idx-1
-#         Base.write(vmdinput, "set sel [atomselect top \"index $vmd_idx\"]\n")
-#         Base.write(vmdinput, "\$sel set index $(new_indexes[idx])\n")
-#     end
-
-#     Base.write(vmdinput, "[atomselect top \"all\"] writepsf $(replace(outfile, ".pdb" => ".psf"))\n")
-#     Base.write(vmdinput, "[atomselect top \"all\"] writepdb $outfile\n\n")
-
-#     Base.write(vmdinput, "exit\n")
-
-#     Base.close(vmdinput)
-
-#     vmdoutput = Base.split(Base.read(`$vmd -dispdev text -e $(tcl)`, String), "\n")
-
-#     return outfile, replace(outfile, ".pdb" => ".psf"), vmdoutput
-
-# end
-
-
 function dummy_chains()
     return "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"
 end
