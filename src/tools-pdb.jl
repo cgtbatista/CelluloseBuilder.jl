@@ -61,6 +61,12 @@ end
     - new_pdbname::String: the new PDB file name (default: nothing).
     - vmd::String: the VMD executable (default: "vmd").
     - vmd_debug::Bool: if you want to see the VMD command (default: false).
+
+    # Examples
+    ```julia
+    updatingPDB("/tmp/jl_heF2BQrW5M.psf", "/tmp/jl_heF2BQrW5M.pdb", "BGC", vmd_column="resname", vmd_selection="resname BGLC")
+    updatingPDB("/tmp/jl_heF2BQrW5M.psf", "/tmp/jl_heF2BQrW5M.pdb", "BGC", vmd_column="resname", vmd_selection="resname BGLC", all=false)
+    ```
 """
 function updatingPDB(psfname::String, pdbname::String, new_value::String; vmd_column="segid", vmd_selection="all", all=true, new_pdbname=nothing, vmd="vmd", vmd_debug=false)
   
