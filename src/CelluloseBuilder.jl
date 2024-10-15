@@ -17,9 +17,9 @@ export cellulosebuilder
 export gettingBasisVectors, gettingPBC, unitcell2cartesian, atomsvecString, _XY_trimming_coords, _Z_propagation_coords
 export _exporting_XYZfile, _exporting_PDBfile, transformingPBC, _XYZfragments_2_PDB, _cleaning_PDBfragment
 export generate_cellulose_topology
-export updating_segid
+export updatingPDB
 
-export getPDB, matching_residue, mergingPDBs
+export getPDB, matching_residue, mergingPDBs, get_position_info, pdb_replacement
 export patching
 
 export V_steam, p_antoine
@@ -59,8 +59,6 @@ include("./picking_fragments.jl")
 
 ## cleaning the temporary files
 include("./cleaning_tmpfiles.jl")
-
-include("./getPDB.jl")      # PDBs for residues
 
 ## Misc. tools to deal help the system building
 include("./tools-assembly.jl")
