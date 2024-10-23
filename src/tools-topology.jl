@@ -193,12 +193,12 @@ function generate_petn_topology(; filename=nothing)
     Base.write(rtf, "\n")
     Base.write(rtf, "! pEtN-BGlc linkage \n")
     Base.write(rtf, "! phosphatidylethanolamine + cellulose -> pEtN-cellulose + diacylglycerol\n")
-    Base.write(rtf, "PRES PCEL          -0.761  ! (i-1)6->P(i) B-Glc O6 attacking the pEtN P (maybe SN1 mechanism)\n")
-    Base.write(rtf, "dele atom 1HO6		        ! residual charge =  0.420\n")
+    Base.write(rtf, "PRES PCEL          -0.715  ! (i-1)6->P(i) B-Glc O6 attacking the pEtN P (maybe SN1 mechanism)\n") ## -0.089
+    Base.write(rtf, "dele atom 1HO6		        ! residual charge =  0.420\n") ## leaving the sugar with the charge of -0.420
     Base.write(rtf, "dele atom 2O1		        ! residual charge = -0.669\n")
-    Base.write(rtf, "dele atom 2HO		        ! residual charge =  0.338\n")
-    Base.write(rtf, "ATOM 1C6  CC321     0.254  ! ORIGINAL PENALTY = 2.485\n")
-    Base.write(rtf, "ATOM 1O6  OC311    -0.300  ! ORIGINAL PENALTY = 2.214\n")
+    Base.write(rtf, "dele atom 2HO		        ! residual charge =  0.338\n") ## therefore is lefting 0.331 charge on pEtN residue
+    Base.write(rtf, "!! ATOM 1C6  CC321     0.254  ! ORIGINAL PENALTY = 2.485\n") ## the original sugar charge is  0.050 (-0.022 on CGENFF)
+    Base.write(rtf, "!! ATOM 1O6  OC311    -0.300  ! ORIGINAL PENALTY = 2.214\n") ## the original sugar charge is -0.650 (-0.571 on CGENFF)
     Base.write(rtf, "ATOM 2P   PG1	     1.501\n")
     Base.write(rtf, "ATOM 2C1  CG321    -0.077\n")
     Base.write(rtf, "ATOM 2O2  OG303    -0.569\n")
