@@ -205,7 +205,7 @@ function V_steam(T::Float64, N::Int64; Z=.935,
 end
 
 
-function N_box(V::Float64, density::Float64; MM_solvent = 18.015, solute=false, V_solute=10.)
+function N(V::Float64, density::Float64; MM_solvent = 18.015, solute=false, V_solute=10.)
 
     N_avogadro = 6.02214076E+23
     atomic_density = (density / MM_solvent) * 10^(-24) * N_avogadro ## n molecules /A³
@@ -217,6 +217,21 @@ function N_box(V::Float64, density::Float64; MM_solvent = 18.015, solute=false, 
     end
 
     return Int64(round(N))
+
+end
+
+function V(N::Int64, density::Float64; MM_solvent = 18.015, solute=false, V_solute=10.)
+
+    N_avogadro = 6.02214076E+23
+    atomic_density = (density / MM_solvent) * 10^(-24) * N_avogadro ## n molecules /A³
+
+    if !solute
+        V = Float64(N) / atomic_density
+    else
+        V = (Float64(N) / atomic_density) + V_solute
+    end
+
+    return V
 
 end
 

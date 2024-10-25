@@ -22,7 +22,7 @@ export updatingPDB
 export getPDB, matching_residue, mergingPDBs, get_position_info, pdb_replacement
 export patching
 
-export V_steam, p_antoine
+export V_steam, p_antoine, N, V
 
 export MacrofibrilAssembly
 
