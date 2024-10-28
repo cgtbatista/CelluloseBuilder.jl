@@ -64,7 +64,7 @@ end
 
 function SystemBoxSolvation(
         solute_pdbname::String, solvent_pdbname::String, boxlength::Float64;
-        N=1, center=zeros(3), tol=2., seed=-1, outfile=nothing, vmd="vmd"
+        N=1, center=zeros(3), tol=2., seed=-1, outfile=nothing
     )
 
     if isnothing(outfile)
@@ -100,6 +100,47 @@ function SystemBoxSolvation(
 
     return outfile
 end
+
+
+function SystemSphereSolvation(
+        solute_pdbname::String, solvent_pdbname::String, radii::Float64;
+        N=1, center=zeros(3), tol=2., seed=-1, outfile=nothing
+    )
+
+    if isnothing(outfile)
+        outfile = tempname() * ".pdb"
+    end
+
+    inp = replace(outfile, ".pdb" => ".inp")
+    pkminput = Base.open(inp, "w")
+
+    Base.write(pkminput, "## Packmol -- creating cellulose macrofibrils\n\n")
+    Base.write(pkminput, "tolerance $tol\n")
+    Base.write(pkminput, "seed      $seed\n")
+    Base.write(pkminput, "filetype  pdb\n")
+    Base.write(pkminput, "\n")
+    Base.write(pkminput, "output    $outfile\n")
+
+    Base.write(pkminput, "structure $solute_pdbname\n")
+    Base.write(pkminput, "  number 1\n")
+    Base.write(pkminput, "  center\n")
+    Base.write(pkminput, "  fixed $(center[1]) $(center[2]) $(center[3]) 0. 0. 0.\n")   ## solute
+    Base.write(pkminput, "end structure\n\n")
+
+    Base.write(pkminput, "structure $solvent_pdbname\n")
+    Base.write(pkminput, "  number $N\n")
+    sphere_threshold = String("$(center[1] - radii) $(center[2] - radii) $(center[3] - radii) $(radii)")
+    Base.write(pkminput, "  inside sphere $sphere_threshold\n")
+    Base.write(pkminput, "end structure\n\n")
+
+    Base.close(pkminput)
+
+    Packmol.run_packmol(inp)
+
+    return outfile
+    
+end
+
 
 function SolvatedMacrofibril(;pdbname="initial.pdb", previous_psfname="../macrofibril.psf", topology="../../../toppar/toppar_water_ions.inp", outfile=nothing, vmd="vmd")
 

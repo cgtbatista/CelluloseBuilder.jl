@@ -24,6 +24,7 @@ export patching
 
 export V_steam, p_antoine, N, V
 
+export SystemBoxSolvation, SystemSphereSolvation, SolvatedMacrofibril
 export MacrofibrilAssembly
 
 # Write your package code here.
