@@ -196,12 +196,12 @@ end
 
 
 """
-    leftoverPDBs(pdbname::String; resname="TIP3", segname="WAT")
+    leftoverPDBs(pdbname::String; resname="HOH", segname="WAT")
 
     Separate atoms from a PDB file based on their `resname`s and create new PDBs based on a raw `segname` + chain value.
     The main application is to correct the water PSF/PDB due to the lack of resnum (max 9999).
 """
-function leftoverPDBs(pdbname::String; resname="TIP3", segname="WAT")
+function leftoverPDBs(pdbname::String; resname="HOH", segname="WAT")
     
     pdbfiles = []
     

@@ -160,8 +160,9 @@ function SolvatedMacrofibril(;pdbname="initial.pdb", previous_psfname="../macrof
         Base.write(vmdinput, "topology $top\n")
     end
     Base.write(vmdinput, "\n")
-    Base.write(vmdinput, "readpsf  $previous_psfname\n\n")
-    Base.write(vmdinput, "coordpdb $pdbname\n")
+    Base.write(vmdinput, "pdbalias residue HOH TIP3\n")
+    Base.write(vmdinput, "readpsf  $previous_psfname\n")
+    Base.write(vmdinput, "coordpdb $pdbname\n\n")
 
     pdbs = leftoverPDBs(pdbname)
 
