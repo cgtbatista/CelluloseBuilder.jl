@@ -129,7 +129,7 @@ function SystemSphereSolvation(
 
     Base.write(pkminput, "structure $solvent_pdbname\n")
     Base.write(pkminput, "  number $N\n")
-    sphere_threshold = String("$(center[1] - radii) $(center[2] - radii) $(center[3] - radii) $(radii)")
+    sphere_threshold = String("$(center[1]) $(center[2]) $(center[3]) $(radii)")
     Base.write(pkminput, "  inside sphere $sphere_threshold\n")
     Base.write(pkminput, "end structure\n\n")
 
@@ -138,7 +138,7 @@ function SystemSphereSolvation(
     Packmol.run_packmol(inp)
 
     return outfile
-    
+
 end
 
 
