@@ -133,6 +133,99 @@ function generate_petn_topology(; filename=nothing)
     Base.write(rtf, "36 1\n\n")
     Base.write(rtf, "AUTOGENERATE ANGLES DIHEDRALS\n")
     Base.write(rtf, "!! carbon\n")
+    Base.write(rtf, "MASS  -1  CC316P    12.01100 C ! aliphatic C for CH2\n")                                          ## CG321 -> CC3161
+    Base.write(rtf, "!! hydrogen\n")
+    Base.write(rtf, "MASS  -1  HCA2P      1.00800 H ! alphatic proton, CH2\n")                                         ## HGA2  -> HCA2
+    Base.write(rtf, "MASS  -1  HCP1       1.00800 H ! polar H\n")                                                      ## HGP1  -> HCP1
+    Base.write(rtf, "MASS  -1  HCC        1.00800 H ! polar H, +ve charge\n")                                          ## HGP2  -> HCC (não existe)
+    Base.write(rtf, "!! oxygen\n")
+    Base.write(rtf, "MASS  -1  OC2DP     15.99940 O ! =O in phosphate or sulfate\n")                                   ## OG2P1 -> OC2DP
+    Base.write(rtf, "MASS  -1  OC312     15.99940 O ! hydroxyl oxygen\n")                                              ## OG311 -> OC312
+    Base.write(rtf, "MASS  -1  OC3OP     15.99940 O ! phosphate/sulfate ester oxygen\n")                               ## OG303 -> OC30P
+    Base.write(rtf, "!! nitrogen\n")
+    Base.write(rtf, "MASS  -1  NH3C      14.00700 N ! primary NH3+, phosphatidylethanolamine\n")                       ## NG3P3 -> NH3C (não existe)
+    Base.write(rtf, "!! phosphorous\n")
+    Base.write(rtf, "MASS  -1  PC        30.97380 P  ! phosphate -1\n")                                                ## PG1   -> PC
+    Base.write(rtf, "! DEFAults for patching FIRSt and LAST residues\n")
+    Base.write(rtf, "DEFA FIRS NONE LAST NONE\n")
+    Base.write(rtf, "AUTOGENERATE ANGLES DIHEDRALS PATCH DRUDE\n")
+    Base.write(rtf, "\n")
+    Base.write(rtf, "!! RESIDS !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n")
+    Base.write(rtf, "\n")
+    Base.write(rtf, "RESI ENP            0.000 ! param penalty=   0.000 ; charge penalty=   0.000\n")
+    Base.write(rtf, "GROUP             ! CHARGE    PENALTY  Z   EL   NB NBE RNG1 TYP RNG2 TYP RNG3 TYP\n")
+    Base.write(rtf, "ATOM NP     NH3C   -0.293 !    0.000   7   N    4  4\n")
+    Base.write(rtf, "ATOM HP1    HCC     0.328 !    0.000   1   H    1  1\n")
+    Base.write(rtf, "ATOM HP2    HCC     0.328 !    0.000   1   H    1  1\n")
+    Base.write(rtf, "ATOM HP3    HCC     0.328 !    0.000   1   H    1  1\n")
+    Base.write(rtf, "ATOM CP2    CC316P  0.130 !    0.000   6   C    4  4\n")
+    Base.write(rtf, "ATOM HPC    HCA2P   0.090 !    0.000   1   H    1  1\n")
+    Base.write(rtf, "ATOM HPD    HCA2P   0.090 !    0.000   1   H    1  1\n")
+    Base.write(rtf, "ATOM CP1    CC316P -0.084 !    0.000   6   C    4  4\n")
+    Base.write(rtf, "ATOM HPA    HCA2P   0.090 !    0.000   1   H    1  1\n")
+    Base.write(rtf, "ATOM HPB    HCA2P   0.090 !    0.000   1   H    1  1\n")
+    Base.write(rtf, "ATOM P      PC      1.505 !    0.000   15  P    4  5\n")
+    Base.write(rtf, "ATOM OP4    OC2DP  -0.824 !    0.000   8   O    1  1\n")
+    Base.write(rtf, "ATOM OP3    OC2DP  -0.824 !    0.000   8   O    1  2\n")
+    Base.write(rtf, "ATOM OP2    OC3OP  -0.623 !    0.000   8   O    2  2\n")
+    Base.write(rtf, "ATOM OP1    OC312  -0.669 !    0.000   8   O    2  2\n")
+    Base.write(rtf, "ATOM HOP    HCP1    0.338 !    0.000   1   H    1  1\n")
+    Base.write(rtf, "               ! TYP INR\n")
+    Base.write(rtf, "BOND NP   HP1  ! 1   0\n")
+    Base.write(rtf, "BOND NP   HP2  ! 1   0\n")
+    Base.write(rtf, "BOND NP   HP3  ! 1   0\n")
+    Base.write(rtf, "BOND NP   CP2  ! 1   0\n")
+    Base.write(rtf, "BOND CP2  CP1  ! 1   0\n")
+    Base.write(rtf, "BOND CP2  HPC  ! 1   0\n")
+    Base.write(rtf, "BOND CP2  HPD  ! 1   0\n")
+    Base.write(rtf, "BOND CP1  HPA  ! 1   0\n")
+    Base.write(rtf, "BOND CP1  HPB  ! 1   0\n")
+    Base.write(rtf, "BOND CP1  OP2  ! 1   0\n")
+    Base.write(rtf, "BOND P    OP3  ! 2   0\n")
+    Base.write(rtf, "BOND P    OP1  ! 1   0\n")
+    Base.write(rtf, "BOND P    OP4  ! 1   0\n")
+    Base.write(rtf, "BOND P    OP2  ! 1   0\n")
+    Base.write(rtf, "BOND OP1  HOP  ! 1   0\n")
+    Base.write(rtf, "PATC FIRS NONE LAST NONE\n")
+    Base.write(rtf, "\n")
+    Base.write(rtf, "!! PATCHES !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n")
+    Base.write(rtf, "\n")
+    Base.write(rtf, "! pEtN-BGlc linkage \n")
+    Base.write(rtf, "! phosphatidylethanolamine + cellulose -> pEtN-cellulose + diacylglycerol\n")
+    Base.write(rtf, "PRES PCEL          -0.715  ! (i-1)6->P(i) B-Glc O6 attacking the pEtN P (maybe SN1 mechanism)\n") ## -0.089
+    Base.write(rtf, "dele atom 1HO6		        ! residual charge =  0.420\n") ## leaving the sugar with the charge of -0.420
+    Base.write(rtf, "dele atom 2OP1		        ! residual charge = -0.669\n")
+    Base.write(rtf, "dele atom 2HOP		        ! residual charge =  0.338\n") ## therefore is lefting 0.331 charge on pEtN residue
+    Base.write(rtf, "ATOM 1C6  CC321    -0.022  ! ORIGINAL PENALTY = 2.485\n") ## the original sugar charge is  0.050 (-0.022 on CGENFF)
+    Base.write(rtf, "ATOM 1O6  OC311    -0.624  ! ORIGINAL PENALTY = 2.214\n") ## the original sugar charge is -0.650 (-0.571 on CGENFF)
+    Base.write(rtf, "ATOM 2P   PC	     1.501\n") ## só aqui tem -0.750 de carga parcial sem contar o açúcar!
+    Base.write(rtf, "ATOM 2CP1 CC316P   -0.077\n") ## no final, sem contar os átomos deletados da pEtN tem que ser 0.412
+    Base.write(rtf, "ATOM 2OP2 OC3OP    -0.569\n")
+    Base.write(rtf, "ATOM 2OP3 OC2DP    -0.785\n") # 0,466
+    Base.write(rtf, "ATOM 2OP4 OC2DP    -0.785\n") # tenho que ajustar as cargas do açúcar pra ser -0,046
+    Base.write(rtf, "BOND 1O6  2P\n")
+    Base.write(rtf, "\n")
+    Base.write(rtf, "END\n")
+
+    Base.close(rtf)
+
+    return filename
+end
+
+function generate_petn_topology2(; filename=nothing) ## ORIGINAL FUNCTION
+
+    if isnothing(filename)
+        filename = tempname() * ".rtf"
+    end
+
+    rtf = Base.open(filename, "w")
+    
+    Base.write(rtf, "! This file is the topology file needed to generate pEtN and patch it to cellulose chain (CHARMM36)\n")
+    Base.write(rtf, "\n")
+    Base.write(rtf, "read rtf card append\n")
+    Base.write(rtf, "36 1\n\n")
+    Base.write(rtf, "AUTOGENERATE ANGLES DIHEDRALS\n")
+    Base.write(rtf, "!! carbon\n")
     Base.write(rtf, "MASS  -1  CG324     12.01100 C ! aliphatic C for CH2, adjacent to positive N (piperidine) (+)\n")
     Base.write(rtf, "MASS  -1  CG321     12.01100 C ! aliphatic C for CH2\n")
     Base.write(rtf, "!! hydrogen\n")
@@ -168,8 +261,8 @@ function generate_petn_topology(; filename=nothing)
     Base.write(rtf, "ATOM P      PG1     1.505 !    0.000   15  P    4  5\n")
     Base.write(rtf, "ATOM O3     OG2P1  -0.824 !    0.000   8   O    1  2\n")
     Base.write(rtf, "ATOM O4     OG2P1  -0.824 !    0.000   8   O    1  1\n")
-    Base.write(rtf, "ATOM O1     OG311  -0.669 !    0.000   8   O    2  2\n")
     Base.write(rtf, "ATOM O2     OG303  -0.623 !    0.000   8   O    2  2\n")
+    Base.write(rtf, "ATOM O1     OG311  -0.669 !    0.000   8   O    2  2\n")
     Base.write(rtf, "ATOM HO     HGP1    0.338 !    0.000   1   H    1  1\n")
     Base.write(rtf, "               ! TYP INR\n")
     Base.write(rtf, "BOND N    HN1  ! 1   0\n")
@@ -197,13 +290,13 @@ function generate_petn_topology(; filename=nothing)
     Base.write(rtf, "dele atom 1HO6		        ! residual charge =  0.420\n") ## leaving the sugar with the charge of -0.420
     Base.write(rtf, "dele atom 2O1		        ! residual charge = -0.669\n")
     Base.write(rtf, "dele atom 2HO		        ! residual charge =  0.338\n") ## therefore is lefting 0.331 charge on pEtN residue
-    Base.write(rtf, "!! ATOM 1C6  CC321     0.254  ! ORIGINAL PENALTY = 2.485\n") ## the original sugar charge is  0.050 (-0.022 on CGENFF)
-    Base.write(rtf, "!! ATOM 1O6  OC311    -0.300  ! ORIGINAL PENALTY = 2.214\n") ## the original sugar charge is -0.650 (-0.571 on CGENFF)
-    Base.write(rtf, "ATOM 2P   PG1	     1.501\n")
-    Base.write(rtf, "ATOM 2C1  CG321    -0.077\n")
+    Base.write(rtf, "ATOM 1C6  CC321    -0.022  ! ORIGINAL PENALTY = 2.485\n") ## the original sugar charge is  0.050 (-0.022 on CGENFF)
+    Base.write(rtf, "ATOM 1O6  OC311    -0.624  ! ORIGINAL PENALTY = 2.214\n") ## the original sugar charge is -0.650 (-0.571 on CGENFF)
+    Base.write(rtf, "ATOM 2P   PG1	     1.501\n") ## só aqui tem -0.750 de carga parcial sem contar o açúcar!
+    Base.write(rtf, "ATOM 2C1  CG321    -0.077\n") ## no final, sem contar os átomos deletados da pEtN tem que ser 0.412
     Base.write(rtf, "ATOM 2O2  OG303    -0.569\n")
-    Base.write(rtf, "ATOM 2O3  OG2P1    -0.785\n")
-    Base.write(rtf, "ATOM 2O4  OG2P1    -0.785\n")
+    Base.write(rtf, "ATOM 2O3  OG2P1    -0.785\n") # 0,466
+    Base.write(rtf, "ATOM 2O4  OG2P1    -0.785\n") # tenho que ajustar as cargas do açúcar pra ser -0,046
     Base.write(rtf, "BOND 1O6  2P\n")
     Base.write(rtf, "\n")
     Base.write(rtf, "END\n")

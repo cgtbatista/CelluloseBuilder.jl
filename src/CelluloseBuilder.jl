@@ -20,7 +20,7 @@ export generate_cellulose_topology
 export updatingPDB
 
 export getPDB, matching_residue, mergingPDBs, get_position_info, pdb_replacement
-export patching
+export patching, checking_charge
 
 export V_steam, p_antoine, N, V
 

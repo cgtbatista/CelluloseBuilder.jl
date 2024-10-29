@@ -1,8 +1,8 @@
 package require psfgen 
-topology /tmp/jl_1cBw9CZsFS.rtf 
+topology /tmp/jl_StOTSB41c9.rtf 
  
 segment M1 { 
-    pdb /tmp/jl_R8JKNaFKVg_1.pdb 
+    pdb /tmp/jl_2BSzOfY3sX_1.pdb 
 } 
 patch 14bb M1:10 M1:9 
 patch 14bb M1:9 M1:8 
@@ -13,11 +13,10 @@ patch 14bb M1:5 M1:4
 patch 14bb M1:4 M1:3 
 patch 14bb M1:3 M1:2 
 patch 14bb M1:2 M1:1 
-patch 14bb M1:1 M1:10 
  
 regenerate angles dihedrals 
  
-coordpdb /tmp/jl_R8JKNaFKVg_1.pdb M1 
+coordpdb /tmp/jl_2BSzOfY3sX_1.pdb M1 
  
 guesscoord 
  

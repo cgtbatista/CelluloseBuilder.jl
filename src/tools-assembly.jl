@@ -148,7 +148,7 @@ function SolvatedMacrofibril(;pdbname="initial.pdb", previous_psfname="../macrof
         outfile = tempname() * ".pdb"
     end
 
-    tcl = replace(outfile, ".pdb" => ".inp")
+    tcl = replace(outfile, ".pdb" => ".tcl")
 
     vmdinput = Base.open(tcl, "w")
 

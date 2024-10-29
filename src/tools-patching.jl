@@ -149,7 +149,33 @@ function matching_residue(
 end
 
 
+function checking_charge(pdbname::String; psfname=nothing, vmd_selection="all", vmd="vmd", debug=false)
+    
+    psfname = isnothing(psfname) ? replace(pdbname, ".pdb" => ".psf") : psfname
+    
+    tcl = tempname() * ".tcl"
+    
+    vmdinput = Base.open(tcl, "w")
 
+    Base.write(vmdinput, "## VMD -- Picking the charges\n\n")
+    Base.write(vmdinput, "mol new $psfname\n")
+    Base.write(vmdinput, "mol addfile $pdbname\n\n")
+    Base.write(vmdinput, "set charges [[atomselect top \"$vmd_selection\"] get charge]\n")
+    Base.write(vmdinput, "set total_charge 0.0\n\n")
+    Base.write(vmdinput, "foreach charge \$charges {\n")
+    Base.write(vmdinput, "      set total_charge [expr {\$total_charge + \$charge}]\n")
+    Base.write(vmdinput, "  }\n\n")
+    Base.write(vmdinput, "puts \"FINAL CHARGE: \$total_charge\"\n")
+    Base.write(vmdinput, "exit\n")
 
+    Base.close(vmdinput)
 
+    vmdoutput = Base.split(Base.read(`$vmd -dispdev text -e $(tcl)`, String), "\n")
 
+    if debug
+        return vmdoutput
+    else
+        return parse(Float64, split(vmdoutput[end-3])[end])
+    end
+        
+end

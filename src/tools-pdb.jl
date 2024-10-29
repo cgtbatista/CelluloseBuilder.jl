@@ -227,7 +227,7 @@ function leftoverPDBs(pdbname::String; resname="HOH", segname="WAT")
 
         for chain in chains
             chain_pdb = PDBTools.select(pdb,
-                    by = (atom -> atom.chain == chain)
+                    (atom -> atom.chain == chain)
                 ); chain_pdbname = tempname() * ".pdb"
 
             PDBTools.writePDB(chain_pdb, chain_pdbname)
