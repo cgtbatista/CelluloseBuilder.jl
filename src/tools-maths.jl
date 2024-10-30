@@ -101,14 +101,14 @@ function honeycomb_positions(center::Vector{Float64}, r::Float64, nlayers::Int64
         for k in 0:5
             θ = k * π / 3  # angle on radii
             for m in 1:n
-                angle_adjustment = (k % 3 == 0) ? 1.0 : f_adj
+                angle_adjustment = (k % 3 != 0) ? 1.0 : f_adj
                 # computing the coordinates
                 x = center[1] + m * d_adjusted * cos(θ) * angle_adjustment
                 y = center[2] + m * d_adjusted * sin(θ) * angle_adjustment
                 push!(points, [x, y, center[3]])
             end
         end
-        
+
     end
 
     return points
