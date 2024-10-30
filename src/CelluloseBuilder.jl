@@ -22,6 +22,8 @@ export updatingPDB
 export getPDB, matching_residue, mergingPDBs, get_position_info, pdb_replacement
 export patching, checking_charge
 
+export fibril_dimensions
+
 export V_steam, p_antoine, N, V
 
 export SystemBoxSolvation, SystemSphereSolvation, SolvatedMacrofibril
