@@ -6,7 +6,7 @@
 """
 function MacrofibrilAssembly(
         pdbname::String, fibril_radii::Float64, fibril_spacing::Float64;
-        pattern="honeycomb", center=zeros(3), tol=2., nlayers=nothing, outfile=nothing,
+        pattern="honeycomb", center=zeros(3), tol=2., nlayers=nothing, outfile=nothing, f_adj=0.95,
         old_segid_starter="M", vmd="vmd"
     )
 
@@ -17,7 +17,7 @@ function MacrofibrilAssembly(
     nlayers = ifelse(isnothing(nlayers), 1, nlayers)  
 
     if pattern == "honeycomb"
-        fibril_positions = honeycomb_positions(center::Vector{Float64}, fibril_radii, nlayers; spacing=fibril_spacing)
+        fibril_positions = honeycomb_positions(center::Vector{Float64}, fibril_radii, nlayers; spacing=fibril_spacing, f_adj=f_adj)
     end
     
     inp = replace(outfile, ".pdb" => ".inp")
