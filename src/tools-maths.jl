@@ -262,3 +262,30 @@ function fibril_dimensions(pdbname::String, habit::String)
     return round(r_fibril, digits=1), round(l_fibril, digits=1)
 
 end
+
+function simulation_steps(t_simulation::Int64; unit="ns", timestep=2.0, output=1000)
+    
+    timestep = timestep * 1e-3                      # converting to ps (will be easier to work)
+
+    if unit == "ps"
+        total_time = t_simulation
+    elseif unit == "ns"
+        total_time = t_simulation * 1e3
+    elseif unit == "μs"
+        total_time = t_simulation * 1e6
+    elseif unit == "ms"
+        total_time = t_simulation * 1e9
+    else
+        throw(ArgumentError("Unit $unit not found (try to use `ps`, `ns`, `μs` or `ms`)."))
+    end
+
+    steps  = round(Int64, (total_time / timestep))
+    frames = round(Int64, steps / output)
+
+    println("Simulation:")
+    println("You should run $steps steps to complete $t_simulation $unit.")
+    println("In the end, you will have $frames frames in the output, with each frame covering $(t_simulation / Float64(frames)) $unit of your simulation.")
+
+    return steps, frames
+
+end
