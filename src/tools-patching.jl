@@ -13,6 +13,71 @@
     ```
 """
 function patching(
+        pdbname::String, resid::Vector{Int64}, segid::String;
+        patch_resname="PETN", new_pdbname=nothing, vmd="vmd", vmd_debug=false, topology=[ generate_cellulose_topology(), generate_petn_topology() ]
+    )
+
+    new_pdbname = isnothing(new_pdbname) ? tempname() * ".pdb" : new_pdbname
+    new_psfname = replace(new_pdbname, ".pdb" => ".psf")
+
+    tcl = tempname() * ".tcl"
+
+    vmdinput = Base.open(tcl, "w")
+
+    Base.write(vmdinput, "package require psfgen\n")
+    if typeof(topology) == Vector{String}
+        for topfile in topology
+            Base.write(vmdinput, "topology $topfile\n")
+        end
+        Base.write(vmdinput, "\n")
+    else
+        Base.write(vmdinput, "topology $topology\n\n")
+    end
+
+    Base.write(vmdinput, "readpsf $(replace(pdbname, ".pdb" => ".psf"))\n")
+    Base.write(vmdinput, "coordpdb $pdbname\n\n")
+
+    for i in resid
+        Base.write(vmdinput, "patch $patch_resname $segid:$i\n")
+    end
+    Base.write(vmdinput, "\n")
+
+    Base.write(vmdinput, "regenerate angles dihedrals\n")  
+    Base.write(vmdinput, "guesscoord\n\n")
+
+    Base.write(vmdinput, "writepsf $new_psfname\n")
+    Base.write(vmdinput, "writepdb $new_pdbname\n\n")
+
+    Base.write(vmdinput, "exit\n")
+
+    Base.close(vmdinput)
+
+    vmdoutput = Base.split(Base.read(`$vmd -dispdev text -e $(tcl)`, String), "\n")
+    
+    if vmd_debug
+        return vmdoutput
+    else
+        return new_psfname, new_pdbname
+    end
+
+end
+
+
+"""
+   patching2(
+        reference::String, resid::Vector{Int64}, segid::String;
+        decoration_type="ENP", new_segid="TMP", new_pdbname=nothing, patches_pdbname=nothing, vmd="vmd", vmd_debug=false,
+        topology=[ generate_cellulose_topology(), generate_petn_topology() ]
+    )
+
+    This function patches a reference PDB file with decoration residues. The decoration residues are rotated and translated to match the reference residues.
+    
+    # Examples
+    ```julia
+    patching("cellulose.pdb", [1, 2, 3], "M1", decoration_type="ENP", new_segid="TMP", new_pdbname="cellulose_enp.pdb")
+    ```
+"""
+function patching2(
         reference::String, resid::Vector{Int64}, segid::String;
         decoration_type="ENP", new_segid="TMP", new_pdbname=nothing, patches_pdbname=nothing, vmd="vmd", vmd_debug=false,
         topology=[ generate_cellulose_topology(), generate_petn_topology() ]
