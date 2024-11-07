@@ -1,15 +1,11 @@
 """
-   patching(
-        reference::String, resid::Vector{Int64}, segid::String;
-        decoration_type="ENP", new_segid="TMP", new_pdbname=nothing, patches_pdbname=nothing, vmd="vmd", vmd_debug=false,
-        topology=[ generate_cellulose_topology(), generate_petn_topology() ]
-    )
+    patching(pdbname::String, resid::Vector{Int64}, segid::String; patch_resname="PETN", new_pdbname=nothing, vmd="vmd", vmd_debug=false, topology=[ generate_cellulose_topology(), generate_petn_topology() ])
 
-    This function patches a reference PDB file with decoration residues. The decoration residues are rotated and translated to match the reference residues.
+    This function creates patch to the .
     
     # Examples
     ```julia
-    patching("cellulose.pdb", [1, 2, 3], "M1", decoration_type="ENP", new_segid="TMP", new_pdbname="cellulose_enp.pdb")
+    patching("cellulose.pdb", [1, 2, 3], "M1")
     ```
 """
 function patching(
