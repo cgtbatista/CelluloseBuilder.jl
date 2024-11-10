@@ -216,8 +216,10 @@ function cellulosebuilder(monomers::Int64; phase="Iβ", fibril=nothing, pbc=noth
 
     ncellobiose = Int64(monomers/2)
 
-    if ncellobiose < 1 || ncellobiose%2 == 1
-        error("The number of cellobiose units must be equal or greater than 1, while the number of monomers must be an even number.")
+    if ncellobiose < 1
+        error("The number of cellobiose units must be equal or greater than 1. The actual value is $(ncellobiose).")
+    elseif monomers%2 != 0
+        error("The number of monomer units must be an even number. The actual value is $(monomers%2).")
     end
     if !isnothing(pbc)
         pbc=nothing

@@ -24,10 +24,10 @@ export patching, checking_charge
 
 export fibril_dimensions, simulation_steps
 
-export V_steam, p_antoine, N, V
+export V_steam, p_antoine, N, V, N_ions
 
 export SystemBoxSolvation, SystemSphereSolvation, SolvatedMacrofibril
-export MacrofibrilAssembly
+export MacrofibrilAssembly, CorrectSolvatedSystem
 
 # Write your package code here.
 ##const DEFAULT_CARB_TOPOLOGY_FILE = "$(@__DIR__)/toppar/cellulose.rtf"

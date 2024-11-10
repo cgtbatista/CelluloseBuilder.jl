@@ -222,6 +222,14 @@ function N(V::Float64, density::Float64; MM_solvent = 18.015, solute=false, V_so
 
 end
 
+function N_ions(V::Float64, M::Float64)
+
+    N_avogadro = 6.02214076E+23
+    N = V * M * N_avogadro * 10^(-24)
+    return Int64(round(N))
+
+end
+
 function V(N::Int64, density::Float64; MM_solvent = 18.015, solute=false, V_solute=10.)
 
     N_avogadro = 6.02214076E+23

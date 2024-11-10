@@ -187,3 +187,49 @@ function SolvatedMacrofibril(;pdbname="initial.pdb", previous_psfname="../macrof
 
     return vmdoutput
 end
+
+function CorrectSolvatedSystem(pdbname::String, resnames::Vector{String}, segnames::Vector{String}; previous_psfname="../macrofibril.psf", topology="../../../toppar/toppar_water_ions.inp", outfile=nothing, vmd="vmd")
+
+    if isnothing(outfile)
+        outfile = tempname() * ".pdb"
+    end
+
+    tcl = replace(outfile, ".pdb" => ".tcl")
+
+    vmdinput = Base.open(tcl, "w")
+
+    Base.write(vmdinput, "## VMD -- solvating cellulose macrofibrils\n\n")
+    Base.write(vmdinput, "package require psfgen\n")
+    
+    topology = topology != Vector{String} ? [topology] : topology
+    for top in topology
+        Base.write(vmdinput, "topology $top\n")
+    end
+    Base.write(vmdinput, "\n")
+    Base.write(vmdinput, "pdbalias residue HOH TIP3\n")
+    Base.write(vmdinput, "readpsf  $previous_psfname\n")
+    Base.write(vmdinput, "coordpdb $pdbname\n\n")
+
+    pdbs = leftoverPDBs(pdbname, resname=resnames, segname=segnames)
+
+    for pdb in pdbs
+        Base.write(vmdinput, "segment $(pdb[1]) {\n")
+        Base.write(vmdinput, "      auto none\n")
+        Base.write(vmdinput, "      pdb  $(pdb[2])\n")
+        Base.write(vmdinput, "  }\n")
+        Base.write(vmdinput, "coordpdb $(pdb[2]) $(pdb[1])\n\n")
+    end
+
+    Base.write(vmdinput, "guesscoord\n\n")
+
+    Base.write(vmdinput, "writepsf $(replace(outfile, ".pdb" => ".psf"))\n")
+    Base.write(vmdinput, "writepdb $outfile\n\n")
+
+    Base.write(vmdinput, "exit\n")
+
+    Base.close(vmdinput)
+
+    vmdoutput = Base.split(Base.read(`$vmd -dispdev text -e $(tcl)`, String), "\n")
+
+    return vmdoutput
+end
