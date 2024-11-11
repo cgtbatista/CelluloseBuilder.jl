@@ -1,7 +1,8 @@
 ## VMD -- solvating cellulose macrofibrils
 
 package require psfgen
-topology /home/carlos/Dropbox/works/pEtNCellulose/toppar/water_naoh.str
+
+topology /home/carlos/Dropbox/works/pEtNCellulose/assembly/toppar/water_ions.str
 
 pdbalias residue HOH TIP3
 readpsf  /home/carlos/Dropbox/works/pEtNCellulose/assembly/MakeSystems/chain/ccc.psf
