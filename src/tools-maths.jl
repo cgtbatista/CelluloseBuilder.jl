@@ -225,9 +225,35 @@ end
 function N_ions(V::Float64, M::Float64)
 
     N_avogadro = 6.02214076E+23
-    N = V * M * N_avogadro * 10^(-24)
+    N = V * M * N_avogadro * 10^(-27)
     return Int64(round(N))
 
+end
+
+function M_ions(I::Float64; salt="NaCl")
+
+    if lowercase(salt) == "nacl" || lowercase(salt) == "kcl"
+       n_cation = 1.
+       n_anion = 1.
+       M = 2.0 * I / (n_cation + n_anion)
+    elseif lowercase(salt) == "mgcl2" || lowercase(salt) == "cacl2"
+       n_cation = 1.
+       n_anion = 2.
+       M = 2.0 * I / (n_cation * 4. + n_anion)
+    else
+        error("Salt not found.")
+    end
+
+    return n_cation * M, n_anion * M
+
+end
+
+function N_HOH(V::Float64, pH::Float64)
+    
+    M_H = 10.0^(-pH)
+    M_OH = 1e-14 / M_H
+    
+    return N_ions(V, M_H), N_ions(V, M_OH)
 end
 
 function V(N::Int64, density::Float64; MM_solvent = 18.015, solute=false, V_solute=10.)

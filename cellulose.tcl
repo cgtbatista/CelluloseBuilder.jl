@@ -1,29 +1,9 @@
 package require psfgen 
-topology /tmp/jl_dcBwhqtqBW.rtf 
+topology /tmp/jl_wJAbWhWbsV.rtf 
  
 segment M1 { 
-    pdb /tmp/jl_vO1aTaXOpS_1.pdb 
+    pdb /tmp/jl_i1o1OjYBS7_1.pdb 
 } 
-patch 14bb M1:60 M1:59 
-patch 14bb M1:59 M1:58 
-patch 14bb M1:58 M1:57 
-patch 14bb M1:57 M1:56 
-patch 14bb M1:56 M1:55 
-patch 14bb M1:55 M1:54 
-patch 14bb M1:54 M1:53 
-patch 14bb M1:53 M1:52 
-patch 14bb M1:52 M1:51 
-patch 14bb M1:51 M1:50 
-patch 14bb M1:50 M1:49 
-patch 14bb M1:49 M1:48 
-patch 14bb M1:48 M1:47 
-patch 14bb M1:47 M1:46 
-patch 14bb M1:46 M1:45 
-patch 14bb M1:45 M1:44 
-patch 14bb M1:44 M1:43 
-patch 14bb M1:43 M1:42 
-patch 14bb M1:42 M1:41 
-patch 14bb M1:41 M1:40 
 patch 14bb M1:40 M1:39 
 patch 14bb M1:39 M1:38 
 patch 14bb M1:38 M1:37 
@@ -63,30 +43,10 @@ patch 14bb M1:5 M1:4
 patch 14bb M1:4 M1:3 
 patch 14bb M1:3 M1:2 
 patch 14bb M1:2 M1:1 
-patch 14bb M1:1 M1:60 
+patch 14bb M1:1 M1:40 
 segment M2 { 
-    pdb /tmp/jl_vO1aTaXOpS_4.pdb 
+    pdb /tmp/jl_i1o1OjYBS7_4.pdb 
 } 
-patch 14bb M2:60 M2:59 
-patch 14bb M2:59 M2:58 
-patch 14bb M2:58 M2:57 
-patch 14bb M2:57 M2:56 
-patch 14bb M2:56 M2:55 
-patch 14bb M2:55 M2:54 
-patch 14bb M2:54 M2:53 
-patch 14bb M2:53 M2:52 
-patch 14bb M2:52 M2:51 
-patch 14bb M2:51 M2:50 
-patch 14bb M2:50 M2:49 
-patch 14bb M2:49 M2:48 
-patch 14bb M2:48 M2:47 
-patch 14bb M2:47 M2:46 
-patch 14bb M2:46 M2:45 
-patch 14bb M2:45 M2:44 
-patch 14bb M2:44 M2:43 
-patch 14bb M2:43 M2:42 
-patch 14bb M2:42 M2:41 
-patch 14bb M2:41 M2:40 
 patch 14bb M2:40 M2:39 
 patch 14bb M2:39 M2:38 
 patch 14bb M2:38 M2:37 
@@ -126,30 +86,10 @@ patch 14bb M2:5 M2:4
 patch 14bb M2:4 M2:3 
 patch 14bb M2:3 M2:2 
 patch 14bb M2:2 M2:1 
-patch 14bb M2:1 M2:60 
+patch 14bb M2:1 M2:40 
 segment M3 { 
-    pdb /tmp/jl_vO1aTaXOpS_7.pdb 
+    pdb /tmp/jl_i1o1OjYBS7_7.pdb 
 } 
-patch 14bb M3:60 M3:59 
-patch 14bb M3:59 M3:58 
-patch 14bb M3:58 M3:57 
-patch 14bb M3:57 M3:56 
-patch 14bb M3:56 M3:55 
-patch 14bb M3:55 M3:54 
-patch 14bb M3:54 M3:53 
-patch 14bb M3:53 M3:52 
-patch 14bb M3:52 M3:51 
-patch 14bb M3:51 M3:50 
-patch 14bb M3:50 M3:49 
-patch 14bb M3:49 M3:48 
-patch 14bb M3:48 M3:47 
-patch 14bb M3:47 M3:46 
-patch 14bb M3:46 M3:45 
-patch 14bb M3:45 M3:44 
-patch 14bb M3:44 M3:43 
-patch 14bb M3:43 M3:42 
-patch 14bb M3:42 M3:41 
-patch 14bb M3:41 M3:40 
 patch 14bb M3:40 M3:39 
 patch 14bb M3:39 M3:38 
 patch 14bb M3:38 M3:37 
@@ -189,13 +129,13 @@ patch 14bb M3:5 M3:4
 patch 14bb M3:4 M3:3 
 patch 14bb M3:3 M3:2 
 patch 14bb M3:2 M3:1 
-patch 14bb M3:1 M3:60 
+patch 14bb M3:1 M3:40 
  
 regenerate angles dihedrals 
  
-coordpdb /tmp/jl_vO1aTaXOpS_1.pdb M1 
-coordpdb /tmp/jl_vO1aTaXOpS_4.pdb M2 
-coordpdb /tmp/jl_vO1aTaXOpS_7.pdb M3 
+coordpdb /tmp/jl_i1o1OjYBS7_1.pdb M1 
+coordpdb /tmp/jl_i1o1OjYBS7_4.pdb M2 
+coordpdb /tmp/jl_i1o1OjYBS7_7.pdb M3 
  
 guesscoord 
  

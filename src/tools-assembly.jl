@@ -142,7 +142,7 @@ function SystemSphereSolvation(
 end
 
 
-function SolvatedMacrofibril(;pdbname="initial.pdb", previous_psfname="../macrofibril.psf", topology="../../../toppar/toppar_water_ions.inp", outfile=nothing, vmd="vmd")
+function SolvatedMacrofibril(;pdbname="initial.pdb", previous_psfname="../macrofibril.psf", topology=generate_waterions_topology(), outfile=nothing, vmd="vmd")
 
     if isnothing(outfile)
         outfile = tempname() * ".pdb"
@@ -188,44 +188,64 @@ function SolvatedMacrofibril(;pdbname="initial.pdb", previous_psfname="../macrof
     return vmdoutput
 end
 
-function CorrectSolvatedSystem(pdbname::String, resnames::Vector{String}, segnames::Vector{String}; previous_psfname="../macrofibril.psf", topology="../../../toppar/toppar_water_ions.inp", outfile=nothing, vmd="vmd")
+function CorrectSolvatedSystem(pdbname::String, resnames::Vector{String}, segnames::Vector{String}; previous_psfname=nothing, topology=generate_waterions_topology(), new_pdbname=nothing, vmd="vmd")
 
-    if isnothing(outfile)
-        outfile = tempname() * ".pdb"
+    if isnothing(new_pdbname)
+        new_pdbname = tempname() * ".pdb"       
     end
+    new_psfname = replace(new_pdbname, ".pdb" => ".psf")
 
-    tcl = replace(outfile, ".pdb" => ".tcl")
+    previous_psfname = isnothing(previous_psfname) ? replace(pdbname, ".pdb" => ".psf") : previous_psfname
+
+    tcl = replace(new_pdbname, ".pdb" => ".tcl")
 
     vmdinput = Base.open(tcl, "w")
 
-    Base.write(vmdinput, "## VMD -- solvating cellulose macrofibrils\n\n")
-    Base.write(vmdinput, "package require psfgen\n")
+    Base.write(vmdinput,
+        raw"""
+        ## VMD -- solvating cellulose macrofibrils
+        package require psfgen
+
+        """
+    )
     
     topology = topology != Vector{String} ? [topology] : topology
     for top in topology
         Base.write(vmdinput, "topology $top\n")
     end
-    Base.write(vmdinput, "\n")
-    Base.write(vmdinput, "pdbalias residue HOH TIP3\n")
-    Base.write(vmdinput, "readpsf  $previous_psfname\n")
-    Base.write(vmdinput, "coordpdb $pdbname\n\n")
+    Base.write(vmdinput,
+        raw"""
 
-    pdbs = leftoverPDBs(pdbname, resname=resnames, segname=segnames)
+        readpsf  """ * "$previous_psfname\n" *
+        raw"""
+        coordpdb """ * "$pdbname\n"
+    )
 
-    for pdb in pdbs
-        Base.write(vmdinput, "segment $(pdb[1]) {\n")
-        Base.write(vmdinput, "      auto none\n")
-        Base.write(vmdinput, "      pdb  $(pdb[2])\n")
-        Base.write(vmdinput, "  }\n")
-        Base.write(vmdinput, "coordpdb $(pdb[2]) $(pdb[1])\n\n")
+    pdbdata = leftoverPDBs(pdbname, resname=resnames, segname=segnames)
+
+    for (segid, filename) in pdbdata
+        Base.write(vmdinput,
+            raw"""
+            
+            segment """ * "$segid" * raw""" {
+                    auto none
+                    pdb  """ * "$filename\n" * raw"""
+            }
+            coordpdb """ * "$filename $segid\n\n"
+        )
     end
 
-    Base.write(vmdinput, "guesscoord\n\n")
-
-    Base.write(vmdinput, "writepsf $(replace(outfile, ".pdb" => ".psf"))\n")
-    Base.write(vmdinput, "writepdb $outfile\n\n")
-
-    Base.write(vmdinput, "exit\n")
+    Base.write(vmdinput,
+        raw"""
+        
+        guesscoord
+        writepsf """ * "$new_psfname\n" *
+        raw"""
+        writepdb """ * "$new_pdbname\n" *
+        raw"""
+        exit
+        """
+    )
 
     Base.close(vmdinput)
 

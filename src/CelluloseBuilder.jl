@@ -24,7 +24,7 @@ export patching, checking_charge
 
 export fibril_dimensions, simulation_steps
 
-export V_steam, p_antoine, N, V, N_ions
+export V_steam, p_antoine, N, V, N_ions, N_HOH, M_ions
 
 export SystemBoxSolvation, SystemSphereSolvation, SolvatedMacrofibril
 export MacrofibrilAssembly, CorrectSolvatedSystem
