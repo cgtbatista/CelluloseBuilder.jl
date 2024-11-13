@@ -147,6 +147,16 @@ function getPDB(residue::String; pdbname=nothing)
         Base.write(pdb, "HETATM   14  O2P ENP     1      -1.207  -0.267  -0.142  1.00  0.00      U    O\n")
         Base.write(pdb, "HETATM   15  O1P ENP     1      -1.865   1.459   1.564  0.00  0.00      U    O\n")
         Base.write(pdb, "HETATM   16  HOP ENP     1      -1.632   2.399   1.669  0.00  0.00      U    H\n")
+    elseif residue == "HOH" || residue == "water"
+        Base.write(pdb, "HETATM    1  H1  HOH     1       9.626   6.787  12.673                       H\n")
+        Base.write(pdb, "HETATM    2  H2  HOH     1       9.626   8.420  12.673                       H\n")
+        Base.write(pdb, "HETATM    3  OH2 HOH     1      10.203   7.604  12.673                       O\n")
+    elseif residue == "Na" || residue == "sodium" || residue == "SOD"
+        Base.write(pdb, "HETATM    1  SOD SOD     1       0.000   0.000   0.000                       Na\n")
+    elseif residue == "Mg" || residue == "magnesium" || residue == "MG"
+        Base.write(pdb, "HETATM    1  MG  MG      1       0.000   0.000   0.000                       Mg\n")
+    elseif residue == "Cl" || residue == "chloride" || residue == "CLA"
+        Base.write(pdb, "HETATM    1  CLA CLA     1       0.000   0.000   0.000                       Cl\n")
     else
         throw(ArgumentError("The residue $residue is still not covered by this script."))
     end

@@ -19,6 +19,7 @@ export _exporting_XYZfile, _exporting_PDBfile, transformingPBC, _XYZfragments_2_
 export generate_cellulose_topology
 export updatingPDB
 
+export pdb_fixedatoms, pdb_restrainatoms
 export getPDB, matching_residue, mergingPDBs, get_position_info, pdb_replacement
 export patching, checking_charge
 

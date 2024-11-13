@@ -270,4 +270,46 @@ function pdb_replacement(pdbname::String; new_pdbname=nothing, pattern="ATOM  ",
 
 end
 
+function pdb_fixedatoms(selection, pdbname::String; new_pdbname=nothing, zeroing=true)
+    
+    new_pdbname = isnothing(new_pdbname) ? tempname() * ".pdb" : new_pdbname
 
+    pdb = PDBTools.readPDB(pdbname)
+
+    if zeroing
+        for atom in pdb
+            atom.beta = 0.0
+        end
+    end
+
+    for atom in PDBTools.select(pdb, selection)
+        atom.beta = 1.0
+    end
+
+    PDBTools.writePDB(pdb, new_pdbname)
+
+    return new_pdbname
+
+end
+
+function pdb_restrainatoms(selection, pdbname::String; k_force=20.0, new_pdbname=nothing, zeroing=true)
+    
+    new_pdbname = isnothing(new_pdbname) ? tempname() * ".pdb" : new_pdbname
+
+    pdb = PDBTools.readPDB(pdbname)
+
+    if zeroing
+        for atom in pdb
+            atom.beta = 0.0
+        end
+    end
+
+    for atom in PDBTools.select(pdb, selection)
+        atom.beta = k_force
+    end
+
+    PDBTools.writePDB(pdb, new_pdbname)
+
+    return new_pdbname
+
+end
