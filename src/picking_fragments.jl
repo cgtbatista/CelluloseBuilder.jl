@@ -50,7 +50,6 @@ julia > 59
 ```
 
 """
-
 function picking_fragments(vmdoutput)
 
     nfragments = nothing

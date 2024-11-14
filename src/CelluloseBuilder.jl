@@ -1,49 +1,10 @@
 module CelluloseBuilder
 
-import StaticArrays
-
-import PDBTools
-import MolSimToolkit
-import Packmol
-
-import LsqFit
-import LinearAlgebra: cross, norm, dot, I
-
-# using PDBTools, MolSimToolkit, StaticArrays, Packmol, LinearAlgebra, Test
 ## exported .jl functions
-
 export cellulosebuilder
-
 export gettingBasisVectors, gettingPBC, unitcell2cartesian, atomsvecString, _XY_trimming_coords, _Z_propagation_coords
 export _exporting_XYZfile, _exporting_PDBfile, transformingPBC, _XYZfragments_2_PDB, _cleaning_PDBfragment
 export generate_cellulose_topology
-export updatingPDB
-
-export pdb_fixedatoms, pdb_restrainatoms
-export getPDB, matching_residue, mergingPDBs, get_position_info, pdb_replacement
-export patching, checking_charge
-
-export fibril_dimensions, simulation_steps
-
-export V_steam, p_antoine, N, V, N_ions, N_HOH, M_ions
-
-export SystemBoxSolvation, SystemSphereSolvation, SolvatedMacrofibril
-export MacrofibrilAssembly, CorrectSolvatedSystem
-
-# Write your package code here.
-##const DEFAULT_CARB_TOPOLOGY_FILE = "$(@__DIR__)/toppar/cellulose.rtf"
-
-## future input format...
-## struct CelluloseBuilderInput
-##     phase::String
-##     pbc
-##     covalent::Bool
-##     topologyfile::String
-##     atomnames::Vector{String}
-##     asym_coords::Vector{Vector{Float64}}
-##     uc_parameters::Vector{Vector{Float64}}
-## end
-## export CelluloseBuilderInput
 
 # main cellulose builder function
 include("./cellulose.jl")
@@ -64,15 +25,7 @@ include("./picking_fragments.jl")
 ## cleaning the temporary files
 include("./cleaning_tmpfiles.jl")
 
-## Misc. tools to deal help the system building
-include("./tools-assembly.jl")
-include("./tools-maths.jl")
-include("./tools-patching.jl")
-include("./tools-pdb.jl")
-include("./tools-topology.jl")
-
-## getting the surface
+include("./topology.jl")
 include("./vdw-surface.jl")
-include("./residue-library.jl")
 
 end

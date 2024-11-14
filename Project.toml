@@ -3,14 +3,6 @@ uuid = "f5258e19-0f4f-4595-8a18-bcc895194118"
 authors = ["cgtbatista <c203748@dac.unicamp.br> and contributors"]
 version = "1.0.0-DEV"
 
-[deps]
-LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
-LsqFit = "2fda8390-95c7-5789-9bda-21331edee243"
-MolSimToolkit = "054db54f-6694-444d-9bbb-e9ecdbfe77be"
-Packmol = "6cdf86f9-9676-4cea-a42d-19f9a563443f"
-PDBTools = "e29189f1-7114-4dbd-93d0-c5673a921a58"
-StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
-
 [compat]
 julia = "1.6.7"
 
