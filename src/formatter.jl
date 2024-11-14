@@ -108,7 +108,7 @@ function _cleaning_PDBfragment(atoms::Vector{String}, pdbfile::String, new_pdbfi
         
         # editing the residue names
         _pdbcolumn_resname = SubString(new_irow, findfirst("    X ", new_irow))
-        new_irow = replace(new_irow, _pdbcolumn_resname => "BGLC  ")
+        new_irow = replace(new_irow, _pdbcolumn_resname => "BGC   ")
         # editing residue sequence numbers
         _pdbcolumn_resnum = SubString(new_irow, 26-length("$resid")+1 : 26)
         new_irow = replace(new_irow, _pdbcolumn_resnum*"    " => "$resid"*"    ") ## This dummy space is escential to not replace all numbers (x coords begin on 31 string position)
