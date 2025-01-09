@@ -325,58 +325,80 @@ julia > gettingPBC([ 5, 7, 8 ], "Iβ")
 ```
 
 """
-
-
 function gettingPBC(xsize::Int64, ysize::Int64, zsize::Int64, phase::String; pbc=nothing)
     if phase == "Ib" || phase == "Iβ"
         if pbc == :all || pbc == :All || pbc == :ALL
             xsize += 1; ysize += 1;
-            println("         periodic boundary conditions will be applied in a and b crystalographic directions.")
-            println("         surfaces (1 0 0), (2 0 0), (0 1 0), and (0 2 0) will be exposed!")
+            println("""
+            Periodic boundary conditions will be applied in a and b crystalographic directions.
+            surfaces (1 0 0), (2 0 0), (0 1 0), and (0 2 0) will be exposed!
+            """)
         elseif pbc == :a || pbc == :A
             xsize += 1;
-            println("         periodic boundary conditions will be applied in a crystalographic direction.")
-            println("         surfaces (1 0 0), (2 0 0), and (0 1 0) will be exposed!")
+            println("""
+            Periodic boundary conditions will be applied in a crystalographic direction.
+            surfaces (1 0 0), (2 0 0), and (0 1 0) will be exposed!
+            """)
         elseif pbc == :b || pbc == :B
             ysize += 1;
-            println("         periodic boundary conditions will be applied in b crystalographic direction.")
-            println("         surfaces (1 0 0), (0 1 0), and (0 2 0) will be exposed!")
+            println("""
+            Periodic boundary conditions will be applied in b crystalographic direction.
+            Surfaces (1 0 0), (0 1 0), and (0 2 0) will be exposed!
+            """)
         elseif isnothing(pbc)
-            println("         periodic boundary conditions will not be special applied.")
-            println("         default translational symmetry will be applied with the surfaces (1 0 0) and (0 1 0) exposed!")
+            println("""
+            Periodic boundary conditions will not be special applied.
+            Default translational symmetry will be applied with the surfaces (1 0 0) and (0 1 0) exposed!
+            """)
         end
     elseif phase == "Ia" || phase == "Iα"
         if !isnothing(pbc)
-            println("         periodic boundary conditions $pbc will not be applied in the Iα phase, because it is not valid!")
-            println("         default translational symmetry will be applied with the surfaces (1 0 0) and (0 1 0) exposed!")
+            println("""
+            Periodic boundary conditions $pbc will not be applied in the Iα phase, because it is not valid!
+            Default translational symmetry will be applied with the surfaces (1 0 0) and (0 1 0) exposed!
+            """)
         else
-            println("         periodic boundary conditions will not be special applied.")
-            println("         default translational symmetry will be applied with the surfaces (1 0 0) and (0 1 0) exposed!")
+            println("""
+            Periodic boundary conditions will not be special applied.
+            Default translational symmetry will be applied with the surfaces (1 0 0) and (0 1 0) exposed!
+            """)
         end
     elseif phase == "II"
         if pbc == :all || pbc == :All || pbc == :ALL
             xsize += 1;
-            println("         periodic boundary conditions will be applied in a and b crystalographic directions.")
-            println("         surfaces (1 0 0), (2 0 0), (0 1 0), and (0 2 0) will be exposed!")
+            println("""
+            Periodic boundary conditions will be applied in a and b crystalographic directions.
+            Surfaces (1 0 0), (2 0 0), (0 1 0), and (0 2 0) will be exposed!
+            """)
         elseif pbc == :a || pbc == :A
             xsize += 1;
-            println("         periodic boundary conditions will be applied in a crystalographic direction.")
-            println("         surfaces (1 0 0), (2 0 0), and (0 1 0) will be exposed!")
+            println("""
+            Periodic boundary conditions will be applied in a crystalographic direction.
+            Surfaces (1 0 0), (2 0 0), and (0 1 0) will be exposed!
+            """)
         elseif pbc == :b || pbc == :B
             ysize += 1;
-            println("         periodic boundary conditions will be applied in b crystalographic direction.")
-            println("         surfaces (1 0 0), (0 1 0), and (0 2 0) will be exposed!")
+            println("""
+            Periodic boundary conditions will be applied in b crystalographic direction.
+            Surfaces (1 0 0), (0 1 0), and (0 2 0) will be exposed!
+            """)
         elseif isnothing(pbc)
-            println("         periodic boundary conditions will not be special applied.")
-            println("         default translational symmetry will be applied with the surfaces (1 0 0) and (0 1 0) exposed!")
+            println("""
+            Periodic boundary conditions will not be special applied.
+            Default translational symmetry will be applied with the surfaces (1 0 0) and (0 1 0) exposed!
+            """)
         end
     elseif phase == "III" || phase == "III_I" || phase == "III_i" || phase == "IIIi"
         if !isnothing(pbc)
-            println("         periodic boundary conditions $pbc will not be applied in the Iα phase, because it is not valid!")
-            println("         default translational symmetry will be applied with the surfaces (1 0 0) and (0 1 0) exposed!")
+            println("""
+            Periodic boundary conditions $pbc will not be applied in the Iα phase, because it is not valid!
+            Default translational symmetry will be applied with the surfaces (1 0 0) and (0 1 0) exposed!
+            """)
         else
-            println("         periodic boundary conditions will not be special applied.")
-            println("         default translational symmetry will be applied with the surfaces (1 0 0) and (0 1 0) exposed!")
+            println("""
+            Periodic boundary conditions will not be special applied.
+            Default translational symmetry will be applied with the surfaces (1 0 0) and (0 1 0) exposed!
+            """)
         end
     else
         error("The phase $phase is not implemented yet.")
@@ -386,17 +408,17 @@ end
 
 function gettingPBC(units::Int64, phase::String)
     
-    if phase == "Ib" || phase == "Iβ"
+    if lowercase(phase) == "ib" || lowercase(phase) == "iβ"
 
         xsize = 5; ysize = 7; zsize = units;
         xlattice = 0; ylattice = 0; zlattice = zsize;
     
-    elseif phase == "II"
+    elseif lowercase(phase) == "ii"
 
         xsize = 7; ysize = 5; zsize = units;
         xlattice = 0; ylattice = 0; zlattice = zsize;
 
-    elseif phase == "Ia" || phase == "Iα"
+    elseif lowercase(phase) == "ia" || lowercase(phase) == "iα"
 
         xsize = 7; ysize = 6; zsize = units;
         xlattice = zsize; ylattice = 0; zlattice = 0;
@@ -405,8 +427,10 @@ function gettingPBC(units::Int64, phase::String)
         error("The phase $phase cannot be used as a base for elementary fibril.")
     end
 
-    println("         periodic boundary conditions will be applied to build the elementary fibril.")
-    println("         number of cellobiose residues per cellulose chain is $zsize.")
+    println("""
+    Periodic boundary conditions will be applied to build the elementary fibril.
+    Number of cellobiose residues per cellulose chain is $zsize.
+    """)
 
     return [xsize, ysize, zsize], [xlattice, ylattice, zlattice]
 end

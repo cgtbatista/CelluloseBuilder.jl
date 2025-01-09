@@ -4,6 +4,9 @@ authors = ["cgtbatista <c203748@dac.unicamp.br> and contributors"]
 version = "1.0.0-DEV"
 
 [compat]
+Test = "1.9"
+TestItemRunner = "1"
+TestItems = "1"
 julia = "1.6.7"
 
 [extras]

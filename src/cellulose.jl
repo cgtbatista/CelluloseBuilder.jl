@@ -36,7 +36,6 @@ julia >
 ```
 
 """
-
 function cellulosebuilder(a::Int64, b::Int64, c::Int64; phase="Iβ", pbc=nothing, covalent=true, vmd="vmd", topology_file=generate_cellulose_topology())
 
     if a <= 1 || b <= 1 || c < 1
@@ -212,67 +211,74 @@ function cellulosebuilder(monolayer::String, nchains::Int64, monomers::Int64; ph
 
 end
 
-function cellulosebuilder(monomers::Int64; phase="Iβ", fibril=nothing, pbc=nothing, covalent=true, vmd="vmd", topology_file=generate_cellulose_topology())
+"""
+    cellulosebuilder(monomers::Int64; phase="Iβ", fibril=nothing, ...)
+
+Builds a cellulose fibril with a given number of cellobiose units. 
+"""
+function cellulosebuilder(monomers::Int64; phase="Iβ", fibril=nothing, covalent=true, vmd="vmd", topology_file=generate_cellulose_topology())
 
     ncellobiose = Int64(monomers/2)
 
-    if ncellobiose < 1
+    if monomers < 2
         error("The number of cellobiose units must be equal or greater than 1. The actual value is $(ncellobiose).")
-    elseif monomers%2 != 0
+    end ## checking the number of cellobiose units
+
+    if monomers%2 != 0
         error("The number of monomer units must be an even number. The actual value is $(monomers%2).")
-    end
-    if !isnothing(pbc)
-        pbc=nothing
-    end
+    end ## checking for a even number of cellobiose units
     
-    ## HEADER   ------------------------------------------------------------------------------
-    println("")
-    println("GENERETING $phase CELLULOSE FIBRIL!")
-    if covalent; println("COVALENT TURNNED ON -- CONSIDERING THE PERIODIC COVALENT BONDING ACROSS THE BOX BORDERS..."); end
-    println("")
-    println("")
+    pbc = nothing
+
+    println("""
+    Building a cellulose fibril with $monomers cellobiose units.
+    This fibrils are built with the $phase phase and the periodic covalently bond is setted as $covalent.
+    """)
+    
     xyzsize, lattice = gettingPBC(ncellobiose, phase)
-    xsize, ysize, zsize = xyzsize[1], xyzsize[2], xyzsize[3]
-
-    ## DEALING W/ UNIT CELLS -----------------------------------------------------------------
-    println("   ... BASIS VECTORS")
     basisvectors = gettingBasisVectors(lattice, phase)
-    println("")
-    println("           X -- $(round.(basisvectors[1], digits=1))")
-    println("           Y -- $(round.(basisvectors[2], digits=1))")
-    println("           Z -- $(round.(basisvectors[3], digits=1))")
-    println("")
 
-    ## EXPORTING THE CELLULOSE UNIT ---------------------------------------------------------
-    println("   ... PREPARING THE PDB AND PSF FILES")
-    println("")
+    println("""
+    The (a,b,c) unit cell dimensions are ($(xsize = xyzsize[1]), $(ysize = xyzsize[2]), $(zsize = xyzsize[3])) and the basis vectors are:
 
-    println("   1 - Getting the initial unit cell coordinates and atomic labels:")
-    println("       + imposing translational symmetry for $pbc.")
-    println("       + transforming the asymmetric unit to the cartesian coordinates for every [a,b,c] = [$xsize,$ysize,$zsize] Å.")
+        x⃗ = $(round.(basisvectors[1], digits=1)); y⃗ = $(round.(basisvectors[2], digits=1)); z⃗ = $(round.(basisvectors[3], digits=1))
+
+
+    Building the cellulose file structure
+    -------------------------------------
+    """)
+
+    println("""
+    i.   getting the initial unit cell coordinates and atomic labels:
+         - imposing translational symmetry for pbc = $pbc.
+         - transforming the asymmetric unit to the cartesian coordinates for every [a,b,c] = [$xsize,$ysize,$zsize] Å.
+         - atomic labels for $phase.
+    """)
     xinit, yinit, zinit = unitcell2cartesian(xyzsize, phase)
-    println("       + atomic labels for $phase.")
     atomsinit, atomstype = atomsvecString(phase, length(xinit))
-    println("")
 
-    println("   2 - Extending the cellulose modifications of the atoms:")
-    println("       + cleaning the coordinates and atomic labels for $phase.")
+    println("""
+    ii.  extending the cellulose modifications of the atoms:
+         - cleaning the coordinates and atomic labels for $phase.
+         - expanding the z coordinates for $phase.
+         - picking the number of fragments of the basic structure.
+    """)
     atomsclean, xclean, yclean, zclean = _XY_trimming_coords(atomsinit, xinit, yinit, zinit, xyzsize, phase=phase)
-    println("       + expanding the z coordinates for $phase.")
     atomsexpnd, xexpnd, yexpnd, zexpnd = _Z_propagation_coords(atomsclean, xclean, yclean, zclean, xyzsize[3], phase=phase)
-    println("       + picking the number of fragments of the basic structure.")
     xyzfile, vmdoutput = _exporting_XYZfile(atomsexpnd, xexpnd, yexpnd, zexpnd)
-    n_fragments = picking_fragments(vmdoutput)
-    println("")
-
-    println("   3 - Periodic boundary conditions (PBC) on the $n_fragments fragments: $(pbc)...")
+    
+    println("""
+    iii. periodic boundary conditions (PBC) on the $(picking_fragments(vmdoutput)) fragments: $(pbc)...
+    """)
     vmdxyz, frag_sel, frag_units, vmdoutput2 = transformingPBC("fibril", xyzsize, phase=phase, fibril=fibril, xyzfile=xyzfile, vmd=vmd)
-    println("")
 
-    println("   4 - Generating the PSF/PDB files:")    
-    println("       + writing the PDBs for each of those $frag_units fragment units.")
+    println("""
+    iv.  generating the PSF/PDB files:
+         - writing the PDBs for each of those $frag_units fragment units.")
+         - cleaning each fragment PDB.")
+         - using the CHARMM topology file to build the final PDB/PSF with the fragments
+    """)
     pdb_basename = _XYZfragments_2_PDB(vmdxyz, frag_sel, frag_units, vmd=vmd)[2]
-    println("       + cleaning each fragment PDB.")
     units = Base.split(frag_sel, " ");
     tmpfragments = String[]; tmpfile = tempname();
     for u in units
@@ -281,15 +287,17 @@ function cellulosebuilder(monomers::Int64; phase="Iβ", fibril=nothing, pbc=noth
         _cleaning_PDBfragment(atomstype, pdbname, new_pdbname)
         push!(tmpfragments, new_pdbname)
     end
-    println("       + using the CHARMM topology file to build the final PDB/PSF with the fragments")
     if phase == "Iβ" || phase == "Ib" || phase == "II"
         n_monomers = 2*xyzsize[3]
     else n_monomers = xyzsize[3] end
     vmdoutput3 = _exporting_PDBfile(n_monomers, tmpfragments, phase=phase, covalent=covalent, vmd=vmd, topology_file=topology_file)
     
     cleaning_tmpfiles("cellulose")
-    println("")
-    println("   ... it is done!")
+    
+    println("""
+    
+    That's all! :D
+    """)
 
     return vmdoutput3
 
