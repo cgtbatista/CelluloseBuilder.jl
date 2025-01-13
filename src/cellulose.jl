@@ -85,11 +85,11 @@ function cellulosebuilder(a::Int64, b::Int64, c::Int64; phase="Iβ", pbc=nothing
 
     println("   2 - Extending the cellulose modifications of the atoms:")
     println("       + cleaning the coordinates and atomic labels for $phase.")
-    atomsclean, xclean, yclean, zclean = _XY_trimming_coords(atomsinit, xinit, yinit, zinit, xyzsize, phase=phase)
+    atomsclean, xclean, yclean, zclean = _trimming_xy(atomsinit, xinit, yinit, zinit, xyzsize, phase=phase)
     println("       + expanding the z coordinates for $phase.")
-    atomsexpnd, xexpnd, yexpnd, zexpnd = _Z_propagation_coords(atomsclean, xclean, yclean, zclean, xyzsize[3], phase=phase)
+    atomsexpnd, xexpnd, yexpnd, zexpnd = _expanding_z(atomsclean, xclean, yclean, zclean, xyzsize[3], phase=phase)
     println("       + picking the number of fragments of the basic structure.")
-    xyzfile, vmdoutput = _exporting_XYZfile(atomsexpnd, xexpnd, yexpnd, zexpnd)
+    xyzfile, vmdoutput = writeXYZ(atomsexpnd, xexpnd, yexpnd, zexpnd)
     n_fragments = picking_fragments(vmdoutput)
     println("")
 
@@ -131,15 +131,22 @@ end
 function cellulosebuilder(monolayer::String, nchains::Int64, monomers::Int64; phase="Iβ", pbc=nothing, covalent=true, vmd="vmd", topology_file=generate_cellulose_topology())
 
     ncellobiose = Int64(monomers/2)
-    if monolayer != "monolayer" && monolayer != "center" && monolayer != "origin"
+
+    if monomers < 2
+        error("The number of cellobiose units must be equal or greater than 1. The actual value is $(ncellobiose).")
+    end ## checking the number of cellobiose units
+
+    if monomers%2 != 0
+        error("The number of monomer units must be an even number. The actual value is $(monomers%2).")
+    end ## checking for a even number of cellobiose units
+
+    types = Set(["monolayer", "center", "origin"])
+
+    if !in(monolayer, types)
         error("The monolayer type must be `monolayer`, `center`, or `origin`.")
     end
-    if nchains < 1 || ncellobiose < 1
-        error("The number of chains and cellobiose must be greater or equal than 1.")
-    end
-    if !isnothing(pbc)
-        pbc=nothing
-    end
+
+    pbc = nothing
     
     ## HEADER   ------------------------------------------------------------------------------
     println("")
@@ -173,11 +180,11 @@ function cellulosebuilder(monolayer::String, nchains::Int64, monomers::Int64; ph
 
     println("   2 - Extending the cellulose modifications of the atoms:")
     println("       + cleaning the coordinates and atomic labels for $phase.")
-    atomsclean, xclean, yclean, zclean = _XY_trimming_coords(atomsinit, xinit, yinit, zinit, xyzsize, phase=phase)
+    atomsclean, xclean, yclean, zclean = _trimming_xy(atomsinit, xinit, yinit, zinit, xyzsize, phase=phase)
     println("       + expanding the z coordinates for $phase.")
-    atomsexpnd, xexpnd, yexpnd, zexpnd = _Z_propagation_coords(atomsclean, xclean, yclean, zclean, xyzsize[3], phase=phase)
+    atomsexpnd, xexpnd, yexpnd, zexpnd = _expanding_z(atomsclean, xclean, yclean, zclean, xyzsize[3], phase=phase)
     println("       + picking the number of fragments of the basic structure.")
-    xyzfile, vmdoutput = _exporting_XYZfile(atomsexpnd, xexpnd, yexpnd, zexpnd)
+    xyzfile, vmdoutput = writeXYZ(atomsexpnd, xexpnd, yexpnd, zexpnd)
     n_fragments = picking_fragments(vmdoutput)
     println("")
 
@@ -214,11 +221,11 @@ end
 """
     cellulosebuilder(monomers::Int64; phase="Iβ", fibril=nothing, ...)
 
-Builds a cellulose fibril with a given number of cellobiose units. 
+Builds a cellulose fibril with a given number of cellobiose units based on the number of `monomers`.
 """
 function cellulosebuilder(monomers::Int64; phase="Iβ", fibril=nothing, covalent=true, vmd="vmd", topology_file=generate_cellulose_topology())
 
-    ncellobiose = Int64(monomers/2)
+    ncellobiose, pbc = Int64(monomers/2), nothing
 
     if monomers < 2
         error("The number of cellobiose units must be equal or greater than 1. The actual value is $(ncellobiose).")
@@ -227,24 +234,22 @@ function cellulosebuilder(monomers::Int64; phase="Iβ", fibril=nothing, covalent
     if monomers%2 != 0
         error("The number of monomer units must be an even number. The actual value is $(monomers%2).")
     end ## checking for a even number of cellobiose units
-    
-    pbc = nothing
 
     println("""
+
     Building a cellulose fibril with $monomers cellobiose units.
-    This fibrils are built with the $phase phase and the periodic covalently bond is setted as $covalent.
+    This fibrils are built with the $phase phase and the periodic covalent bonding is setted as $covalent.
     """)
-    
     xyzsize, lattice = gettingPBC(ncellobiose, phase)
     basisvectors = gettingBasisVectors(lattice, phase)
 
     println("""
-    The (a,b,c) unit cell dimensions are ($(xsize = xyzsize[1]), $(ysize = xyzsize[2]), $(zsize = xyzsize[3])) and the basis vectors are:
+    The (a, b, c) unit cell dimensions are ($(xsize = xyzsize[1]), $(ysize = xyzsize[2]), $(zsize = xyzsize[3])) and the basis vectors are:
 
-        x⃗ = $(round.(basisvectors[1], digits=1)); y⃗ = $(round.(basisvectors[2], digits=1)); z⃗ = $(round.(basisvectors[3], digits=1))
+        x = $(round.(basisvectors[1], digits=1)); y = $(round.(basisvectors[2], digits=1)); z = $(round.(basisvectors[3], digits=1))
 
 
-    Building the cellulose file structure
+    Building the cellulose structure file
     -------------------------------------
     """)
 
@@ -254,8 +259,9 @@ function cellulosebuilder(monomers::Int64; phase="Iβ", fibril=nothing, covalent
          - transforming the asymmetric unit to the cartesian coordinates for every [a,b,c] = [$xsize,$ysize,$zsize] Å.
          - atomic labels for $phase.
     """)
-    xinit, yinit, zinit = unitcell2cartesian(xyzsize, phase)
-    atomsinit, atomstype = atomsvecString(phase, length(xinit))
+    x, y, z = unitcell2cartesian(xyzsize, phase)
+    atoms, atomstype = atomsvecString(phase, length(x))
+    crystal = XYZs(atoms, x, y, z)
 
     println("""
     ii.  extending the cellulose modifications of the atoms:
@@ -263,14 +269,12 @@ function cellulosebuilder(monomers::Int64; phase="Iβ", fibril=nothing, covalent
          - expanding the z coordinates for $phase.
          - picking the number of fragments of the basic structure.
     """)
-    atomsclean, xclean, yclean, zclean = _XY_trimming_coords(atomsinit, xinit, yinit, zinit, xyzsize, phase=phase)
-    atomsexpnd, xexpnd, yexpnd, zexpnd = _Z_propagation_coords(atomsclean, xclean, yclean, zclean, xyzsize[3], phase=phase)
-    xyzfile, vmdoutput = _exporting_XYZfile(atomsexpnd, xexpnd, yexpnd, zexpnd)
+    xyzfile, nfragments = rawXYZ(crystal, xyzsize, phase=phase)
     
     println("""
-    iii. periodic boundary conditions (PBC) on the $(picking_fragments(vmdoutput)) fragments: $(pbc)...
+    iii. applying the periodic boundary conditions (PBC) on the $(nfragments) fragments: $(pbc)...
     """)
-    vmdxyz, frag_sel, frag_units, vmdoutput2 = transformingPBC("fibril", xyzsize, phase=phase, fibril=fibril, xyzfile=xyzfile, vmd=vmd)
+    vmdxyz, frag_sel, frag_units = transformingPBC("fibril", xyzsize, phase=phase, fibril=fibril, xyzfile=xyzfile, vmd=vmd)
 
     println("""
     iv.  generating the PSF/PDB files:

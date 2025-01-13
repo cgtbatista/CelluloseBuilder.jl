@@ -239,7 +239,7 @@ function transformingPBC(nfrag::Int64, xsize::Int64, ysize::Int64; phase="Iβ", 
 
 end
 
-function transformingPBC(style::String, xyzsize::Vector{Int64}; phase="Iβ", fibril=nothing, xyzfile="filename.xyz", vmd="vmd")
+function transformingPBC(style::String, xyzsize::Vector{Int64}; phase="Iβ", fibril=nothing, xyzfile="filename.xyz", vmd="vmd", vmdDebug=false)
     
     xyz = joinpath(tempdir(), "cellulose.xyz") ## the new and last XYZ file!
 
@@ -287,9 +287,11 @@ function transformingPBC(style::String, xyzsize::Vector{Int64}; phase="Iβ", fib
         error("The phase $phase is not implemented yet.")
     end
 
-
-    return xyz, sel_fragments, n_fragments, vmdoutput
-
+    if vmdDebug
+        return vmdoutput
+    else
+        return xyz, sel_fragments, n_fragments
+    end
 end
 
 
