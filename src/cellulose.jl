@@ -40,7 +40,7 @@
 ##    xyzsize = gettingPBC([xsize, ysize, zsize], phase, pbc=pbc)
 ##    println("       + appling transformations on fractional coordinates needed for the phase $phase.")
 ##    println("       + transforming the asymmetric unit to the cartesian coordinates for every [a,b,c] = [$xsize,$ysize,$zsize] Å.")
-##    xinit, yinit, zinit = unitcell2cartesian(xyzsize, phase)
+##    xinit, yinit, zinit = fractional2cartesian(xyzsize, phase)
 ##    println("       + atomic labels for $phase.")
 ##    atomsinit, atomstype = atomnames(phase, length(xinit))
 ##    println("")
@@ -135,7 +135,7 @@
 ##    println("   1 - Getting the initial unit cell coordinates and atomic labels:")
 ##    println("       + imposing translational symmetry for $pbc.")
 ##    println("       + transforming the asymmetric unit to the cartesian coordinates for every [a,b,c] = [$xsize,$ysize,$zsize] Å.")
-##    xinit, yinit, zinit = unitcell2cartesian(xyzsize, phase)
+##    xinit, yinit, zinit = fractional2cartesian(xyzsize, phase)
 ##    println("       + atomic labels for $phase.")
 ##    atomsinit, atomstype = atomnames(phase, length(xinit))
 ##    println("")
@@ -223,7 +223,7 @@ function cellulosebuilder(monomers::Int64; phase="Iβ", fibril=nothing, covalent
          - transforming the asymmetric unit to the cartesian coordinates for every [a,b,c] = [$xsize,$ysize,$zsize] Å.
          - atomic labels for $phase.
     """)
-    x, y, z = unitcell2cartesian(xyzsize, phase)
+    x, y, z = fractional2cartesian(xyzsize, phase)
     atoms, atomstype = atomnames(phase, nblocks=length(x))
     crystal = XYZs(atoms, x, y, z)
 

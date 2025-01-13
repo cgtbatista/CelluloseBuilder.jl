@@ -2,9 +2,10 @@ module CelluloseBuilder
 
 ## functions
 export cellulosebuilder
-export gettingBasisVectors, gettingPBC, unitcell2cartesian, atomnames, _trimming_xy, _expanding_z
+export gettingBasisVectors, gettingPBC, fractional2cartesian, atomnames, _trimming_xy, _expanding_z
+export transformASU
 export writeXYZ, rawXYZ, _exporting_PDBfile, transformingPBC, xyz2pdb, cleanPDB
-export generate_cellulose_topology
+export generate_cellulose_topology, get_crystallographic_info
 
 ## structures
 struct XYZ
@@ -26,7 +27,7 @@ export XYZ, XYZs
 ## editing the default atomnames
 include("./atomnames.jl")
 include("./expanding.jl")
-
+include("./coords.jl")
 ## crystalographic tools to deal with the crystalline cellulose
 include("./crystaltoolkit.jl")
 

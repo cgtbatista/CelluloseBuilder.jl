@@ -49,9 +49,9 @@ end
 
 """
 
-    transform_AsymUnits(x::Vector{Float64}, y::Vector{Float64}, z::Vector{Float64}, phase::String)    
-    transform_AsymUnits(raw_AsymUnit::Vector{Vector{Int64}}, phase::String)
-    transform_AsymUnits(phase::String)
+    transformASU(x::Vector{Float64}, y::Vector{Float64}, z::Vector{Float64}, phase::String)    
+    transformASU(raw_AsymUnit::Vector{Vector{Int64}}, phase::String)
+    transformASU(phase::String)
 
 This function transform the raw asymmetric unit cell to attend the translational symmetry of the cellulose phase (`Iα`, `Iβ`, `II` or `III`). The return is the
 transformed asymmetric unit cell structured as a `Vector{Vector[Float64]}`.
@@ -69,15 +69,15 @@ transformed asymmetric unit cell structured as a `Vector{Vector[Float64]}`.
 
 ```jldoctest
 
-julia > transform_AsymUnits(x, y, z, "Iβ")
-julia > transform_AsymUnits(xyz, "Iβ")
-julia > transform_AsymUnits("Iβ")
+julia > transformASU(x, y, z, "Iβ")
+julia > transformASU(xyz, "Iβ")
+julia > transformASU("Iβ")
 
 ```
 
 """
 
-function transform_AsymUnits(raw_AsymUnit::Vector{Vector{Float64}}, phase::String)
+function transformASU(raw_AsymUnit::Vector{Vector{Float64}}, phase::String)
     xtemp = Float64[]; ytemp = Float64[]; ztemp = Float64[]; 
     if phase == "Ib" || phase == "Iβ" || phase == "II" || phase == "III" || phase == "III_I" || phase == "III_i" || phase == "IIIi"
         for raw in enumerate(repeat(raw_AsymUnit, outer=2))
@@ -102,95 +102,21 @@ function transform_AsymUnits(raw_AsymUnit::Vector{Vector{Float64}}, phase::Strin
     return [ [ i, j, k ] for (i, j, k) in zip(xtemp, ytemp, ztemp) ]
 end
 
-function transform_AsymUnits(phase::String)
+function transformASU(phase::String)
     raw_AsymUnit = get_crystallographic_info(phase)[2]
-    return transform_AsymUnits(raw_AsymUnit, phase)
+    return transformASU(raw_AsymUnit, phase)
 end
 
-function transform_AsymUnits(x::Vector{Float64}, y::Vector{Float64}, z::Vector{Float64}, phase::String)  
+function transformASU(x::Vector{Float64}, y::Vector{Float64}, z::Vector{Float64}, phase::String)  
     if length(x) != length(y) || length(y) != length(z)
         error("The number of x, y, and z coordinates must be the same.")
     end
     raw_AsymUnit = [ [ i, j, k ] for (i, j, k) in zip(x, y, z) ]
-    return transform_AsymUnits(raw_AsymUnit, phase)
+    return transformASU(raw_AsymUnit, phase)
 end
 
 
 
-"""
-
-    unitcell2cartesian(cell_dim::Vector{Int64}, fractional_coords::Vector{Vector{Float64}}, uc_parameters::Vector{Vector{Float64}})
-    unitcell2cartesian(cell_dim::Vector{Int64}, phase::String)
-
-Convert the fractional unit cell coordinates to the cartesian coordinates. The return is the `x`, `y`, and `z` cartesian coordinates.
-Its uses the `get_crystallographic_info()` function to get the crystallographic parameters. The `phase` argument is used to define the crystallographic parameters.
-
-## Arguments
-- `cell_dim::Vector{Int64}`: The dimensions of the unit cell. It could be (xsize, ysize) or (xsize, ysize, zsize).
-- `fractional_coords::Vector{Vector{Float64}}`: The fractional coordinates of the unit cell.
-- `uc_parameters::Vector{Vector{Float64}}`: The crystallographic parameters of the unit cell.
-- `phase::String`: The cellulose phase. It could be `Iβ`, `Iα`, `II` or `III`.
-
-# Examples
-```jldoctest
-
-julia > unitcell2cartesian(xyzsize[1:2], get_crystallographic_info("Iβ")[2], get_crystallographic_info("Iβ")[3])
-julia > unitcell2cartesian(xyzsize, phase)
-
-```
-
-"""
-
-function unitcell2cartesian(cell_dim::Vector{Int64}, fractional_coords::Vector{Vector{Float64}}, uc_parameters::Vector{Vector{Float64}}; inclined=true)
-    
-    x = Vector{Float64}[]; y = Vector{Float64}[]; z = Vector{Float64}[]; ## Vector of vectors to store the cartesian coordinates for each unit cell
-    
-    a = uc_parameters[1][1]; b = uc_parameters[1][2]; c = uc_parameters[1][3];
-    α = uc_parameters[2][1]; β = uc_parameters[2][2]; γ = uc_parameters[2][3];
-    V_unitcell = a*b*c*sqrt(1 - cosd(α)^2 - cosd(β)^2 - cosd(γ)^2 + 2*cosd(α)*cosd(β)*cosd(γ));
-
-    if inclined == true
-        
-        xsize, ysize, zsize = cell_dim[1], cell_dim[2], cell_dim[3] ## parallelepiped
-        
-        for k in collect(1:1:xsize), j in collect(1:1:ysize), i in collect(1:1:zsize)
-            xtemp, ytemp, ztemp = Float64[], Float64[], Float64[]
-            istep, jstep, kstep = convert(Float64, i-1), convert(Float64, j-1), convert(Float64, k-1)
-            for fcoord in fractional_coords
-                xfrac, yfrac, zfrac = fcoord[1]+istep, fcoord[2]+jstep, fcoord[3]+kstep
-                push!(xtemp, a*xfrac + b*yfrac*cosd(γ) + c*zfrac*cosd(β));
-                push!(ytemp, b*yfrac*sind(γ) + c*zfrac*(cosd(α) - cosd(β)*cosd(γ))/sind(γ));
-                push!(ztemp, zfrac*V_unitcell/(a*b*sind(γ)));
-            end
-            push!(x, xtemp); push!(y, ytemp); push!(z, ztemp);
-        end
-
-    else
-        
-        xsize, ysize = cell_dim[1], cell_dim[2]
-        
-        for j in collect(1:1:ysize), i in collect(1:1:xsize)
-            xtemp, ytemp, ztemp = Float64[], Float64[], Float64[]
-            istep, jstep = convert(Float64, i-1), convert(Float64, j-1)
-            for fcoord in fractional_coords
-                xfrac, yfrac, zfrac = fcoord[1]+istep, fcoord[2]+jstep, fcoord[3]
-                push!(xtemp, a*xfrac + b*yfrac*cosd(γ) + c*zfrac*cosd(β));
-                push!(ytemp, b*yfrac*sind(γ) + c*zfrac*(cosd(α) - cosd(β)*cosd(γ))/sind(γ));
-                push!(ztemp, zfrac*V_unitcell/(a*b*sind(γ)));
-            end; push!(x, xtemp); push!(y, ytemp); push!(z, ztemp);
-        end
-
-    end
-
-    return x, y, z
-end
-
-function unitcell2cartesian(cell_dim::Vector{Int64}, phase::String)
-    fractional_coords = transform_AsymUnits(phase)
-    uc_parameters = get_crystallographic_info(phase)[3]
-    if phase == "Ia" || phase == "Iα"; i_value=true; else i_value=false; end
-    return unitcell2cartesian(cell_dim, fractional_coords, uc_parameters, inclined=i_value)
-end
 
 
 
