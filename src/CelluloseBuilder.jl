@@ -2,8 +2,8 @@ module CelluloseBuilder
 
 ## functions
 export cellulosebuilder
-export gettingBasisVectors, gettingPBC, unitcell2cartesian, atomsvecString, _trimming_xy, _expanding_z
-export writeXYZ, rawXYZ, _exporting_PDBfile, transformingPBC, _XYZfragments_2_PDB, _cleaning_PDBfragment
+export gettingBasisVectors, gettingPBC, unitcell2cartesian, atomnames, _trimming_xy, _expanding_z
+export writeXYZ, rawXYZ, _exporting_PDBfile, transformingPBC, xyz2pdb, cleanPDB
 export generate_cellulose_topology
 
 ## structures
@@ -24,13 +24,12 @@ end
 export XYZ, XYZs
 
 ## editing the default atomnames
-include("./editing_atomnames.jl")
+include("./atomnames.jl")
 include("./expanding.jl")
 
 ## crystalographic tools to deal with the crystalline cellulose
 include("./crystaltoolkit.jl")
 
-include("./formatter.jl")
 include("./exporting_systems.jl")
 include("./PBC.jl")
 
@@ -39,11 +38,13 @@ include("./fragments.jl")
 
 ## cleaning the temporary files
 include("./cleaning_tmpfiles.jl")
-
+include("./pdb.jl")
 include("./topology.jl")
 include("./vdw-surface.jl")
 
 # main cellulose builder function
 include("./cellulose.jl")
+
+include("./utils.jl")
 
 end
