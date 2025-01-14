@@ -1,9 +1,9 @@
-function atomnames(labels::Vector{String}, n::Int64, nblocks::Int64)
+function atomnames(labels::Vector{String}, n::Int64, ncells::Int64)
     atoms = repeat(replace.(labels, r"\d" => ""), outer=n);
-    return [ atoms for _ in 1:nblocks ]
+    return [ atoms for _ in 1:ncells ]
 end
 
-function atomnames(phase::String; nblocks=1, original=true)
+function atomnames(phase::String; ncells=1, original=true)
     
     labels = get_crystallographic_info(phase)[1]
 
@@ -20,8 +20,8 @@ function atomnames(phase::String; nblocks=1, original=true)
     end
     
     if original
-        return atomnames(firstpick.(labels), n, nblocks), labels
+        return atomnames(firstpick.(labels), n, ncells), labels
     else
-        return atomnames(firstpick.(labels), n, nblocks)
+        return atomnames(firstpick.(labels), n, ncells)
     end
 end

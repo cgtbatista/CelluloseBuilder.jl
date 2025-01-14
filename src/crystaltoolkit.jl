@@ -1,124 +1,124 @@
-##function gettingBasisVectors(lattice_vector::Vector{Int64}, uc_parameters::Vector{Vector{Float64}})
-##    a = uc_parameters[1][1]; b = uc_parameters[1][2]; c = uc_parameters[1][3];              ## the coefficients of the unit cell parameters
-##    alpha = uc_parameters[2][1]; beta = uc_parameters[2][2]; gamma = uc_parameters[2][3];   ## the unit cell angles
-##    xbasisvector = [
-##        lattice_vector[1]*a*sind(beta)*sqrt(1-(cotd(alpha)*cotd(beta)-cscd(alpha)*cscd(beta)*cosd(gamma))^2),
-##        0.,
-##        0.
-##    ]
-##    ybasisvector = [
-##        lattice_vector[2]*a*(cscd(alpha)*cosd(gamma)-cotd(alpha)*cosd(beta)),
-##        lattice_vector[2]*b*sind(alpha),
-##        0.
-##    ]
-##    zbasisvector = [
-##        lattice_vector[3]*a*cosd(beta),
-##        lattice_vector[3]*b*cosd(alpha),
-##        lattice_vector[3]*c
-##    ]
-##    return [ xbasisvector, ybasisvector, zbasisvector ]
-##end
-
-function gettingBasisVectors(lattice_vector::Vector{Int64}, uc_parameters::Vector{Vector{Float64}})
-    a = uc_parameters[1][1]; b = uc_parameters[1][2]; c = uc_parameters[1][3];              ## the coefficients of the unit cell parameters
-    alpha = uc_parameters[2][1]; beta = uc_parameters[2][2]; gamma = uc_parameters[2][3];   ## the unit cell angles
-    xbasisvector = [
-        lattice_vector[1]*a,
-        0.,
-        0.
-    ]
-    ybasisvector = [
-        lattice_vector[2]*b*cosd(gamma),
-        lattice_vector[2]*b*sind(gamma),
-        0.
-    ]
-    zbasisvector = [
-        lattice_vector[3]*c*cosd(beta),
-        lattice_vector[3]*c*(cosd(alpha) - cosd(beta)*cosd(gamma))/sind(gamma),
-        lattice_vector[3]*c*sqrt(1 - cosd(beta)^2 - ((cosd(alpha)-cosd(beta)*cosd(gamma))/sind(gamma))^2)
-    ]
-    return [ xbasisvector, ybasisvector, zbasisvector ]
+struct XYZ
+    atoms::Vector{String}
+    x::Vector{Float64}
+    y::Vector{Float64}
+    z::Vector{Float64}
 end
 
-function gettingBasisVectors(lattice_vector::Vector{Int64}, phase::String)
-    uc_parameters = get_crystallographic_info(phase)[3]
-    return gettingBasisVectors(lattice_vector, uc_parameters)
+struct XYZs
+    atoms::Vector{Vector{String}}
+    x::Vector{Vector{Float64}}
+    y::Vector{Vector{Float64}}
+    z::Vector{Vector{Float64}}
 end
 
-
-
 """
+    _expanding_z(atoms::Vector{String}, x::Vector{Float64}, y::Vector{Float64}, z::Vector{Float64}, zsize::Int64; phase="Iβ")
 
-    transformASU(x::Vector{Float64}, y::Vector{Float64}, z::Vector{Float64}, phase::String)    
-    transformASU(raw_AsymUnit::Vector{Vector{Int64}}, phase::String)
-    transformASU(phase::String)
-
-This function transform the raw asymmetric unit cell to attend the translational symmetry of the cellulose phase (`Iα`, `Iβ`, `II` or `III`). The return is the
-transformed asymmetric unit cell structured as a `Vector{Vector[Float64]}`.
-
-## Arguments
-
-- `x::Vector{Float64}`: The x coordinates of the raw asymmetric unit cell.
-- `y::Vector{Float64}`: The y coordinates of the raw asymmetric unit cell.
-- `z::Vector{Float64}`: The z coordinates of the raw asymmetric unit cell.
-- `raw_AsymUnit::Vector{Vector{Float64}}`: The raw asymmetric unit cell. It can be rightly obtained from the `get_crystallographic_info()` function.
-- `phase::String`: The cellulose phase. It could be `Iβ`, `Iα`, `II` or `III`.
-
-
-## Examples
-
-```jldoctest
-
-julia > transformASU(x, y, z, "Iβ")
-julia > transformASU(xyz, "Iβ")
-julia > transformASU("Iβ")
-
-```
-
+This function is able to propagate the crystalline system across the z-axis.
 """
+function _expanding_z(xyz::XYZ, n::Int64; phase="Iβ")
 
-function transformASU(raw_AsymUnit::Vector{Vector{Float64}}, phase::String)
-    xtemp = Float64[]; ytemp = Float64[]; ztemp = Float64[]; 
-    if phase == "Ib" || phase == "Iβ" || phase == "II" || phase == "III" || phase == "III_I" || phase == "III_i" || phase == "IIIi"
-        for raw in enumerate(repeat(raw_AsymUnit, outer=2))
-            if raw[1] <= length(raw_AsymUnit)
-                push!(xtemp, raw[2][1])
-                push!(ytemp, raw[2][2])
-                push!(ztemp, raw[2][3])
-            else
-                push!(xtemp, -1*raw[2][1])
-                push!(ytemp, -1*raw[2][2])
-                push!(ztemp, raw[2][3]+0.5)
+    atoms, x, y, z = String[], Float64[], Float64[], Float64[]
+
+    if !(lowercase(phase) in Set(["ia", "iα", "ib", "iβ", "ii", "iii", "iii_i", "iiii"]))
+        error("The phase $phase is not implemented yet.")
+    end
+
+    if !(lowercase(phase) in Set(["ia", "iα"]))        
+        parameters = get_crystallographic_info(phase)[3]
+        c = parameters[1][3]
+        if lowercase(phase) in ["ib", "iβ"]
+            for k in collect(1:1:n)
+                append!(atoms, xyz.atoms); append!(x, xyz.x); append!(y, xyz.y); append!(z, xyz.z .+ c*(k-1));
             end
         end
-    elseif phase == "Ia" || phase == "Iα"
-        for raw in raw_AsymUnit
-            push!(xtemp, raw[1])
-            push!(ytemp, raw[2])
-            push!(ztemp, raw[3])
+        if lowercase(phase) == "ii"
+            for k in collect(2:1:max_k)
+                append!(atoms, xyz.atoms); append!(x, xyz.x); append!(y, xyz.y); append!(z, xyz.z .+ c*(k-1));
+            end
+        end
+        if lowercase(phase) in Set(["iii", "iii_i", "iiii"])
+            for k in collect(1:1:n)
+                append!(atoms, xyz.atoms); append!(x, xyz.x); append!(y, xyz.y); append!(z, xyz.z .+ c*(k-1));
+            end
+        end
+    else
+        atoms, x, y, z = xyz.atoms, xyz.x, xyz.y, xyz.z
+    end
+
+    return XYZ(atoms, x, y, z)
+end
+
+function _trimming_xy(xyz::XYZs, dim::Vector{Int64}; phase="Iβ")
+
+    atoms, x, y, z = String[], Float64[], Float64[], Float64[]
+
+    if !(lowercase(phase) in Set(["ia", "iα", "ib", "iβ", "ii", "iii", "iii_i", "iiii"]))
+        error("The phase $phase is not implemented yet.")
+    else
+        xsize, ysize = dim[1], dim[2]
+        units = 1
+    end
+
+    if lowercase(phase) in Set(["ib", "iβ"])
+        for j in collect(1:1:ysize), i in collect(1:1:xsize)
+            at, xtemp, ytemp, ztemp = xyz.atoms[units], xyz.x[units], xyz.y[units], xyz.z[units]
+            _atomselect_indexes = (eachindex(at) .== 0)
+            if ((i == 1) && (j != ysize)) || ((i != 1) && (i != xsize) && (j == 1))
+                _atomselect_indexes = (eachindex(at) .>= 64) .& (eachindex(at) .<= 84)
+            end
+            if ((j != 1) && (i == xsize)) || ((i != 1) && (i != xsize) && (j == ysize))
+                _atomselect_indexes = (eachindex(at) .>= 22) .& (eachindex(at) .<= 42)
+            end
+            if ((i == 1) && (j == ysize)) || ((j == 1) && (i == xsize))
+                _atomselect_indexes = ((eachindex(at) .>= 22) .& (eachindex(at) .<= 42)) .| ((eachindex(at) .>= 64) .& (eachindex(at) .<= 84))
+            end
+
+            units += 1
+            append!(atoms, at[.!(_atomselect_indexes)])
+            append!(x, xtemp[.!(_atomselect_indexes)])
+            append!(y, ytemp[.!(_atomselect_indexes)])
+            append!(z, ztemp[.!(_atomselect_indexes)])
+        end
+    end
+    
+    if lowercase(phase) == "ii"
+        for j in collect(1:1:ysize), i in collect(1:1:xsize)
+            at, xtemp, ytemp, ztemp = xyz.atoms[units], xyz.x[units], xyz.y[units], xyz.z[units]
+            _atomselect_indexes = (eachindex(at) .== 0)
+            if ((i == 1) && (j != ysize)) || ((i != 1) && (i != xsize) && (j == 1))
+                _atomselect_indexes = (eachindex(at) .>= 55) .& (eachindex(at) .<= 72)
+            end
+            if ((j != 1) && (i == xsize)) || ((i != 1) && (i != xsize) && (j == ysize))
+                _atomselect_indexes = (eachindex(at) .>= 19) .& (eachindex(at) .<= 36)
+            end
+            if ((i == 1) && (j == ysize)) || ((j == 1) && (i == xsize))
+                _atomselect_indexes = ((eachindex(at) .>= 19) .& (eachindex(at) .<= 36)) .| ((eachindex(at) .>= 55) .& (eachindex(at) .<= 72))
+            end
+            
+            units += 1
+            append!(atoms, at[.!(_atomselect_indexes)])
+            append!(x, xtemp[.!(_atomselect_indexes)])
+            append!(y, ytemp[.!(_atomselect_indexes)])
+            append!(z, ztemp[.!(_atomselect_indexes)])
+        end        
+    end
+
+    if lowercase(phase) in Set(["ia", "iα"])
+        for (at, xtemp, ytemp, ztemp) in zip(xyz.atoms, xyz.x, xyz.y, xyz.z)
+            append!(atoms, at); append!(x, xtemp); append!(y, ytemp); append!(z, ztemp);
         end
     end
 
-    return [ [ i, j, k ] for (i, j, k) in zip(xtemp, ytemp, ztemp) ]
-end
-
-function transformASU(phase::String)
-    raw_AsymUnit = get_crystallographic_info(phase)[2]
-    return transformASU(raw_AsymUnit, phase)
-end
-
-function transformASU(x::Vector{Float64}, y::Vector{Float64}, z::Vector{Float64}, phase::String)  
-    if length(x) != length(y) || length(y) != length(z)
-        error("The number of x, y, and z coordinates must be the same.")
+    if lowercase(phase) in Set(["iii", "iii_i", "iiii"])
+        for (at, xtemp, ytemp, ztemp) in zip(xyz.atoms, xyz.x, xyz.y, xyz.z)
+            append!(atoms, at); append!(x, xtemp); append!(y, ytemp); append!(z, ztemp);
+        end
     end
-    raw_AsymUnit = [ [ i, j, k ] for (i, j, k) in zip(x, y, z) ]
-    return transformASU(raw_AsymUnit, phase)
+    
+    return XYZ(atoms, x, y, z)
 end
-
-
-
-
-
 
 """
 

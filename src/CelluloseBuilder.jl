@@ -1,38 +1,28 @@
 module CelluloseBuilder
 
+## structures
+export XYZ
+export XYZs
+
 ## functions
 export cellulosebuilder
-export gettingBasisVectors, gettingPBC, fractional2cartesian, atomnames, _trimming_xy, _expanding_z
-export transformASU
+export lattice2basis, getPBC, fractional2cartesian, _trimming_xy, _expanding_z
+export translate
 export writeXYZ, rawXYZ, _exporting_PDBfile, transformingPBC, xyz2pdb, cleanPDB
 export generate_cellulose_topology, get_crystallographic_info
 
-## structures
-struct XYZ
-    atoms::Vector{String}
-    x::Vector{Float64}
-    y::Vector{Float64}
-    z::Vector{Float64}
-end
-
-struct XYZs
-    atoms::Vector{Vector{String}}
-    x::Vector{Vector{Float64}}
-    y::Vector{Vector{Float64}}
-    z::Vector{Vector{Float64}}
-end
-
-export XYZ, XYZs
-
-## editing the default atomnames
-include("./atomnames.jl")
-include("./expanding.jl")
-include("./coords.jl")
-## crystalographic tools to deal with the crystalline cellulose
+## crystalographic tools to deal with cellulose
 include("./crystaltoolkit.jl")
 
+## editing the default atomnames
+include("./atomnames.jl")                                       #done
+include("./coords.jl")                                          #done
+
 include("./exporting_systems.jl")
-include("./PBC.jl")
+
+## PBC tools
+include("./pbc.jl")
+include("./pbc-misc.jl")
 
 ## picking the number of structure fragments inside a VMD structure loading output
 include("./fragments.jl")
@@ -45,7 +35,7 @@ include("./vdw-surface.jl")
 
 # main cellulose builder function
 include("./cellulose.jl")
-
+include("./operators.jl")
 include("./utils.jl")
 
 end

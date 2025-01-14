@@ -24,7 +24,7 @@
 ##
 ##    ## DEALING W/ UNIT CELLS -----------------------------------------------------------------
 ##    println("   ... BASIS VECTORS")
-##    basisvectors = gettingBasisVectors(lattice, phase)
+##    basisvectors = lattice2basis(lattice, phase)
 ##    println("")
 ##    println("           X -- $(round.(basisvectors[1], digits=1))")
 ##    println("           Y -- $(round.(basisvectors[2], digits=1))")
@@ -37,7 +37,7 @@
 ##
 ##    println("   1 - Getting the initial unit cell coordinates and atomic labels:")
 ##    println("       + imposing translational symmetry for $pbc.")
-##    xyzsize = gettingPBC([xsize, ysize, zsize], phase, pbc=pbc)
+##    xyzsize = getPBC([xsize, ysize, zsize], phase, pbc=pbc)
 ##    println("       + appling transformations on fractional coordinates needed for the phase $phase.")
 ##    println("       + transforming the asymmetric unit to the cartesian coordinates for every [a,b,c] = [$xsize,$ysize,$zsize] Å.")
 ##    xinit, yinit, zinit = fractional2cartesian(xyzsize, phase)
@@ -116,12 +116,12 @@
 ##    if covalent; println("COVALENT TURNNED ON -- CONSIDERING THE PERIODIC COVALENT BONDING ACROSS THE BOX BORDERS..."); end
 ##    println("")
 ##    println("")
-##    xyzsize, lattice = gettingPBC(monolayer, nchains, ncellobiose, phase)
+##    xyzsize, lattice = getPBC(monolayer, nchains, ncellobiose, phase)
 ##    xsize, ysize, zsize = xyzsize[1], xyzsize[2], xyzsize[3]
 ##
 ##    ## DEALING W/ UNIT CELLS -----------------------------------------------------------------
 ##    println("   ... BASIS VECTORS")
-##    basisvectors = gettingBasisVectors(lattice, phase)
+##    basisvectors = lattice2basis(lattice, phase)
 ##    println("")
 ##    println("           X -- $(round.(basisvectors[1], digits=1))")
 ##    println("           Y -- $(round.(basisvectors[2], digits=1))")
@@ -202,13 +202,13 @@ function cellulosebuilder(monomers::Int64; phase="Iβ", fibril=nothing, covalent
     Building a cellulose fibril with $monomers cellobiose units.
     This fibrils are built with the $phase phase and the periodic covalent bonding is setted as $covalent.
     """)
-    xyzsize, lattice = gettingPBC(ncellobiose, phase)
-    basisvectors = gettingBasisVectors(lattice, phase)
+    xyzsize, lattice = getPBC(ncellobiose, phase)
+    basisvectors = lattice2basis(lattice, phase)
 
     println("""
     The (a, b, c) unit cell dimensions are ($(xsize = xyzsize[1]), $(ysize = xyzsize[2]), $(zsize = xyzsize[3])) and the basis vectors are:
 
-        x = $(round.(basisvectors[1], digits=1)); y = $(round.(basisvectors[2], digits=1)); z = $(round.(basisvectors[3], digits=1))
+        a = $(round.(basisvectors[1], digits=1)); b = $(round.(basisvectors[2], digits=1)); c = $(round.(basisvectors[3], digits=1))
 
 
     Building the cellulose structure file
@@ -224,7 +224,7 @@ function cellulosebuilder(monomers::Int64; phase="Iβ", fibril=nothing, covalent
          - atomic labels for $phase.
     """)
     x, y, z = fractional2cartesian(xyzsize, phase)
-    atoms, atomstype = atomnames(phase, nblocks=length(x))
+    atoms, atomstype = atomnames(phase, ncells=length(x))
     crystal = XYZs(atoms, x, y, z)
 
     println("""
