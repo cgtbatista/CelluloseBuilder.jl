@@ -12,6 +12,13 @@ struct XYZs
     z::Vector{Vector{Float64}}
 end
 
+struct UnitCell
+    atoms::Vector{String}                                   ##
+    coords::Vector{Vector{Float64}}                         ## fractional coordinates [ [x0, y0, z0], [x1, y1, z1], [x2, y2, z2], ..., [xN, yN, zN] ]
+    parameters::Tuple{Vector{Float64}, Vector{Float64}}     ## [ [a, b, c], [α, β, γ] ]
+end
+
+
 """
     _expanding_z(atoms::Vector{String}, x::Vector{Float64}, y::Vector{Float64}, z::Vector{Float64}, zsize::Int64; phase="Iβ")
 

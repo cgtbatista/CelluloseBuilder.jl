@@ -37,7 +37,7 @@
 ##
 ##    println("   1 - Getting the initial unit cell coordinates and atomic labels:")
 ##    println("       + imposing translational symmetry for $pbc.")
-##    xyzsize = getPBC([xsize, ysize, zsize], phase, pbc=pbc)
+##    xyzsize = PBC([xsize, ysize, zsize], phase, pbc=pbc)
 ##    println("       + appling transformations on fractional coordinates needed for the phase $phase.")
 ##    println("       + transforming the asymmetric unit to the cartesian coordinates for every [a,b,c] = [$xsize,$ysize,$zsize] Å.")
 ##    xinit, yinit, zinit = fractional2cartesian(xyzsize, phase)
@@ -116,7 +116,7 @@
 ##    if covalent; println("COVALENT TURNNED ON -- CONSIDERING THE PERIODIC COVALENT BONDING ACROSS THE BOX BORDERS..."); end
 ##    println("")
 ##    println("")
-##    xyzsize, lattice = getPBC(monolayer, nchains, ncellobiose, phase)
+##    xyzsize, lattice = PBC(monolayer, nchains, ncellobiose, phase)
 ##    xsize, ysize, zsize = xyzsize[1], xyzsize[2], xyzsize[3]
 ##
 ##    ## DEALING W/ UNIT CELLS -----------------------------------------------------------------
@@ -187,26 +187,21 @@ Builds a cellulose fibril with a given number of cellobiose units based on the n
 """
 function cellulosebuilder(monomers::Int64; phase="Iβ", fibril=nothing, covalent=true, vmd="vmd", topology_file=generate_cellulose_topology())
 
-    ncellobiose = Int64(monomers/2)
-
-    if monomers < 2
-        error("The number of cellobiose units must be equal or greater than 1. The actual value is $(ncellobiose).")
-    end ## checking the number of cellobiose units
-
-    if monomers%2 != 0
-        error("The number of monomer units must be an even number. The actual value is $(monomers%2).")
-    end ## checking for a even number of cellobiose units
+    valid_fibril = (monomers >= 2) || (monomers%2 == 0)
+    if !valid_fibril
+        error("The number of cellobiose units must be an integer value equal or greater than 1. The actual value is $(Int64(monomers/2)).")
+    end
 
     println("""
 
     Building a cellulose fibril with $monomers cellobiose units.
     This fibrils are built with the $phase phase and the periodic covalent bonding is setted as $covalent.
     """)
-    xyzsize, lattice = getPBC(ncellobiose, phase)
+    xyzsizes, lattice = PBC(monomers, phase=phase)
     basisvectors = lattice2basis(lattice, phase)
 
     println("""
-    The (a, b, c) unit cell dimensions are ($(xsize = xyzsize[1]), $(ysize = xyzsize[2]), $(zsize = xyzsize[3])) and the basis vectors are:
+    The unit cell is ($(xsize = xyzsizes[1]), $(ysize = xyzsizes[2]), $(zsize = xyzsizes[3])) and its basis vectors are:
 
         a = $(round.(basisvectors[1], digits=1)); b = $(round.(basisvectors[2], digits=1)); c = $(round.(basisvectors[3], digits=1))
 
@@ -223,7 +218,7 @@ function cellulosebuilder(monomers::Int64; phase="Iβ", fibril=nothing, covalent
          - transforming the asymmetric unit to the cartesian coordinates for every [a,b,c] = [$xsize,$ysize,$zsize] Å.
          - atomic labels for $phase.
     """)
-    x, y, z = fractional2cartesian(xyzsize, phase)
+    x, y, z = fractional2cartesian(xyzsizes, phase)
     atoms, atomstype = atomnames(phase, ncells=length(x))
     crystal = XYZs(atoms, x, y, z)
 
@@ -233,12 +228,12 @@ function cellulosebuilder(monomers::Int64; phase="Iβ", fibril=nothing, covalent
          - expanding the z coordinates for $phase.
          - picking the number of fragments of the basic structure.
     """)
-    xyzfile, nfragments = rawXYZ(crystal, xyzsize, phase=phase)
+    xyzfile, nfragments = rawXYZ(crystal, xyzsizes, phase=phase)
     
     println("""
     iii. applying the periodic boundary conditions (PBC) on the $(nfragments) fragments: $(pbc)...
     """)
-    vmdxyz, frag_sel, frag_units = transformingPBC("fibril", xyzsize, phase=phase, fibril=fibril, xyzfile=xyzfile, vmd=vmd)
+    vmdxyz, frag_sel, frag_units = transformingPBC(xyzfile, xyzsizes, phase=phase, fibril=fibril, vmd=vmd)
 
     println("""
     iv.  generating the PSF/PDB files:
@@ -256,8 +251,8 @@ function cellulosebuilder(monomers::Int64; phase="Iβ", fibril=nothing, covalent
         push!(tmpfragments, new_pdbname)
     end
     if phase == "Iβ" || phase == "Ib" || phase == "II"
-        n_monomers = 2*xyzsize[3]
-    else n_monomers = xyzsize[3] end
+        n_monomers = 2*xyzsizes[3]
+    else n_monomers = xyzsizes[3] end
     vmdoutput3 = _exporting_PDBfile(n_monomers, tmpfragments, phase=phase, covalent=covalent, vmd=vmd, topology_file=topology_file)
     
     cleaning_tmpfiles("cellulose")
