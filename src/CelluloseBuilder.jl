@@ -10,7 +10,7 @@ export translate
 export writeXYZ, rawXYZ, _exporting_PDBfile, pbcXYZ, fragPDBs, cleanPDB
 export generate_cellulose_topology, get_crystallographic_info
 
-export unitcell, crystal, picking_fragments
+export unitcell, crystal, picking_fragments, cleanPDB!
 
 ## crystalographic tools to deal with cellulose
 include("./crystaltoolkit.jl")
