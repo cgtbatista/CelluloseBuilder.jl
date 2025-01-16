@@ -105,3 +105,110 @@ function PBC(monomers::Int64, chains::Int64; phase="Iβ", layer="center")
 
     return [xsize, ysize, zsize], [a, b, c]
 end
+
+"""
+    pbcdata(xsize::Int64, ysize::Int64, zsize::Int64)
+
+Dictionary useful for `(a, b, c)` definition of the crystal.
+"""
+function pbcdata(xsize::Int64, ysize::Int64, zsize::Int64)
+    
+    PBC = Dict{Tuple{String, String}, Function}(
+        ("ib", "a") => () -> (xsize + 1, ysize, zsize, """
+        Periodic boundary conditions will be applied on crystalographic direction `a`.
+        Surfaces (1 0 0), (2 0 0), and (0 1 0) will be exposed!
+        
+        """),
+        ("ib", "b") => () -> (xsize, ysize + 1, zsize, """
+        Periodic boundary conditions will be applied on crystalographic direction `b`.
+        Surfaces (1 0 0), (0 1 0), and (0 2 0) will be exposed!
+        
+        """),
+        ("ib", "all") => () -> (xsize + 1, ysize + 1, zsize, """
+        Periodic boundary conditions will be applied on both crystalographic directions `a` and `b`.
+        Surfaces (1 0 0), (2 0 0), (0 1 0), and (0 2 0) will be exposed!
+        
+        """),
+        ("ii", "a") => () -> (xsize + 1, ysize, zsize, """
+        Periodic boundary conditions will be applied on crystalographic direction `a`.
+        Surfaces (1 0 0), (2 0 0), and (0 1 0) will be exposed!
+        
+        """),
+        ("ii", "b") => () -> (xsize, ysize + 1, zsize, """
+        Periodic boundary conditions will be applied on crystalographic direction `b`.
+        Surfaces (1 0 0), (0 1 0), and (0 2 0) will be exposed!
+        
+        """),
+        ("ii", "all") => () -> (xsize + 1, ysize + 1, zsize, """
+        Periodic boundary conditions will be applied on both crystalographic directions `a` and `b`.
+        Surfaces (1 0 0), (2 0 0), (0 1 0), and (0 2 0) will be exposed!
+        
+        """)
+    )
+
+    aliases = [
+        (("iβ", "a"), ("ib", "a")),
+        (("iβ", "b"), ("ib", "b")),
+        (("iβ", "all"), ("ib", "all"))
+    ]
+
+    for (alias, original) in aliases
+        PBC[alias] = PBC[original]
+    end
+
+    return PBC
+end
+
+"""
+    pbcdata(monomers::Int64; chains=nothing)
+
+Dictionary useful for cellulose definition of the layers and fibril.
+"""
+function pbcdata(monomers::Int64; chains=nothing)
+    
+    n = Int64(monomers/2)
+
+    if isnothing(chains)
+        PBC = Dict{String, Tuple{Int64, Int64, Int64}}(
+            "ib" => (5, 7, n),
+            "II" => (7, 5, n),
+            "ia" => (7, 6, n)
+        )
+
+        aliases = [
+            ("iβ", "ib"),
+            ("iα", "ia")
+        ]
+    end
+
+    if typeof(chains) == Int64
+        chains2 = chains + 1        
+        PBC = Dict{Tuple{String, String}, Tuple{Int64, Int64, Int64}}(
+            ("ib", "center") => (2, chains2, n),
+            ("ib", "origin") => (2, chains, n),
+            ("ia", "monolayer") => (chains, chains, n),
+            ("ii", "center") => (chains2, 2, n),
+            ("ii", "origin") => (chains, 2, n)
+        )
+
+        aliases = [
+            (("ib", "c"), ("ib", "center")),
+            (("ib", "o"), ("ib", "origin")),
+            (("ia", "m"), ("ia", "monolayer")),
+            (("ii", "c"), ("ii", "center")),
+            (("ii", "o"), ("ii", "origin")),
+            (("iβ", "center"), ("ib", "center")),
+            (("iβ", "origin"), ("ib", "origin")),
+            (("iα", "monolayer"), ("ia", "monolayer")),
+            (("iβ", "c"), ("ib", "center")),
+            (("iβ", "o"), ("ib", "origin")),
+            (("iα", "m"), ("ia", "monolayer"))
+        ]
+    end
+
+    for (alias, original) in aliases
+        PBC[alias] = PBC[original]
+    end
+
+    return PBC
+end

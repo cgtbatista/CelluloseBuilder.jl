@@ -33,6 +33,9 @@ include("./pdb.jl")
 include("./topology.jl")
 include("./vdw-surface.jl")
 
+# file generators
+include("./xyz.jl")
+
 # main cellulose builder function
 include("./cellulose.jl")
 include("./operators.jl")

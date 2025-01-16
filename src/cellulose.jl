@@ -231,7 +231,7 @@ function cellulosebuilder(monomers::Int64; phase="Iβ", fibril=nothing, covalent
     xyzfile, nfragments = rawXYZ(crystal, xyzsizes, phase=phase)
     
     println("""
-    iii. applying the periodic boundary conditions (PBC) on the $(nfragments) fragments: $(pbc)...
+    iii. screening the $(nfragments) chains of the $xyzfile crystal that respect the fibril xy-plane restricion for $phase phase.
     """)
     vmdxyz, frag_sel, frag_units = pbcXYZ(xyzfile, xyzsizes, phase=phase, fibril=fibril, vmd=vmd)
 
