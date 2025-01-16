@@ -235,18 +235,10 @@ function cellulosebuilder(monomers::Int64; phase="Iβ", fibril=nothing, covalent
          - cleaning each fragment PDB.")
          - using the CHARMM topology file to build the final PDB/PSF with the fragments
     """)
-
-    pdbnames = fragPDBs(new_xyzname, fragments=units, vmd=vmd)
-    
-    new_pdbnames = cleanPDB.(pdbnames, charmm_atomstyle)
-    # tmpfragments = String[]; tmpfile = tempname();
-    
-    # for u in units
-    #     pdbname = pdb_basename * "_" * u * ".pdb"
-    #     new_pdbname = tmpfile * "_" * u * ".pdb"
-    #     cleanPDB(pdbname, atomstype, new_pdbname=new_pdbname)
-    #     push!(tmpfragments, new_pdbname)
-    # end
+    pdbnames = fragPDBs(new_xyzname, fragments=chains, vmd=vmd)
+    for pdb in pdbnames
+        cleanPDB!(pdb, charmm_atomstyle)
+    end
 
     n = if in(lowercase(phase), Set(["ib", "iβ", "ii"]))
         2 * xyzsizes[3]
@@ -254,8 +246,7 @@ function cellulosebuilder(monomers::Int64; phase="Iβ", fibril=nothing, covalent
         xyzsizes[3]
     end
     
-    #vmdoutput = _exporting_PDBfile(n, tmpfragments, phase=phase, covalent=covalent, vmd=vmd, topology_file=topology_file)
-    vmdoutput = _exporting_PDBfile(n, new_pdbnames, phase=phase, covalent=covalent, vmd=vmd, topology_file=topology_file)
+    vmdoutput = _exporting_PDBfile(n, pdbnames, phase=phase, covalent=covalent, vmd=vmd, topology_file=topology_file)
     
     cleaning_tmpfiles("cellulose")
     
