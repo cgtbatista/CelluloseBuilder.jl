@@ -1,3 +1,18 @@
+function rawXYZ(crystal::CrystalXYZ, xyzsizes::Vector{Int64}; phase="Iβ", exporting=true, natoms=nothing, xyzfile=nothing, vmd="vmd", output=false)
+    
+    atemp, xtemp, ytemp, ztemp = xy_pruning(crystal.atoms, crystal.x, crystal.y, crystal.z, xyzsizes, phase)
+    atoms, x, y, z = z_expansion(atemp, xtemp, ytemp, ztemp, xyzsizes, phase)
+
+    if !exporting
+        return atoms, x, y, z
+    else
+        return writeXYZ(
+                    atoms, x, y, z;
+                    natoms=natoms, xyzfile=xyzfile, vmd=vmd, output=output
+                )
+    end
+end
+
 function pbcXYZ(
             xyzname::String,
             xyzsizes::Vector{Int64};

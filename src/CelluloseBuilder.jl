@@ -1,15 +1,16 @@
 module CelluloseBuilder
 
 ## structures
-export XYZ
-export XYZs
+export CrystalXYZ, UnitCell
 
 ## functions
 export cellulosebuilder
-export lattice2basis, PBC, fractional2cartesian, _trimming_xy, _expanding_z
+export lattice2basis, PBC, fractional2cartesian, xy_pruning, z_expansion
 export translate
 export writeXYZ, rawXYZ, _exporting_PDBfile, pbcXYZ, xyz2pdb, cleanPDB
 export generate_cellulose_topology, get_crystallographic_info
+
+export unitcell, crystal
 
 ## crystalographic tools to deal with cellulose
 include("./crystaltoolkit.jl")

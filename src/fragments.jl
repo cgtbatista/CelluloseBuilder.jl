@@ -102,18 +102,3 @@ function writeXYZ(
     end
 
 end
-
-function rawXYZ(xyz::XYZs, dim::Vector{Int64}; phase="Iβ", exporting=true, natoms=nothing, xyzfile=nothing, vmd="vmd", output=false)
-    
-    xyz_trimmed = _trimming_xy(xyz, dim, phase=phase)
-    xyz_expanded = _expanding_z(xyz_trimmed, dim[3], phase=phase)
-
-    if !exporting
-        return xyz_expanded
-    else
-        return writeXYZ(
-                    xyz_expanded.atoms, xyz_expanded.x, xyz_expanded.y, xyz_expanded.z;
-                    natoms=natoms, xyzfile=xyzfile, vmd=vmd, output=output
-                )
-    end
-end

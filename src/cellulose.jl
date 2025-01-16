@@ -47,9 +47,9 @@
 ##
 ##    println("   2 - Extending the cellulose modifications of the atoms:")
 ##    println("       + cleaning the coordinates and atomic labels for $phase.")
-##    atomsclean, xclean, yclean, zclean = _trimming_xy(atomsinit, xinit, yinit, zinit, xyzsize, phase=phase)
+##    atomsclean, xclean, yclean, zclean = xy_pruning(atomsinit, xinit, yinit, zinit, xyzsize, phase=phase)
 ##    println("       + expanding the z coordinates for $phase.")
-##    atomsexpnd, xexpnd, yexpnd, zexpnd = _expanding_z(atomsclean, xclean, yclean, zclean, xyzsize[3], phase=phase)
+##    atomsexpnd, xexpnd, yexpnd, zexpnd = z_expansion(atomsclean, xclean, yclean, zclean, xyzsize[3], phase=phase)
 ##    println("       + picking the number of fragments of the basic structure.")
 ##    xyzfile, vmdoutput = writeXYZ(atomsexpnd, xexpnd, yexpnd, zexpnd)
 ##    n_fragments = picking_fragments(vmdoutput)
@@ -142,9 +142,9 @@
 ##
 ##    println("   2 - Extending the cellulose modifications of the atoms:")
 ##    println("       + cleaning the coordinates and atomic labels for $phase.")
-##    atomsclean, xclean, yclean, zclean = _trimming_xy(atomsinit, xinit, yinit, zinit, xyzsize, phase=phase)
+##    atomsclean, xclean, yclean, zclean = xy_pruning(atomsinit, xinit, yinit, zinit, xyzsize, phase=phase)
 ##    println("       + expanding the z coordinates for $phase.")
-##    atomsexpnd, xexpnd, yexpnd, zexpnd = _expanding_z(atomsclean, xclean, yclean, zclean, xyzsize[3], phase=phase)
+##    atomsexpnd, xexpnd, yexpnd, zexpnd = z_expansion(atomsclean, xclean, yclean, zclean, xyzsize[3], phase=phase)
 ##    println("       + picking the number of fragments of the basic structure.")
 ##    xyzfile, vmdoutput = writeXYZ(atomsexpnd, xexpnd, yexpnd, zexpnd)
 ##    n_fragments = picking_fragments(vmdoutput)
@@ -197,11 +197,10 @@ function cellulosebuilder(monomers::Int64; phase="Iβ", fibril=nothing, covalent
     Building a cellulose fibril with $monomers cellobiose units.
     This fibrils are built with the $phase phase and the periodic covalent bonding is setted as $covalent.
     """)
-    xyzsizes, lattice = PBC(monomers, phase=phase)
-    basisvectors = lattice2basis(lattice, phase)
+    xyzsizes, lattice, basisvectors = unitcell(monomers, phase)
 
     println("""
-    The unit cell is ($(xsize = xyzsizes[1]), $(ysize = xyzsizes[2]), $(zsize = xyzsizes[3])) and its basis vectors are:
+    The unit cell has the lattice of ($(lattice[1]), $(lattice[2]), $(lattice[3])) and its basis vectors are:
 
         a = $(round.(basisvectors[1], digits=1)); b = $(round.(basisvectors[2], digits=1)); c = $(round.(basisvectors[3], digits=1))
 
@@ -215,12 +214,10 @@ function cellulosebuilder(monomers::Int64; phase="Iβ", fibril=nothing, covalent
     println("""
     i.   getting the initial unit cell coordinates and atomic labels:
          - imposing translational symmetry for pbc = $pbc.
-         - transforming the asymmetric unit to the cartesian coordinates for every [a,b,c] = [$xsize,$ysize,$zsize] Å.
+         - transforming the ASU to cartesian coordinates for every [xsize, ysize, zsize] = [$(xyzsizes[1]),$(xyzsizes[2]),$(xyzsizes[3])] Å.
          - atomic labels for $phase.
     """)
-    x, y, z = fractional2cartesian(xyzsizes, phase)
-    atoms, atomstype = atomnames(phase, ncells=length(x))
-    crystal = XYZs(atoms, x, y, z)
+    cellulose, atomstype = crystal(xyzsizes, phase)
 
     println("""
     ii.  extending the cellulose modifications of the atoms:
@@ -228,7 +225,7 @@ function cellulosebuilder(monomers::Int64; phase="Iβ", fibril=nothing, covalent
          - expanding the z coordinates for $phase.
          - picking the number of fragments of the basic structure.
     """)
-    xyzfile, nfragments = rawXYZ(crystal, xyzsizes, phase=phase)
+    xyzfile, nfragments = rawXYZ(cellulose, xyzsizes, phase=phase)
     
     println("""
     iii. screening the $(nfragments) chains of the $xyzfile crystal that respect the fibril xy-plane restricion for $phase phase.

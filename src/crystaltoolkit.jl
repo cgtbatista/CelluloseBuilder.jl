@@ -1,11 +1,4 @@
-struct XYZ
-    atoms::Vector{String}
-    x::Vector{Float64}
-    y::Vector{Float64}
-    z::Vector{Float64}
-end
-
-struct XYZs
+struct CrystalXYZ
     atoms::Vector{Vector{String}}
     x::Vector{Vector{Float64}}
     y::Vector{Vector{Float64}}
@@ -18,113 +11,150 @@ struct UnitCell
     parameters::Tuple{Vector{Float64}, Vector{Float64}}     ## [ [a, b, c], [α, β, γ] ]
 end
 
+# x, y, z = fractional2cartesian(xyzsizes, phase)
+# atoms, atomstype = atomnames(phase, ncells=length(x))
+# crystal = XYZs(atoms, x, y, z)
 
-"""
-    _expanding_z(atoms::Vector{String}, x::Vector{Float64}, y::Vector{Float64}, z::Vector{Float64}, zsize::Int64; phase="Iβ")
-
-This function is able to propagate the crystalline system across the z-axis.
-"""
-function _expanding_z(xyz::XYZ, n::Int64; phase="Iβ")
-
-    atoms, x, y, z = String[], Float64[], Float64[], Float64[]
-
-    if !(lowercase(phase) in Set(["ia", "iα", "ib", "iβ", "ii", "iii", "iii_i", "iiii"]))
-        error("The phase $phase is not implemented yet.")
-    end
-
-    if !(lowercase(phase) in Set(["ia", "iα"]))        
-        parameters = get_crystallographic_info(phase)[3]
-        c = parameters[1][3]
-        if lowercase(phase) in ["ib", "iβ"]
-            for k in collect(1:1:n)
-                append!(atoms, xyz.atoms); append!(x, xyz.x); append!(y, xyz.y); append!(z, xyz.z .+ c*(k-1));
-            end
-        end
-        if lowercase(phase) == "ii"
-            for k in collect(2:1:max_k)
-                append!(atoms, xyz.atoms); append!(x, xyz.x); append!(y, xyz.y); append!(z, xyz.z .+ c*(k-1));
-            end
-        end
-        if lowercase(phase) in Set(["iii", "iii_i", "iiii"])
-            for k in collect(1:1:n)
-                append!(atoms, xyz.atoms); append!(x, xyz.x); append!(y, xyz.y); append!(z, xyz.z .+ c*(k-1));
-            end
-        end
+function crystal(xyzsizes::Vector{Int64}, phase::String; topnames=true)
+    x, y, z = fractional2cartesian(xyzsizes, phase)
+    atoms, atypes = atomnames(phase, ncells=length(x))
+    if topnames
+        return CrystalXYZ(atoms, x, y, z), atypes
     else
-        atoms, x, y, z = xyz.atoms, xyz.x, xyz.y, xyz.z
+        return CrystalXYZ(atoms, x, y, z)
     end
-
-    return XYZ(atoms, x, y, z)
 end
 
-function _trimming_xy(xyz::XYZs, dim::Vector{Int64}; phase="Iβ")
+function unitcell(monomers::Int64, phase::String; bv=true)
 
-    atoms, x, y, z = String[], Float64[], Float64[], Float64[]
+    xyzsizes, lattice = PBC(monomers, phase=phase)
+    
+    if bv
+        return xyzsizes, lattice, lattice2basis(lattice, phase)
+    else
+        return xyzsizes, lattice
+    end
+end
+
+function xy_pruning(
+                atoms::Vector{Vector{String}}, x::Vector{Vector{Float64}}, y::Vector{Vector{Float64}}, z::Vector{Vector{Float64}},
+                xyzsizes::Vector{Int64}, phase::String
+            )
+
+    newatoms, xnew, ynew, znew = String[], Float64[], Float64[], Float64[]
 
     if !(lowercase(phase) in Set(["ia", "iα", "ib", "iβ", "ii", "iii", "iii_i", "iiii"]))
         error("The phase $phase is not implemented yet.")
     else
-        xsize, ysize = dim[1], dim[2]
+        xsize, ysize = xyzsizes[1], xyzsizes[2]
         units = 1
     end
 
     if lowercase(phase) in Set(["ib", "iβ"])
         for j in collect(1:1:ysize), i in collect(1:1:xsize)
-            at, xtemp, ytemp, ztemp = xyz.atoms[units], xyz.x[units], xyz.y[units], xyz.z[units]
-            _atomselect_indexes = (eachindex(at) .== 0)
+            atemp, xtemp, ytemp, ztemp = atoms[units], x[units], y[units], z[units]
+            _atomselect_indexes = (eachindex(atemp) .== 0)
             if ((i == 1) && (j != ysize)) || ((i != 1) && (i != xsize) && (j == 1))
-                _atomselect_indexes = (eachindex(at) .>= 64) .& (eachindex(at) .<= 84)
+                _atomselect_indexes = (eachindex(atemp) .>= 64) .& (eachindex(atemp) .<= 84)
             end
             if ((j != 1) && (i == xsize)) || ((i != 1) && (i != xsize) && (j == ysize))
-                _atomselect_indexes = (eachindex(at) .>= 22) .& (eachindex(at) .<= 42)
+                _atomselect_indexes = (eachindex(atemp) .>= 22) .& (eachindex(atemp) .<= 42)
             end
             if ((i == 1) && (j == ysize)) || ((j == 1) && (i == xsize))
-                _atomselect_indexes = ((eachindex(at) .>= 22) .& (eachindex(at) .<= 42)) .| ((eachindex(at) .>= 64) .& (eachindex(at) .<= 84))
+                _atomselect_indexes = ((eachindex(atemp) .>= 22) .& (eachindex(atemp) .<= 42)) .| ((eachindex(atemp) .>= 64) .& (eachindex(atemp) .<= 84))
             end
 
             units += 1
-            append!(atoms, at[.!(_atomselect_indexes)])
-            append!(x, xtemp[.!(_atomselect_indexes)])
-            append!(y, ytemp[.!(_atomselect_indexes)])
-            append!(z, ztemp[.!(_atomselect_indexes)])
+            append!(newatoms, atemp[.!(_atomselect_indexes)])
+            append!(xnew, xtemp[.!(_atomselect_indexes)])
+            append!(ynew, ytemp[.!(_atomselect_indexes)])
+            append!(znew, ztemp[.!(_atomselect_indexes)])
         end
     end
     
     if lowercase(phase) == "ii"
         for j in collect(1:1:ysize), i in collect(1:1:xsize)
-            at, xtemp, ytemp, ztemp = xyz.atoms[units], xyz.x[units], xyz.y[units], xyz.z[units]
-            _atomselect_indexes = (eachindex(at) .== 0)
+            atemp, xtemp, ytemp, ztemp = atoms[units], x[units], y[units], z[units]
+            _atomselect_indexes = (eachindex(atemp) .== 0)
             if ((i == 1) && (j != ysize)) || ((i != 1) && (i != xsize) && (j == 1))
-                _atomselect_indexes = (eachindex(at) .>= 55) .& (eachindex(at) .<= 72)
+                _atomselect_indexes = (eachindex(atemp) .>= 55) .& (eachindex(atemp) .<= 72)
             end
             if ((j != 1) && (i == xsize)) || ((i != 1) && (i != xsize) && (j == ysize))
-                _atomselect_indexes = (eachindex(at) .>= 19) .& (eachindex(at) .<= 36)
+                _atomselect_indexes = (eachindex(atemp) .>= 19) .& (eachindex(atemp) .<= 36)
             end
             if ((i == 1) && (j == ysize)) || ((j == 1) && (i == xsize))
-                _atomselect_indexes = ((eachindex(at) .>= 19) .& (eachindex(at) .<= 36)) .| ((eachindex(at) .>= 55) .& (eachindex(at) .<= 72))
+                _atomselect_indexes = ((eachindex(atemp) .>= 19) .& (eachindex(atemp) .<= 36)) .| ((eachindex(atemp) .>= 55) .& (eachindex(atemp) .<= 72))
             end
             
             units += 1
-            append!(atoms, at[.!(_atomselect_indexes)])
-            append!(x, xtemp[.!(_atomselect_indexes)])
-            append!(y, ytemp[.!(_atomselect_indexes)])
-            append!(z, ztemp[.!(_atomselect_indexes)])
+            append!(newatoms, atemp[.!(_atomselect_indexes)])
+            append!(xnew, xtemp[.!(_atomselect_indexes)])
+            append!(ynew, ytemp[.!(_atomselect_indexes)])
+            append!(znew, ztemp[.!(_atomselect_indexes)])
         end        
     end
 
     if lowercase(phase) in Set(["ia", "iα"])
-        for (at, xtemp, ytemp, ztemp) in zip(xyz.atoms, xyz.x, xyz.y, xyz.z)
-            append!(atoms, at); append!(x, xtemp); append!(y, ytemp); append!(z, ztemp);
+        for (atemp, xtemp, ytemp, ztemp) in zip(atoms, x, y, z)
+            append!(newatoms, atemp)
+            append!(xnew, xtemp)
+            append!(ynew, ytemp)
+            append!(znew, ztemp)
         end
     end
 
     if lowercase(phase) in Set(["iii", "iii_i", "iiii"])
-        for (at, xtemp, ytemp, ztemp) in zip(xyz.atoms, xyz.x, xyz.y, xyz.z)
-            append!(atoms, at); append!(x, xtemp); append!(y, ytemp); append!(z, ztemp);
+        for (atemp, xtemp, ytemp, ztemp) in zip(atoms, x, y, z)
+            append!(newatoms, atemp)
+            append!(xnew, xtemp)
+            append!(ynew, ytemp)
+            append!(znew, ztemp)
         end
     end
     
-    return XYZ(atoms, x, y, z)
+    return newatoms, xnew, ynew, znew
+end
+
+"""
+    z_expansion(atoms::Vector{String}, x::Vector{Float64}, y::Vector{Float64}, z::Vector{Float64}, zsize::Int64; phase="Iβ")
+
+This function is able to propagate the crystalline system across the z-axis.
+"""
+function z_expansion(
+                atoms::Vector{String}, x::Vector{Float64}, y::Vector{Float64}, z::Vector{Float64},
+                xyzsizes::Vector{Int64}, phase::String
+            )
+
+    newatoms, xnew, ynew, znew = String[], Float64[], Float64[], Float64[]
+    n = xyzsizes[3]
+
+    if !(lowercase(phase) in Set(["ia", "iα", "ib", "iβ", "ii", "iii", "iii_i", "iiii"]))
+        error("The phase $phase is not implemented yet.")
+    end
+
+    if !(lowercase(phase) in Set(["ia", "iα"]))     
+        parameters = get_crystallographic_info(phase)[3]
+        c = parameters[1][3]
+        if lowercase(phase) in ["ib", "iβ"]
+            for k in collect(1:1:n)
+                append!(newatoms, atoms); append!(xnew, x); append!(ynew, y); append!(znew, z .+ c*(k-1));
+            end
+        end
+        if lowercase(phase) == "ii"
+            for k in collect(2:1:max_k)
+                append!(newatoms, atoms); append!(xnew, x); append!(ynew, y); append!(znew, z .+ c*(k-1));
+            end
+        end
+        if lowercase(phase) in Set(["iii", "iii_i", "iiii"])
+            for k in collect(1:1:n)
+                append!(newatoms, atoms); append!(xnew, x); append!(ynew, y); append!(znew, z .+ c*(k-1));
+            end
+        end
+    else
+        newatoms, xnew, ynew, znew = atoms, x, y, z
+    end
+
+    return newatoms, xnew, ynew, znew
 end
 
 """
