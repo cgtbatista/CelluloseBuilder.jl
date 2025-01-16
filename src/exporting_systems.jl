@@ -45,7 +45,7 @@ This
 
 ```jldoctest
 
-julia > transformingPBC(59, 5, 7)
+julia > pbcXYZ(59, 5, 7)
 
 ```
 

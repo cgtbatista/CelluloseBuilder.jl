@@ -56,7 +56,7 @@
 ##    println("")
 ##
 ##    println("   3 - Periodic boundary conditions (PBC) on the $n_fragments fragments: $(pbc)...")
-##    vmdxyz, frag_sel, frag_units, vmdoutput2 = transformingPBC(n_fragments, xyzsize[1], xyzsize[2], phase=phase, pbc=pbc, xyzfile=xyzfile, vmd=vmd)
+##    vmdxyz, frag_sel, frag_units, vmdoutput2 = pbcXYZ(n_fragments, xyzsize[1], xyzsize[2], phase=phase, pbc=pbc, xyzfile=xyzfile, vmd=vmd)
 ##    println("")
 ##
 ##    println("   4 - Generating the PSF/PDB files:")    
@@ -151,7 +151,7 @@
 ##    println("")
 ##
 ##    println("   3 - Periodic boundary conditions (PBC) on the $n_fragments fragments: $(pbc)...")
-##    vmdxyz, frag_sel, frag_units, vmdoutput2 = transformingPBC(monolayer, xyzsize, phase=phase, xyzfile=xyzfile, vmd=vmd)
+##    vmdxyz, frag_sel, frag_units, vmdoutput2 = pbcXYZ(monolayer, xyzsize, phase=phase, xyzfile=xyzfile, vmd=vmd)
 ##    println("")
 ##
 ##    println("   4 - Generating the PSF/PDB files:")    
@@ -233,7 +233,7 @@ function cellulosebuilder(monomers::Int64; phase="Iβ", fibril=nothing, covalent
     println("""
     iii. applying the periodic boundary conditions (PBC) on the $(nfragments) fragments: $(pbc)...
     """)
-    vmdxyz, frag_sel, frag_units = transformingPBC(xyzfile, xyzsizes, phase=phase, fibril=fibril, vmd=vmd)
+    vmdxyz, frag_sel, frag_units = pbcXYZ(xyzfile, xyzsizes, phase=phase, fibril=fibril, vmd=vmd)
 
     println("""
     iv.  generating the PSF/PDB files:

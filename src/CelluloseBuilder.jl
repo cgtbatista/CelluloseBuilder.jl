@@ -8,7 +8,7 @@ export XYZs
 export cellulosebuilder
 export lattice2basis, PBC, fractional2cartesian, _trimming_xy, _expanding_z
 export translate
-export writeXYZ, rawXYZ, _exporting_PDBfile, transformingPBC, xyz2pdb, cleanPDB
+export writeXYZ, rawXYZ, _exporting_PDBfile, pbcXYZ, xyz2pdb, cleanPDB
 export generate_cellulose_topology, get_crystallographic_info
 
 ## crystalographic tools to deal with cellulose
