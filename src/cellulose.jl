@@ -214,7 +214,7 @@ function cellulosebuilder(monomers::Int64; phase="Iβ", fibril=nothing, covalent
          - transforming the ASU to cartesian coordinates for every [xsize, ysize, zsize] = [$(xyzsizes[1]),$(xyzsizes[2]),$(xyzsizes[3])] Å.
          - atomic labels for $phase.
     """)
-    xyz, atomstype = crystal(xyzsizes, phase)
+    xyz, charmm_atomstyle = crystal(xyzsizes, phase)
 
     println("""
     ii.  extending the cellulose modifications of the atoms:
@@ -227,19 +227,18 @@ function cellulosebuilder(monomers::Int64; phase="Iβ", fibril=nothing, covalent
     println("""
     iii. screening the $(nfragments) fragments of the $xyzname crystal that respect the fibril xy-plane restricion for $phase phase.
     """)
-    new_xyzname, selection, nchains = pbcXYZ(xyzname, xyzsizes, phase=phase, fibril=fibril, vmd=vmd)
+    new_xyzname, chains = pbcXYZ(xyzname, xyzsizes, phase=phase, fibril=fibril, vmd=vmd)
 
     println("""
     iv.  generating the PSF/PDB files:
-         - writing the PDBs for each of those $nchains fragment units.")
+         - writing the PDBs for each of those $(length(chains)) fragment units.")
          - cleaning each fragment PDB.")
          - using the CHARMM topology file to build the final PDB/PSF with the fragments
     """)
-    units = String.(split(selection, " "))
 
-    pdbnames = fragPDBs(new_xyzname, units, vmd=vmd)
+    pdbnames = fragPDBs(new_xyzname, fragments=units, vmd=vmd)
     
-    new_pdbnames = cleanPDB.(pdbnames, atomstype)
+    new_pdbnames = cleanPDB.(pdbnames, charmm_atomstyle)
     # tmpfragments = String[]; tmpfile = tempname();
     
     # for u in units

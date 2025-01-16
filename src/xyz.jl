@@ -46,8 +46,6 @@ function pbcXYZ(
         selection = monolayer(xyzsizes, phase=phase, structure=structure)
     end
 
-    nfragments = length(split(selection, " "))
-
     tcl = tempname() * ".tcl"
 
     vmdinput = open(tcl, "w")
@@ -64,7 +62,7 @@ function pbcXYZ(
     if vmdDebug
         return vmdoutput
     else
-        return new_xyzname, selection, nfragments
+        return new_xyzname, parse.(Int64, split(selection, " "))
     end
 end
 

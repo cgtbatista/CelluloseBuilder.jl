@@ -127,3 +127,14 @@ function picking_fragments(vmdoutput::Vector{SubString{String}})
     end
     error("The VMD output file does not contain the number of fragments.")
 end
+
+function picking_fragments(xyzname::String; vmd="vmd")
+    tcl = tempname() * ".tcl"
+    open(tcl, "w") do file
+        println(file, """
+        mol new "$xyzname"
+        exit
+        """)
+    end 
+    return picking_fragments(split(Base.read(`$vmd -dispdev text -e $tcl`, String), "\n"))
+end

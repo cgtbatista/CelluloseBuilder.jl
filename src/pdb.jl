@@ -57,20 +57,20 @@ end
 
 Convert each fragment on XYZ file on an unique raw PDB file. The filename will be exported, so there is a way to edit the PDB data.
 """
-function fragPDBs(xyzname::String, fragments::Vector{String}; vmd="vmd", vmdDebug=false)
-
-    pdbnames = Vector{String}(undef, length(fragments))
+function fragPDBs(xyzname::String; fragments=nothing, vmd="vmd", vmdDebug=false)
 
     basename = tempname()
-    tcl = basename * ".tcl"
 
+    fragments = isnothing(fragments) ? Base.OneTo(picking_fragments(xyzname, vmd=vmd)) : fragments
+    pdbnames = [ "$(basename)_$(frag).pdb" for frag in fragments ]
+
+    tcl = basename * ".tcl"
     open(tcl, "w") do file
         println(file, "mol new \"$xyzname\"")
-        for (u, frag) in enumerate(fragments)
-            pdbnames[u] = "$(basename)_$(frag).pdb"
+        for (f, pdbname) in enumerate(pdbnames)
             println(file, """
-            set sel [atomselect top "fragment $(u-1)"]
-            \$sel writepdb "$(pdbnames[u])"
+            set sel [atomselect top "fragment $(f-1)"]
+            \$sel writepdb "$pdbname"
             """)
         end
         println(file, "exit")
