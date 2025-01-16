@@ -1,15 +1,15 @@
 """
-    cleanPDB(atoms::Vector{String}, pdbfile::String, new_pdbfile::String)
+    cleanPDB(pdbname::String, atoms::Vector{String}, new_pdbname::String)
 
 Clean the raw PDB file and export a new one with the right configuration needed for CHARMM force field.
 """
-function cleanPDB(atoms::Vector{String}, pdbfile::String; new_pdbfile=nothing)
+function cleanPDB(pdbname::String, atoms::Vector{String}; new_pdbname=nothing)
 
-    pdbdata = Base.split(Base.read(pdbfile, String), "\n")
+    pdbdata = Base.split(Base.read(pdbname, String), "\n")
 
-    new_pdbfile = isnothing(new_pdbfile) ? tempname() * ".pdb" : new_pdbfile
+    new_pdbname = isnothing(new_pdbname) ? tempname() * ".pdb" : new_pdbname
 
-    pdb = open(new_pdbfile, "w")
+    pdb = open(new_pdbname, "w")
     Base.write(pdb, "CRYST1    0.000    0.000    0.000  90.00  90.00  90.00 P 1           1\n")
 
     ith_atom, resid = 1, 1
@@ -48,39 +48,35 @@ function cleanPDB(atoms::Vector{String}, pdbfile::String; new_pdbfile=nothing)
 
     Base.close(pdb)
 
-    return nothing
+    return new_pdbname
 
 end
 
 """
-    xyz2pdb(xyzfile::String, selection::String; vmd="vmd")
+    fragPDBs(xyzfile::String, selection::String; vmd="vmd")
 
 Convert each fragment on XYZ file on an unique raw PDB file. The filename will be exported, so there is a way to edit the PDB data.
 """
-function xyz2pdb(xyzfile::String, selection::String, units::Int64; vmd="vmd", vmdDebug=false)
-    
+function fragPDBs(xyzname::String, fragments::Vector{String}; vmd="vmd", vmdDebug=false)
+
+    pdbnames = Vector{String}(undef, length(fragments))
+
     basename = tempname()
+    tcl = basename * ".tcl"
 
-    tcl = tempname() * ".tcl"
-    vmdinput = open(tcl, "w")
-
-    Base.write(vmdinput, "mol new \"$xyzfile\" \n")
-    fragments = split(selection, " ")
-    for u in collect(1:1:units)
-        frag = fragments[u]
-        Base.write(vmdinput, """
-        set sel [ atomselect top \"fragment $(u-1)\" ]
-        \$sel writepdb \"$(basename * "_" * frag * ".pdb")\"
-        """)
+    open(tcl, "w") do file
+        println(file, "mol new \"$xyzname\"")
+        for (u, frag) in enumerate(fragments)
+            pdbnames[u] = "$(basename)_$(frag).pdb"
+            println(file, """
+            set sel [atomselect top "fragment $(u-1)"]
+            \$sel writepdb "$(pdbnames[u])"
+            """)
+        end
+        println(file, "exit")
     end
-    Base.write(vmdinput, "exit \n")
-    Base.close(vmdinput)
 
-    vmdoutput = split(Base.read(`$vmd -dispdev text -e $tcl`, String), "\n")
+    vmdoutput = split(read(`$vmd -dispdev text -e $tcl`, String), "\n")
     
-    if vmdDebug
-        return vmdoutput
-    else
-        return basename
-    end
+    return vmdDebug ? vmdoutput : pdbnames
 end

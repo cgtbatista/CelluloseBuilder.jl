@@ -61,7 +61,7 @@
 ##
 ##    println("   4 - Generating the PSF/PDB files:")    
 ##    println("       + writing the PDBs for each of those $frag_units fragment units.")
-##    pdb_basename = xyz2pdb(vmdxyz, frag_sel, frag_units, vmd=vmd)[2]
+##    pdb_basename = fragPDBs(vmdxyz, frag_sel, frag_units, vmd=vmd)[2]
 ##    println("       + cleaning each fragment PDB.")
 ##    units = Base.split(frag_sel, " ");
 ##    tmpfragments = String[]; tmpfile = tempname();
@@ -156,7 +156,7 @@
 ##
 ##    println("   4 - Generating the PSF/PDB files:")    
 ##    println("       + writing the PDBs for each of those $frag_units fragment units.")
-##    pdb_basename = xyz2pdb(vmdxyz, frag_sel, frag_units, vmd=vmd)[2]
+##    pdb_basename = fragPDBs(vmdxyz, frag_sel, frag_units, vmd=vmd)[2]
 ##    println("       + cleaning each fragment PDB.")
 ##    units = Base.split(frag_sel, " ");
 ##    tmpfragments = String[]; tmpfile = tempname();
@@ -185,7 +185,7 @@
 
 Builds a cellulose fibril with a given number of cellobiose units based on the number of `monomers`.
 """
-function cellulosebuilder(monomers::Int64; phase="Iβ", fibril=nothing, covalent=true, vmd="vmd", topology_file=generate_cellulose_topology())
+function cellulosebuilder(monomers::Int64; phase="Iβ", fibril=nothing, covalent=true, vmd="vmd", topology_file=generate_cellulose_topology(), vmdDebug=false)
 
     valid_fibril = (monomers >= 2) || (monomers%2 == 0)
     if !valid_fibril
@@ -207,17 +207,14 @@ function cellulosebuilder(monomers::Int64; phase="Iβ", fibril=nothing, covalent
 
     Building the cellulose structure file
     -------------------------------------
-    """)
 
-    pbc = nothing
 
-    println("""
     i.   getting the initial unit cell coordinates and atomic labels:
-         - imposing translational symmetry for pbc = $pbc.
+         - imposing the default translational symmetry for pbc.
          - transforming the ASU to cartesian coordinates for every [xsize, ysize, zsize] = [$(xyzsizes[1]),$(xyzsizes[2]),$(xyzsizes[3])] Å.
          - atomic labels for $phase.
     """)
-    cellulose, atomstype = crystal(xyzsizes, phase)
+    xyz, atomstype = crystal(xyzsizes, phase)
 
     println("""
     ii.  extending the cellulose modifications of the atoms:
@@ -225,32 +222,41 @@ function cellulosebuilder(monomers::Int64; phase="Iβ", fibril=nothing, covalent
          - expanding the z coordinates for $phase.
          - picking the number of fragments of the basic structure.
     """)
-    xyzfile, nfragments = rawXYZ(cellulose, xyzsizes, phase=phase)
+    xyzname, nfragments = rawXYZ(xyz, xyzsizes, phase=phase)
     
     println("""
-    iii. screening the $(nfragments) chains of the $xyzfile crystal that respect the fibril xy-plane restricion for $phase phase.
+    iii. screening the $(nfragments) fragments of the $xyzname crystal that respect the fibril xy-plane restricion for $phase phase.
     """)
-    vmdxyz, frag_sel, frag_units = pbcXYZ(xyzfile, xyzsizes, phase=phase, fibril=fibril, vmd=vmd)
+    new_xyzname, selection, nchains = pbcXYZ(xyzname, xyzsizes, phase=phase, fibril=fibril, vmd=vmd)
 
     println("""
     iv.  generating the PSF/PDB files:
-         - writing the PDBs for each of those $frag_units fragment units.")
+         - writing the PDBs for each of those $nchains fragment units.")
          - cleaning each fragment PDB.")
          - using the CHARMM topology file to build the final PDB/PSF with the fragments
     """)
-    pdb_basename = xyz2pdb(vmdxyz, frag_sel, frag_units, vmd=vmd)
-    units = Base.split(frag_sel, " ");
-    tmpfragments = String[]; tmpfile = tempname();
-    for u in units
-        pdbname = pdb_basename * "_" * u * ".pdb"
-        new_pdbname = tmpfile * "_" * u * ".pdb"
-        cleanPDB(atomstype, pdbname, new_pdbfile=new_pdbname)
-        push!(tmpfragments, new_pdbname)
+    units = String.(split(selection, " "))
+
+    pdbnames = fragPDBs(new_xyzname, units, vmd=vmd)
+    
+    new_pdbnames = cleanPDB.(pdbnames, atomstype)
+    # tmpfragments = String[]; tmpfile = tempname();
+    
+    # for u in units
+    #     pdbname = pdb_basename * "_" * u * ".pdb"
+    #     new_pdbname = tmpfile * "_" * u * ".pdb"
+    #     cleanPDB(pdbname, atomstype, new_pdbname=new_pdbname)
+    #     push!(tmpfragments, new_pdbname)
+    # end
+
+    n = if in(lowercase(phase), Set(["ib", "iβ", "ii"]))
+        2 * xyzsizes[3]
+    else
+        xyzsizes[3]
     end
-    if phase == "Iβ" || phase == "Ib" || phase == "II"
-        n_monomers = 2*xyzsizes[3]
-    else n_monomers = xyzsizes[3] end
-    vmdoutput3 = _exporting_PDBfile(n_monomers, tmpfragments, phase=phase, covalent=covalent, vmd=vmd, topology_file=topology_file)
+    
+    #vmdoutput = _exporting_PDBfile(n, tmpfragments, phase=phase, covalent=covalent, vmd=vmd, topology_file=topology_file)
+    vmdoutput = _exporting_PDBfile(n, new_pdbnames, phase=phase, covalent=covalent, vmd=vmd, topology_file=topology_file)
     
     cleaning_tmpfiles("cellulose")
     
@@ -259,8 +265,11 @@ function cellulosebuilder(monomers::Int64; phase="Iβ", fibril=nothing, covalent
     That's all! :D
     """)
 
-    return vmdoutput3
-
+    if vmdDebug
+        return vmdoutput
+    else
+        return nothing
+    end
 end
 
 

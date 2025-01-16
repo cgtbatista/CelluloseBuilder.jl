@@ -108,8 +108,7 @@ end
     lattice2basis(lattice::Vector{Int64}, phase::String)
 """
 function lattice2basis(lattice::Vector{Int64}, phase::String)
-    parameters = get_crystallographic_info(phase)[3]
-    return lattice2basis(lattice, parameters)
+    return lattice2basis(lattice, get_crystallographic_info(phase)[3])
 end
 
 function firstpick(label::String)
@@ -118,4 +117,13 @@ function firstpick(label::String)
     else
         return string(label[1])
     end
+end
+
+function picking_fragments(vmdoutput::Vector{SubString{String}})
+    for line in vmdoutput
+        if occursin(" Fragments: ", line)
+            return parse(Int64, split(line)[3])
+        end
+    end
+    error("The VMD output file does not contain the number of fragments.")
 end

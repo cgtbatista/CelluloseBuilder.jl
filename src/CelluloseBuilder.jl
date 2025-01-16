@@ -7,7 +7,7 @@ export CrystalXYZ, UnitCell
 export cellulosebuilder
 export lattice2basis, PBC, fractional2cartesian, xy_pruning, z_expansion
 export translate
-export writeXYZ, rawXYZ, _exporting_PDBfile, pbcXYZ, xyz2pdb, cleanPDB
+export writeXYZ, rawXYZ, _exporting_PDBfile, pbcXYZ, fragPDBs, cleanPDB
 export generate_cellulose_topology, get_crystallographic_info
 
 export unitcell, crystal
@@ -26,7 +26,6 @@ include("./pbc.jl")                                             #done
 include("./pbc-misc.jl")
 
 ## picking the number of structure fragments inside a VMD structure loading output
-include("./fragments.jl")
 
 ## cleaning the temporary files
 include("./cleaning_tmpfiles.jl")
