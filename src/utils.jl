@@ -138,3 +138,71 @@ function picking_fragments(xyzname::String; vmd="vmd")
     end 
     return picking_fragments(split(Base.read(`$vmd -dispdev text -e $tcl`, String), "\n"))
 end
+
+"""
+    isinverted(pdbname::String; vmd="vmd")
+
+Check if the sugar monomer is inverted or not on two atoms. The default return checks if the first monomer of the cellulose chain is upside down.
+"""
+function isinverted(
+                pdbname::String;
+                resid::Int64=1, first::String="C5", last::String="O5", axis::String="z",
+                vmd="vmd", vmdDebug=false
+            )
+    
+    tcl = tempname() * ".tcl"
+
+    open(tcl, "w") do file
+        println(file, """
+        mol new $pdbname
+        
+        set sel1 [[atomselect top "resid $resid and name $first"] get $axis]
+        set sel2 [[atomselect top "resid $resid and name $last"] get $axis]
+
+        puts "COORDS: \$sel1 \$sel2"
+        
+        exit
+        """)
+    end
+
+    vmdoutput = Base.split(Base.read(`$vmd -dispdev text -e $tcl`, String), "\n")
+
+    if vmdDebug
+        return vmdoutput
+    end
+
+    for line in vmdoutput
+        if occursin("COORDS:", line)
+            pos = parse.(Float64, split(line)[2:3])
+            return pos[2] < pos[1] ? true : false
+        end
+    end
+
+    error("The VMD output file does not contain the inverting code.")
+end
+
+function printching!(file::IOStream; id=1, nresids=1, invert=false, phase="Iβ", covalent=true)
+    
+    res = nresids
+    segid = "M$id"
+
+    if lowercase(phase) == "ii" && invert
+        while res > 1
+            pres = res - 1
+            println(file, "patch 14bb $segid:$pres $segid:$res")
+            res -= 1
+            if res == 1 && covalent
+                println(file, "patch 14bb $segid:$nresids $segid:$res")
+            end
+        end
+    else
+        while res > 1
+            pres = res - 1
+            println(file, "patch 14bb $segid:$res $segid:$pres")
+            res -= 1
+            if res == 1 && covalent == true
+                println(file, "patch 14bb $segid:$res $segid:$nresids")
+            end
+        end
+    end
+end

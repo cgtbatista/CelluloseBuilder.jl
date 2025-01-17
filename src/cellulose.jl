@@ -77,9 +77,9 @@
 ##    else monomers = xyzsize[3] end ### O III_I tá certo???? Contar o número de monômeros em cada cadeia depois...
 ##
 ##    if phase == "II"
-##        vmdoutput3 = _exporting_PDBfile(monomers, tmpfragments, phase=phase, covalent=covalent, vmd=vmd, topology_file=topology_file, check_inversion=true)
+##        vmdoutput3 = writePDB(monomers, tmpfragments, phase=phase, covalent=covalent, vmd=vmd, topology_file=topology_file, check_inversion=true)
 ##    else
-##        vmdoutput3 = _exporting_PDBfile(monomers, tmpfragments, phase=phase, covalent=covalent, vmd=vmd, topology_file=topology_file)
+##        vmdoutput3 = writePDB(monomers, tmpfragments, phase=phase, covalent=covalent, vmd=vmd, topology_file=topology_file)
 ##    end
 ##    
 ##    cleaning_tmpfiles("cellulose")
@@ -170,7 +170,7 @@
 ##    if phase == "Iβ" || phase == "Ib" || phase == "II"
 ##        n_monomers = 2*xyzsize[3]
 ##    else n_monomers = xyzsize[3] end
-##    vmdoutput3 = _exporting_PDBfile(n_monomers, tmpfragments, phase=phase, covalent=covalent, vmd=vmd, topology_file=topology_file)
+##    vmdoutput3 = writePDB(n_monomers, tmpfragments, phase=phase, covalent=covalent, vmd=vmd, topology_file=topology_file)
 ##    
 ##    cleaning_tmpfiles("cellulose")
 ##    println("")
@@ -240,13 +240,13 @@ function cellulosebuilder(monomers::Int64; phase="Iβ", fibril=nothing, covalent
         cleanPDB!(pdb, charmm_atomstyle)
     end
 
-    n = if in(lowercase(phase), Set(["ib", "iβ", "ii"]))
-        2 * xyzsizes[3]
-    else
-        xyzsizes[3]
-    end
-    
-    vmdoutput = _exporting_PDBfile(n, pdbnames, phase=phase, covalent=covalent, vmd=vmd, topology_file=topology_file)
+    #n = if in(lowercase(phase), Set(["ib", "iβ", "ii"]))
+    #    2 * xyzsizes[3]
+    #else
+    #    xyzsizes[3]
+    #end
+
+    vmdoutput = writePDB(monomers, pdbnames, phase=phase, covalent=covalent, vmd=vmd, topology_file=topology_file)
     
     cleaning_tmpfiles("cellulose")
     
@@ -257,8 +257,6 @@ function cellulosebuilder(monomers::Int64; phase="Iβ", fibril=nothing, covalent
 
     if vmdDebug
         return vmdoutput
-    else
-        return nothing
     end
 end
 

@@ -24,7 +24,7 @@ function cleanPDB!(pdbname::String, atoms::Vector{String})
         new_irow = replace(new_irow, _pdbcolumn_resname => "BGC   ")
         # editing residue sequence numbers
         _pdbcolumn_resnum = SubString(new_irow, 26-length("$resid")+1 : 26)
-        new_irow = replace(new_irow, _pdbcolumn_resnum*"    " => "$resid"*"    ") ## This dummy space is escential to not replace all numbers (x coords begin on 31 string position)
+        new_irow = replace(new_irow, _pdbcolumn_resnum*"    " => "$resid"*"    ")
         # editing the segname
         _pdbcolumn_segname = SubString(new_irow, findfirst("  0.00  0.00           ", irow))
         new_irow = replace(new_irow, _pdbcolumn_segname => "  1.00  0.00           ")
@@ -49,60 +49,52 @@ function cleanPDB!(pdbname::String, atoms::Vector{String})
     return nothing
 end
 
+#HETATM    1  C1  BGC     1      11.074  40.399   0.449  1.00  0.00           C
+#HETATM    1 C1   BGC     1  1      11.074  40.399   0.  1.00  0.00               C
 
-"""
-    cleanPDB(pdbname::String, atoms::Vector{String}, new_pdbname::String)
 
-Clean the raw PDB file and export a new one with the right configuration needed for CHARMM force field.
-"""
-function cleanPDB(pdbname::String, atoms::Vector{String}; new_pdbname=nothing)
+# function cleanPDB!(pdbname::String, atoms::Vector{String})
 
-    pdbdata = Base.split(Base.read(pdbname, String), "\n")
+#     pdbdata = split(read(pdbname, String), "\n")
 
-    new_pdbname = isnothing(new_pdbname) ? tempname() * ".pdb" : new_pdbname
+#     new_pdbdata = String[]
+#     push!(new_pdbdata, "CRYST1    0.000    0.000    0.000  90.00  90.00  90.00 P 1           1")
 
-    pdb = open(new_pdbname, "w")
-    Base.write(pdb, "CRYST1    0.000    0.000    0.000  90.00  90.00  90.00 P 1           1\n")
+#     ith_atom, resid = 1, 1
 
-    ith_atom, resid = 1, 1
-    for irow in pdbdata
-        if !occursin("ATOM  ", irow); continue; end            
-        
-        new_irow = irow
-        atomname = atoms[ith_atom]
-        
-        # setting hetatoms
-        new_irow = replace(new_irow, "ATOM  " => "HETATM")
-        # editing the atom names
-        _atomname_length = length(atomname); _pdbcolumn_name = SubString(irow, 14 : 14+_atomname_length-1)
-        new_irow = replace(new_irow, _pdbcolumn_name => atomname, count=1)
-        
-        # editing the residue names
-        _pdbcolumn_resname = SubString(new_irow, findfirst("    X ", new_irow))
-        new_irow = replace(new_irow, _pdbcolumn_resname => "BGC   ")
-        # editing residue sequence numbers
-        _pdbcolumn_resnum = SubString(new_irow, 26-length("$resid")+1 : 26)
-        new_irow = replace(new_irow, _pdbcolumn_resnum*"    " => "$resid"*"    ") ## This dummy space is escential to not replace all numbers (x coords begin on 31 string position)
-        # editing the segname
-        _pdbcolumn_segname = SubString(new_irow, findfirst("  0.00  0.00           ", irow))
-        new_irow = replace(new_irow, _pdbcolumn_segname => "  1.00  0.00           ")
-        
-        # writting the new configuration
-        Base.write(pdb, "$new_irow\n")
-        
-        ith_atom += 1
-        if ith_atom > length(atoms)
-            ith_atom = 1
-            resid += 1
-        end
-    end
-    Base.write(pdb, "END")
+#     for irow in pdbdata
 
-    Base.close(pdb)
+#         if !startswith(irow, "ATOM  ")
+#             continue
+#         end
 
-    return new_pdbname
+#         new_irow = "HETATM" * irow[7:end]                                               # updating atom pattern to HETATM
+#         atomname = rpad(atoms[ith_atom], 4)                                             # granting right padding
+#         new_irow = string(new_irow[1:12], atomname, new_irow[17:end])
+#         new_irow = string(new_irow[1:17], "BGC   ", new_irow[21:end])                   # updating residue name
+#         new_irow = string(new_irow[1:22], lpad(resid, 4), new_irow[27:end])             # updating residue number
+#         new_irow = string(new_irow[1:54], "  1.00  0.00           ", new_irow[77:end])
 
-end
+#         push!(new_pdbdata, new_irow)
+
+#         ith_atom += 1
+#         if ith_atom > length(atoms)
+#             ith_atom = 1
+#             resid += 1
+#         end
+#     end
+
+#     push!(new_pdbdata, "END")
+
+#     open(pdbname, "w") do pdb
+#         for line in new_pdbdata
+#             println(pdb, line)
+#         end
+#     end
+
+#     return nothing
+# end
+
 
 """
     fragPDBs(xyzfile::String, selection::String; vmd="vmd")

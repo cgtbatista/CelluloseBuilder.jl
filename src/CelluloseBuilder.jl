@@ -7,10 +7,10 @@ export CrystalXYZ, UnitCell
 export cellulosebuilder
 export lattice2basis, PBC, fractional2cartesian, xy_pruning, z_expansion
 export translate
-export writeXYZ, rawXYZ, _exporting_PDBfile, pbcXYZ, fragPDBs, cleanPDB
+export writeXYZ, rawXYZ, writePDB, pbcXYZ, fragPDBs, cleanPDB
 export generate_cellulose_topology, get_crystallographic_info
 
-export unitcell, crystal, picking_fragments, cleanPDB!
+export unitcell, crystal, picking_fragments, cleanPDB!, isinverted
 
 ## crystalographic tools to deal with cellulose
 include("./crystaltoolkit.jl")
