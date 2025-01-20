@@ -11,10 +11,9 @@ function cleanPDB!(pdbname::String, atomnames::Vector{String})
 
     pdbfile = String[]
 
-    push!(pdbfile, "CRYST1    0.000    0.000    0.000  90.00  90.00  90.00 P 1           1")
-
     iatom, resid = 1, 1
 
+    push!(pdbfile, "CRYST1    0.000    0.000    0.000  90.00  90.00  90.00 P 1           1")
     for line in split(read(pdbname, String), "\n")
 
         if !startswith(line, "ATOM  ")
@@ -37,7 +36,6 @@ function cleanPDB!(pdbname::String, atomnames::Vector{String})
             resid += 1
         end
     end
-
     push!(pdbfile, "END")
 
     open(pdbname, "w") do file
