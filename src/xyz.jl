@@ -16,7 +16,7 @@ end
 function pbcXYZ(
             xyzname::String,
             xyzsizes::Vector{Int64};
-            phase="Iβ", structure=nothing, fibril=nothing, new_xyzname=joinpath(tempdir(), "cellulose.xyz"),
+            phase="Iβ", structure=nothing, fibril=nothing, new_xyzname=nothing,
             vmd="vmd", vmdDebug=false
         )
     
@@ -35,15 +35,15 @@ function pbcXYZ(
         fibril = isnothing(fibril) ? "34566543" : fibril
 
         key = (lowercase(phase), lowercase(fibril))
-        selection = if haskey(microfibril, key)
-                microfibril[key]
+        rchains = if haskey(microfibril, key)
+                parse.(Int64, split(microfibril[key], " "))
             else
                 error("The fibril $fibril is not implemented yet on the microfibril dictionary.")
         end
     end
    
     if !isfibril
-        selection = monolayer(xyzsizes, phase=phase, structure=structure)
+        rchains = monolayer(xyzsizes, phase=phase, structure=structure)
     end
 
     tcl = tempname() * ".tcl"
@@ -51,7 +51,7 @@ function pbcXYZ(
     vmdinput = open(tcl, "w")
     Base.write(vmdinput, """
     mol new $xyzname
-    set sel [ atomselect top \"fragment $selection\" ]
+    set sel [ atomselect top \"fragment $(join(rchains, " "))\" ]
     \$sel writexyz $new_xyzname
     exit
     """)
@@ -62,7 +62,7 @@ function pbcXYZ(
     if vmdDebug
         return vmdoutput
     else
-        return new_xyzname, parse.(Int64, split(selection, " "))
+        return new_xyzname, rchains
     end
 end
 
@@ -72,99 +72,50 @@ end
 Applies the periodic boundary conditions on the cellulose crystal over *xy-plane* using the number of fragments (e.g. chains) as parameter.
 It returns cellulose **XYZ file** needed to prepare the PDB and PSF files.
 """
-function pbcXYZ(nfrag::Int64, xsize::Int64, ysize::Int64; phase="Iβ", pbc=nothing, xyzfile="file.xyz", vmd="vmd")
+function pbcXYZ(
+            xyzname::String,
+            fragments::Int64,
+            xyzsizes::Vector{Int64};
+            phase="Iβ", pbc=nothing, new_xyzname=nothing,
+            vmd="vmd", vmdDebug=false
+        )    
     
-    xyz = joinpath(tempdir(), "cellulose.xyz") ## the new and last XYZ file!
-
-    a=nfrag; boundary=1; n_forbbiden=0; upper=nfrag-1;
-    forbbiden=Int64[]; remainder=Int64[];
-
-    if phase == "Ib" || phase == "Iβ" || phase == "II"
-
-        if pbc == :all || pbc == :ALL || pbc == :All
-            for b in collect(boundary:1:ysize)
-                n_forbbiden = (2*xsize-1)*b - 1
-                push!(forbbiden, convert(Int64, n_forbbiden))
-            end
-            for b in collect(boundary:1:xsize)
-                a = a - 1
-                push!(forbbiden, convert(Int64, a))
-            end
-        elseif pbc == :a || pbc == :A
-            for b in collect(boundary:1:ysize)
-                n_forbbiden = (2*xsize-1)*b - 1
-                push!(forbbiden, convert(Int64, n_forbbiden))
-            end
-        elseif pbc == :b || pbc == :B
-            for b in collect(boundary:1:xsize)
-                a = a - 1
-                push!(forbbiden, convert(Int64, a))
-            end
-        end
-       
-        for num in 0:upper
-            dummy_logical = 1
-            for ith_forbs in forbbiden
-                if num == ith_forbs
-                    dummy_logical = 0
-                    break
-                end
-            end
-            if dummy_logical == 1
-                remainder = push!(remainder, convert(Int64, num))
-            end
-        end
-
-        sel_fragments = join(remainder, " "); n_fragments = length(remainder);
-        
-        vmdinput_file = tempname() * ".tcl"
-        vmdinput = open(vmdinput_file, "w")
-        Base.write(vmdinput, "mol new \"$xyzfile\" \n")
-        Base.write(vmdinput, "set sel [ atomselect top \"fragment $sel_fragments\" ] \n")
-        Base.write(vmdinput, "\$sel writexyz \"$xyz\" \n")
-        Base.write(vmdinput, "exit \n")
-        Base.close(vmdinput)
-        
-        vmdoutput = split(Base.read(`$vmd -dispdev text -e $vmdinput_file`, String), "\n")
-
-    elseif phase == "Ia" || phase == "Iα"
-
-        remainder = collect(0:1:(nfrag-1))
-        sel_fragments = join(remainder, " "); n_fragments = length(remainder);
-        
-        vmdinput_file = tempname() * ".tcl"
-        vmdinput = open(vmdinput_file, "w")
-        Base.write(vmdinput, "mol new \"$xyzfile\" \n")
-        Base.write(vmdinput, "set sel [ atomselect top \"fragment $sel_fragments\" ] \n")
-        Base.write(vmdinput, "\$sel writexyz \"$xyz\" \n")
-        Base.write(vmdinput, "exit \n")
-        Base.close(vmdinput)
-
-        vmdoutput = split(Base.read(`$vmd -dispdev text -e $vmdinput_file`, String), "\n")
-
-    elseif phase == "III" || phase == "III_I" || phase == "III_i" || phase == "IIIi"
-        
-        remainder = collect(0:1:(nfrag-1))
-        sel_fragments = join(remainder, " "); n_fragments = length(remainder);
-        
-        vmdinput_file = tempname() * ".tcl"
-        vmdinput = open(vmdinput_file, "w")
-        Base.write(vmdinput, "mol new \"$xyzfile\" \n")
-        Base.write(vmdinput, "set sel [ atomselect top \"fragment $sel_fragments\" ] \n")
-        Base.write(vmdinput, "\$sel writexyz \"$xyz\" \n")
-        Base.write(vmdinput, "exit \n")
-        Base.close(vmdinput)
-        
-        vmdoutput = split(Base.read(`$vmd -dispdev text -e $vmdinput_file`, String), "\n")
-
-    else
+    valid_phase = in(lowercase(phase), Set(["ib", "iβ", "ii", "ia", "iα", "iii", "iii_i", "iii_i", "iii_i"]))
+    if !valid_phase
         error("The phase $phase is not implemented yet.")
     end
 
+    new_xyzname = isnothing(new_xyzname) ? tempname() * ".xyz" : new_xyzname
+        
+    if in(lowercase(phase), Set(["ib", "iβ", "ii"]))        
+        fchains = forbbiden(fragments, xyzsizes, pbc=pbc)
+        rchains = setdiff(0:fragments-1, fchains)
+    end
 
-    return xyz, sel_fragments, n_fragments, vmdoutput
+    if in(lowercase(phase), Set(["ia", "iα", "iii", "iii_i", "iiii"]))
+        rchains = 0:fragments-1
+    end
 
+    tcl = tempname() * ".tcl"
+
+    open(tcl, "w") do file
+        println(file, """
+        mol new "$xyzname"
+        set sel [ atomselect top "fragment $(join(rchains, " "))" ]
+        \$sel writexyz $new_xyzname
+        exit
+        """)
+    end
+    
+    vmdoutput = execVMD(vmd, tcl)
+
+    if vmdDebug
+        return vmdoutput
+    else
+        return new_xyzname, rchains
+    end
 end
+
 
 """
 

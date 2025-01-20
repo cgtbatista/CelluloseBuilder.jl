@@ -11,10 +11,6 @@ struct UnitCell
     parameters::Tuple{Vector{Float64}, Vector{Float64}}     ## [ [a, b, c], [α, β, γ] ]
 end
 
-# x, y, z = fractional2cartesian(xyzsizes, phase)
-# atoms, atomstype = atomnames(phase, ncells=length(x))
-# crystal = XYZs(atoms, x, y, z)
-
 function crystal(xyzsizes::Vector{Int64}, phase::String; topnames=true)
     x, y, z = fractional2cartesian(xyzsizes, phase)
     atoms, atypes = atomnames(phase, ncells=length(x))
@@ -25,10 +21,26 @@ function crystal(xyzsizes::Vector{Int64}, phase::String; topnames=true)
     end
 end
 
-function unitcell(monomers::Int64, phase::String; bv=true)
+function unitcell(a::Int64, b::Int64, c::Int64, phase::String; bv=true)
+    xyzsizes, lattice = PBC(a, b, c, phase=phase)  
+    if bv
+        return xyzsizes, lattice, lattice2basis(lattice, phase)
+    else
+        return xyzsizes, lattice
+    end
+end
 
-    xyzsizes, lattice = PBC(monomers, phase=phase)
-    
+function unitcell(monomers::Int64, phase::String; bv=true)
+    xyzsizes, lattice = PBC(monomers, phase=phase)  
+    if bv
+        return xyzsizes, lattice, lattice2basis(lattice, phase)
+    else
+        return xyzsizes, lattice
+    end
+end
+
+function unitcell(monolayer::String, chains::Int64, monomers::Int64, phase::String; bv=true)
+    xyzsizes, lattice = PBC(monomers, chains, phase=phase, layer=monolayer)  
     if bv
         return xyzsizes, lattice, lattice2basis(lattice, phase)
     else
@@ -141,7 +153,7 @@ function z_expansion(
             end
         end
         if lowercase(phase) == "ii"
-            for k in collect(2:1:max_k)
+            for k in collect(1:1:n)
                 append!(newatoms, atoms); append!(xnew, x); append!(ynew, y); append!(znew, z .+ c*(k-1));
             end
         end
@@ -185,10 +197,9 @@ julia > get_crystallographic_info("III_I")
 ```
 
 """
-
 function get_crystallographic_info(phase::String)
     ## [ [a, b, c], [α, β, γ] ]
-    if phase == "Ib" || phase == "Iβ"
+    if lowercase(phase) in Set(["ib", "iβ"])
         atomnames = [ "C1", "H1", "C2", "H2", "C3", "H3", "C4", "H4", "C5", "H5", "C6", "H61", "H62", "O2", "O3", "O4", "O5", "O6", "HO2", "HO3", "HO6" ]
         asymmetric_unit =  [
             [ 0.014,  -0.042,   0.0433], [ 0.1382, -0.0188,  0.0598], [-0.026, -0.184,  -0.0516], [-0.1508, -0.2177, -0.0546], [ 0.040,  -0.137,  -0.1848],
@@ -202,7 +213,7 @@ function get_crystallographic_info(phase::String)
             [ 0.5104,  0.2733, -0.0961], [ 0.5184,  1.0275,  0.0326]
         ]
         parameters_unit = [ [ 7.784, 8.201, 10.380 ], [ 90.0, 90.0, 96.5 ] ]
-    elseif phase == "Ia" || phase == "Iα"
+    elseif lowercase(phase) in Set(["ia", "iα"])
         atomnames = [ "C1", "H1", "C2", "H2", "C3", "H3", "C4", "H4", "C5", "H5", "C6", "H61", "H62", "O4", "O2", "O3", "O5", "O6", "HO2", "HO3", "HO6" ]
         asymmetric_unit = [
             [ 0.254,  -0.054,   0.031 ], [0.1973, -0.1585, -0.1140], [ 0.193,  -0.143,   0.234 ], [ 0.2550, -0.0383,  0.3792], [ 0.022, -0.174,   0.114],
@@ -216,7 +227,7 @@ function get_crystallographic_info(phase::String)
             [ 0.422,   0.302,  -0.148 ], [0.481,  -0.508,   0.51  ]
         ]
         parameters_unit = [ [ 10.400, 6.717, 5.962 ], [ 80.37, 118.08, 114.80 ] ]
-    elseif phase == "II"
+    elseif lowercase(phase) == "ii"
         atomnames = [ "C1", "H1", "C2", "H2", "C3", "H3", "C4", "H4", "C5", "H5", "C6", "H61", "H62", "O4", "O2", "O3", "O5", "O6" ]
         asymmetric_unit = [
             [-0.043,   0.007,   0.381 ], [-0.1257, -0.1115,  0.3924], [-0.125,   0.086,   0.286 ], [-0.0411,  0.2049,  0.2764], [-0.151,  -0.003,   0.156 ],
@@ -229,7 +240,7 @@ function get_crystallographic_info(phase::String)
             [ 0.886,   0.418,  -0.067 ]  
         ]
         parameters_unit = [ [ 8.10, 9.03, 10.31 ], [ 90.0, 90.0, 117.1 ] ]
-    elseif phase == "III" || phase == "III_I" || phase == "III_i" || phase == "IIIi"
+    elseif lowercase(phase) in Set(["iii", "iii_i", "iiii"])
         atomnames = [ "C1", "C2", "C3", "C4", "C5", "C6", "O2", "O3", "O4", "O5", "O6", "H1", "H2", "H3", "H4", "H5", "H61", "H62", "HO2", "HO3", "HO6" ]
         asymmetric_unit = [
            [ 0.050961,  0.057262, 0.380527], [ 0.191389,  0.196135, 0.287129], [ 0.047193,  0.160362, 0.153425], [ 0.009263, -0.031267,  0.112801],

@@ -1,99 +1,53 @@
-function cleanPDB!(pdbname::String, atoms::Vector{String})
+#1         2         3         4         5         6         7         8
+#12345678901234567890123456789012345678901234567890123456789012345678901234567890
+#HETATM 1357 MG    MG   168       4.669  34.118  19.123  1.00  3.16          MG2+
+#HETATM 3835 FE   HEM     1      17.140   3.115  15.066  1.00 14.14          FE3+
+#HETATM 1407  CA  BLE P   1      14.625  32.240  14.151  1.09 16.76           C
 
-    pdbdata = Base.split(Base.read(pdbname, String), "\n")
+#ATOM      1  C       X   1       0.110   0.434   3.923  0.00  0.00           C
+#HETATM    1  C1  BGC     1       2.515   8.013   3.923  1.00  0.00           C         after the treatment
 
-    new_pdbdata = Vector{String}()
+function cleanPDB!(pdbname::String, atomnames::Vector{String})
 
-    push!(new_pdbdata, "CRYST1    0.000    0.000    0.000  90.00  90.00  90.00 P 1           1")
+    pdbfile = String[]
 
-    ith_atom, resid = 1, 1
-    for irow in pdbdata
-        if !occursin("ATOM  ", irow); continue; end            
+    push!(pdbfile, "CRYST1    0.000    0.000    0.000  90.00  90.00  90.00 P 1           1")
+
+    iatom, resid = 1, 1
+
+    for line in split(read(pdbname, String), "\n")
+
+        if !startswith(line, "ATOM  ")
+            continue
+        end
+
+        newline = "HETATM" * line[7:end]
         
-        new_irow = irow
-        atomname = atoms[ith_atom]
-        
-        # setting hetatoms
-        new_irow = replace(new_irow, "ATOM  " => "HETATM")
-        # editing the atom names
-        _atomname_length = length(atomname); _pdbcolumn_name = SubString(irow, 14 : 14+_atomname_length-1)
-        new_irow = replace(new_irow, _pdbcolumn_name => atomname, count=1)
-        
-        # editing the residue names
-        _pdbcolumn_resname = SubString(new_irow, findfirst("    X ", new_irow))
-        new_irow = replace(new_irow, _pdbcolumn_resname => "BGC   ")
-        # editing residue sequence numbers
-        _pdbcolumn_resnum = SubString(new_irow, 26-length("$resid")+1 : 26)
-        new_irow = replace(new_irow, _pdbcolumn_resnum*"    " => "$resid"*"    ")
-        # editing the segname
-        _pdbcolumn_segname = SubString(new_irow, findfirst("  0.00  0.00           ", irow))
-        new_irow = replace(new_irow, _pdbcolumn_segname => "  1.00  0.00           ")
-        
-        # writting the new configuration
-        push!(new_pdbdata, "$new_irow")
-        
-        ith_atom += 1
-        if ith_atom > length(atoms)
-            ith_atom = 1
+        newline = string(newline[1:13], rpad(atomnames[iatom], 3), newline[17:end])         # updating atomname
+        newline = string(newline[1:17], "BGC", newline[21:end])                             # updating resname
+        newline = string(newline[1:21], " ", newline[23:end])                               # erasing chain
+        newline = string(newline[1:22], lpad(resid, 4), newline[27:end])                    # updating resid
+        newline = string(newline[1:56], "1.00", newline[61:end])                            # marking the crystallographic coordinates
+
+        push!(pdbfile, newline)
+
+        iatom += 1
+        if iatom > length(atomnames)
+            iatom = 1
             resid += 1
         end
     end
-    push!(new_pdbdata, "END")
 
-    open(pdbname, "w") do pdb
-        for irow in new_pdbdata
-            println(pdb, irow)
+    push!(pdbfile, "END")
+
+    open(pdbname, "w") do file
+        for line in pdbfile
+            println(file, line)
         end
-    end    
+    end
 
     return nothing
 end
-
-#HETATM    1  C1  BGC     1      11.074  40.399   0.449  1.00  0.00           C
-#HETATM    1 C1   BGC     1  1      11.074  40.399   0.  1.00  0.00               C
-
-
-# function cleanPDB!(pdbname::String, atoms::Vector{String})
-
-#     pdbdata = split(read(pdbname, String), "\n")
-
-#     new_pdbdata = String[]
-#     push!(new_pdbdata, "CRYST1    0.000    0.000    0.000  90.00  90.00  90.00 P 1           1")
-
-#     ith_atom, resid = 1, 1
-
-#     for irow in pdbdata
-
-#         if !startswith(irow, "ATOM  ")
-#             continue
-#         end
-
-#         new_irow = "HETATM" * irow[7:end]                                               # updating atom pattern to HETATM
-#         atomname = rpad(atoms[ith_atom], 4)                                             # granting right padding
-#         new_irow = string(new_irow[1:12], atomname, new_irow[17:end])
-#         new_irow = string(new_irow[1:17], "BGC   ", new_irow[21:end])                   # updating residue name
-#         new_irow = string(new_irow[1:22], lpad(resid, 4), new_irow[27:end])             # updating residue number
-#         new_irow = string(new_irow[1:54], "  1.00  0.00           ", new_irow[77:end])
-
-#         push!(new_pdbdata, new_irow)
-
-#         ith_atom += 1
-#         if ith_atom > length(atoms)
-#             ith_atom = 1
-#             resid += 1
-#         end
-#     end
-
-#     push!(new_pdbdata, "END")
-
-#     open(pdbname, "w") do pdb
-#         for line in new_pdbdata
-#             println(pdb, line)
-#         end
-#     end
-
-#     return nothing
-# end
 
 
 """
@@ -133,14 +87,16 @@ Writes the final PSF and PDB files from the cellulose fragments.
 function writePDB(
                 monomers::Int64,
                 pdbnames::Vector{String};
-                phase="Iβ", covalent=true, check_inversion=false,
+                pdbname=nothing,
+                phase="Iβ", covalent=true, hasInversion=false,
                 topology_file=DEFAULT_CARB_TOPOLOGY_FILE,
                 vmd="vmd", vmdDebug=true
             )
+    
+    pdb = isnothing(pdbname) ? tempname() * ".pdb" : pdbname
+    psf, tcl = replace(pdb, ".pdb" => ".psf"), replace(pdb, ".pdb" => ".tcl")
 
-    pdb, psf, tcl = joinpath(tempdir(), "cellulose.pdb"), joinpath(tempdir(), "cellulose.psf"), joinpath(tempdir(), "cellulose.tcl")
-
-    itoken = check_inversion ? isinverted.(pdbnames) : nothing
+    itoken = hasInversion ? isinverted.(pdbnames) : nothing
             
     Base.open(tcl, "w") do file
         println(file, """
@@ -160,7 +116,7 @@ function writePDB(
             printching!(file, id=id, nresids=monomers, invert=inverting, phase=phase, covalent=covalent)
 
             println(file, """
-            """) ## to be more clean on the tcl file
+            """) ## to be more clean on TCL
         end
 
         println(file, """

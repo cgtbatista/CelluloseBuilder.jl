@@ -11,7 +11,7 @@ function atomnames(phase::String; ncells=1, original=true)
         n = 4
     elseif lowercase(phase) in ["ia", "iα"]
         n = 2
-    elseif lowercase(phase) in "ii"
+    elseif lowercase(phase) == "ii"
         n = 4
     elseif lowercase(phase) in ["iii", "iii_i", "iiii"]
         n = 2

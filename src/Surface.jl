@@ -1,6 +1,6 @@
 """
 
-    vmd_getsurface(inputfile::String; surface_method="distance", selection="all", parameters="-res 0.6 -cutoff 4.0", vmd="vmd")
+    surface(rawfile::String; surface_method="distance", selection="all", parameters="-res 0.6 -cutoff 4.0", vmd="vmd")
 
 Generate a surface from a VMD input file using the `volmap` plugin. The surface can be generated using different methods, such as `distance`, `density`, among others.
 The default method is `distance`. The selection can be defined by the user, and the default is `all`.
@@ -9,7 +9,7 @@ The parameters can be set by the user, and the default is `-res 0.6 -cutoff 4.0`
 
 ## Arguments
 
-- `inputfile::String`: The name of the input file without extension. The script will look for `inputfile.pdb` and `inputfile.psf`.
+- `rawfile::String`: The name of the input file without extension. The script will look for `rawfile.pdb` and `rawfile.psf`.
 
 - `surface_method::String="distance"`: The method to be used to generate the surface using the volmap tools. The default is `distance`.
     `density`
@@ -48,54 +48,68 @@ The parameters can be set by the user, and the default is `-res 0.6 -cutoff 4.0`
 
 ```julia-repl
 
-julia > vmd_getsurface("new_crystal")
+julia > surface("new_crystal")
 
 ```
 
 """
+function surface(rawfile::String; surface_method="distance", selection="all", parameters="-res 0.6 -cutoff 4.0", vmd="vmd", vmdDebug=false)
 
-function vmd_getsurface(inputfile::String; surface_method="distance", selection="all", parameters="-res 0.6 -cutoff 4.0", vmd="vmd")
-
-    if !isfile(inputfile * ".pdb") || !isfile(inputfile * ".psf")
-        error("File not found: $inputfile. Be sure to provide a valid *.psf and *.pdb file.")
+    if !isfile(rawfile * ".pdb") || !isfile(rawfile * ".psf")
+        error("File not found: Be sure that exist $rawfile.psf and $rawfile.pdb file.")
     end
 
-    vmdinput_file = tempname() * ".tcl"
+    tcl = tempname() * ".tcl"
 
-    vmdinput = open(vmdinput_file, "w")
-    Base.write(vmdinput, "mol new \"$inputfile.psf\" \n")
-    Base.write(vmdinput, "mol addfile \"$inputfile.pdb\" \n")
-    Base.write(vmdinput, "[atomselect top \"name C1 C2 C3 C4 C5\"] set radius 2.000 \n")
-    Base.write(vmdinput, "[atomselect top \"name C6\"] set radius 2.010 \n")
-    Base.write(vmdinput, "[atomselect top \"name O5\"] set radius 1.650 \n")
-    Base.write(vmdinput, "[atomselect top \"name O1 O2 O3 O4 O6\"] set radius 1.765 \n")
-    Base.write(vmdinput, "[atomselect top \"name H1 H2 H3 H4 H5 H61 H62\"] set radius 1.340 \n")
-    Base.write(vmdinput, "[atomselect top \"name HO1 HO2 HO3 HO4 HO6\"] set radius 1.800 \n")
-    # making the ifelse tests here based on surface method!!
-    Base.write(vmdinput, "volmap $surface_method [atomselect top \"$selection\"] $parameters -o $inputfile.dx \n")
-    Base.write(vmdinput, "mol delete top \n")
-    Base.write(vmdinput, "mol new \"$inputfile.dx\" \n")
-    Base.write(vmdinput, "axes location off \n")
-    Base.write(vmdinput, "mol modstyle 0 top isosurface 0.5 0 0 0 1 1 \n")
-    Base.write(vmdinput, "set unitary_space {{1 0 0 0} {0 1 0 0} {0 0 1 0} {0 0 0 1}} \n")
-    Base.write(vmdinput, "molinfo top set center_matrix [list \$unitary_space] \n")
-    Base.write(vmdinput, "molinfo top set rotate_matrix [list \$unitary_space] \n")
-    Base.write(vmdinput, "molinfo top set scale_matrix [list \$unitary_space] \n")
-    Base.write(vmdinput, "render STL $inputfile.stl true \n")
-    Base.write(vmdinput, "set dat_filename [open $inputfile.dat w] \n")
-    Base.write(vmdinput, "set tmp_filename [open $inputfile.stl r] \n")
-    Base.write(vmdinput, "while {[gets \$tmp_filename line] >= 0} { \n")
-    Base.write(vmdinput, "  if {[lindex [split \$line] 7] == \"vertex\"} { \n")
-    Base.write(vmdinput, "    puts \$dat_filename \"[lrange [split \$line] 8 end]\" \n")
-    Base.write(vmdinput, "  } \n")
-    Base.write(vmdinput, "} \n")
-    Base.write(vmdinput, "close \$tmp_filename \n")
-    Base.write(vmdinput, "close \$dat_filename \n")
-    Base.write(vmdinput, "mol delete all \n")
-    Base.write(vmdinput, "exit \n")
-    Base.close(vmdinput)
+    open(tcl, "w") do file
+        println(file, """
+        mol new "$rawfile.psf"
+        mol addfile "$rawfile.pdb"
+        
+        [atomselect top "name C1 C2 C3 C4 C5"] set radius 2.000
+        [atomselect top "name C6"] set radius 2.010
+        [atomselect top "name O5"] set radius 1.650
+        [atomselect top "name O1 O2 O3 O4 O6"] set radius 1.765
+        [atomselect top "name H1 H2 H3 H4 H5 H61 H62"] set radius 1.340
+        [atomselect top "name HO1 HO2 HO3 HO4 HO6"] set radius 1.800
 
-    vmdoutput_file = Base.read(`$vmd -dispdev text -e $vmdinput_file`, String)
+        volmap $surface_method [atomselect top "$selection"] $parameters -o $rawfile.dx
+        
+        mol delete top
+        
+        mol new "$rawfile.dx"
+        
+        axes location off
+        
+        mol modstyle 0 top isosurface 0.5 0 0 0 1 1
+        set unitary_space {{1 0 0 0} {0 1 0 0} {0 0 1 0} {0 0 0 1}}
+        
+        molinfo top set center_matrix [list \$unitary_space]
+        molinfo top set rotate_matrix [list \$unitary_space]
+        molinfo top set scale_matrix [list \$unitary_space]
+        
+        render STL $rawfile.stl true
+        
+        set dat_filename [open $rawfile.dat w]
+        set tmp_filename [open $rawfile.stl r]
+        while {[gets \$tmp_filename line] >= 0} {
+          if {[lindex [split \$line] 7] == "vertex"} {
+            puts \$dat_filename "[lrange [split \$line] 8 end]"
+          }
+        }
+        close \$tmp_filename
+        close \$dat_filename
+        mol delete all
 
-    return vmdoutput_file
+        exit
+        """)
+    end
+
+    vmdoutput = execVMD(vmd, tcl)
+
+    if vmdDebug
+        return vmdoutput
+    else
+        return rawfile * ".stl", rawfile * ".dat"
+    end
 end

@@ -17,59 +17,73 @@ const microfibril = Dict{Tuple{String, String}, String}([
 """
     monolayer(xyzsizes::Vector{Int64}; phase="Iα", structure="monolayer")
 
-Returns the fragments selection needed to the monolayer structure.
+Returns the fragments selection needed to build the monolayer structure.
 """
 function monolayer(xyzsizes::Vector{Int64}; phase="Iα", structure="monolayer")
 
-    selection = ""
-
+    
     if in(lowercase(structure), Set(["monolayer", "m"])) && in(lowercase(phase), Set(["iα", "ia"]))
-        nsize = xyzsizes[2]
-        for chain in 1:nsize
-            selection = selection * " " * string(chain*(nsize-1))
-        end
-
-        return strip(selection)
+        v_raw = 1:xyzsizes[2]
+        return v_raw * (xyzsizes[2]-1)
     end
 
     isorigin, iscenter = in(lowercase(structure), Set(["origin", "o"])), in(lowercase(structure), Set(["center", "c"]))
     
     if in(lowercase(phase), Set(["ib", "iβ"]))
-        nsize = xyzsizes[2]
         if isorigin
-            for chain in 1:nsize
-                selection = selection * " " * string(3*(chain-1))
-            end
+            v_raw = 1:xyzsizes[2]
+            return 3 * (v_raw .- 1)
         end
         if iscenter
-            for chain in 1:nsize
-                if chain > nsize-1; continue; end
-                selection = selection * " " * string(3*(chain-1)+1)
-            end
+            v_raw = 1:xyzsizes[2]-1
+            return 3 * (v_raw .- 1) .+ 1
         end
-
-        return strip(selection)
     end
 
     if lowercase(phase) == "ii"
-        nsize = xyzsizes[1]
         if isorigin
-            for chain in 1:nsize
-                selection = selection * " " * string(2*(chain-1))
-            end
+            v_raw = 1:xyzsizes[1]
+            return 2 * (v_raw .- 1)
         end
         if iscenter
-            for chain in 1:nsize
-                if chain > nsize-1; continue; end
-                selection = selection * " " * string(2*(chain-1)+1)
-            end
+            v_raw = 1:xyzsizes[1]-1
+            return 2 * (v_raw .- 1) .+ 1
         end
+    end
+end
 
-        return strip(selection)
+"""
+    forbbiden(nfrags, xyzsizes::Vector{Int64}; pbc=nothing)
+
+Returns the chains that are forbidden to be present on the crystal due to the PBCs.
+"""
+function forbbiden(nfrags, xyzsizes::Vector{Int64}; pbc=nothing)
+
+    chains = Int64[]
+    
+    if isnothing(pbc)
+        return chains
     end
 
-    if selection == ""
-        error("The phase $phase does not supports the structure $structure.")
+    xsize, ysize = xyzsizes[1], xyzsizes[2]
+
+    if in(lowercase(pbc), Set(["a", "all"]))
+        for b in 1:ysize
+            push!(chains, (2*xsize-1)*b-1)
+        end
+    end
+    
+    if in(lowercase(pbc), Set(["b", "all"]))
+        for a in 1:xsize
+            nfrags -= 1
+            push!(chains, nfrags)
+        end
+    end
+    
+    if chains == Int64[]
+        error("The PBC $pbc is not implemented yet.")
+    else
+        return chains
     end
 end
 
@@ -207,26 +221,17 @@ function printching!(file::IOStream; id=1, nresids=1, invert=false, phase="Iβ",
     end
 end
 
-"""
-
-    cleaning_tmpfiles()
-
-Move the exported files to the work directory and clean all the *.pdb, *.tcl, and *xyz on temporary
-files inside the temp folder (it can be different on Linux, Windows and MacOS).
-"""
-function cleaning_tmpfiles(filename::String; destination_path=pwd())
+function cleaning_tmpfiles(filename::String; destination_path=pwd(), new_filename="cellulose")
     
-    tmp_path = tempdir()
+    mv(filename * ".xyz", joinpath(destination_path, "$new_filename.xyz"), force=true)
+    mv(filename * ".psf", joinpath(destination_path, "$new_filename.psf"), force=true)
+    mv(filename * ".pdb", joinpath(destination_path, "$new_filename.pdb"), force=true)
+    mv(filename * ".tcl", joinpath(destination_path, "$new_filename.tcl"), force=true)
 
-    mv(joinpath(tmp_path, "$filename.xyz"), joinpath(destination_path, "$filename.xyz"), force=true)
-    mv(joinpath(tmp_path, "$filename.psf"), joinpath(destination_path, "$filename.psf"), force=true)
-    mv(joinpath(tmp_path, "$filename.pdb"), joinpath(destination_path, "$filename.pdb"), force=true)
-    mv(joinpath(tmp_path, "$filename.tcl"), joinpath(destination_path, "$filename.tcl"), force=true)
-
-    files = readdir(tmp_path)
+    files = readdir(tempdir())
     for file in files
         if occursin(".pdb", file) || occursin(".xyz", file) || occursin(".tcl", file)
-            rm(joinpath(tmp_path, file))
+            rm(joinpath(tempdir(), file))
         end
     end
 
