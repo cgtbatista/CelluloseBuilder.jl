@@ -19,8 +19,6 @@ include("./crystaltoolkit.jl")
 include("./atomnames.jl")                                       #done
 include("./coords.jl")                                          #done
 
-include("./exporting_systems.jl")
-
 ## PBC tools
 include("./pbc.jl")                                             #done
 include("./pbc-misc.jl")
@@ -28,7 +26,6 @@ include("./pbc-misc.jl")
 ## picking the number of structure fragments inside a VMD structure loading output
 
 ## cleaning the temporary files
-include("./cleaning_tmpfiles.jl")
 include("./pdb.jl")
 include("./topology.jl")
 include("./vdw-surface.jl")

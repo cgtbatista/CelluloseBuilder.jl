@@ -124,3 +124,65 @@ function fragPDBs(xyzname::String; fragments=nothing, vmd="vmd", vmdDebug=false)
     
     return vmdDebug ? vmdoutput : pdbnames
 end
+
+"""
+    writePDB(monomers::Int64, pdbnames::Vector{String}; phase="Iβ", covalent=true, check_inversion=false, topology_file=DEFAULT_CARB_TOPOLOGY_FILE, vmd="vmd", vmdDebug=true)
+
+Writes the final PSF and PDB files from the cellulose fragments.
+"""
+function writePDB(
+                monomers::Int64,
+                pdbnames::Vector{String};
+                phase="Iβ", covalent=true, check_inversion=false,
+                topology_file=DEFAULT_CARB_TOPOLOGY_FILE,
+                vmd="vmd", vmdDebug=true
+            )
+
+    pdb, psf, tcl = joinpath(tempdir(), "cellulose.pdb"), joinpath(tempdir(), "cellulose.psf"), joinpath(tempdir(), "cellulose.tcl")
+
+    itoken = check_inversion ? isinverted.(pdbnames) : nothing
+            
+    Base.open(tcl, "w") do file
+        println(file, """
+        package require psfgen
+        topology $topology_file
+        """)
+
+        for (id, pdbname) in enumerate(pdbnames)
+            
+            println(file, """
+            segment M$id { 
+                pdb $pdbname 
+            } 
+            """)
+
+            inverting = !isnothing(itoken) ? itoken[id] : false
+            printching!(file, id=id, nresids=monomers, invert=inverting, phase=phase, covalent=covalent)
+
+            println(file, """
+            """) ## to be more clean on the tcl file
+        end
+
+        println(file, """
+        regenerate angles dihedrals
+        """)
+
+        for (id, pdbname) in enumerate(pdbnames)
+            println(file, "coordpdb $pdbname M$id")
+        end
+        
+        println(file, """
+        guesscoord
+
+        writepsf $psf
+        writepdb $pdb
+        exit
+        """)
+    
+    end
+    
+    vmdoutput = Base.split(Base.read(`$vmd -dispdev text -e $(tcl)`, String), "\n")
+    if vmdDebug
+        return vmdoutput
+    end
+end

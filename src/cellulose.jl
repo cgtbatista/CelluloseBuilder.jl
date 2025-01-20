@@ -252,7 +252,7 @@ function cellulosebuilder(monomers::Int64; phase="Iβ", fibril=nothing, covalent
     
     println("""
 
-    That's all! :D
+    It's done!
     """)
 
     if vmdDebug
