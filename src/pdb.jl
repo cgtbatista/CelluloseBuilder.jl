@@ -7,6 +7,11 @@
 #ATOM      1  C       X   1       0.110   0.434   3.923  0.00  0.00           C
 #HETATM    1  C1  BGC     1       2.515   8.013   3.923  1.00  0.00           C         after the treatment
 
+"""
+    cleanPDB!(pdbname::String, atomnames::Vector{String})
+
+Clean the PDB file by changing the atomnames, resnames, resid, and chain. The crystallographic coordinates are marked as 1.00.
+"""
 function cleanPDB!(pdbname::String, atomnames::Vector{String})
 
     pdbfile = String[]
@@ -21,12 +26,11 @@ function cleanPDB!(pdbname::String, atomnames::Vector{String})
         end
 
         newline = "HETATM" * line[7:end]
-        
-        newline = string(newline[1:13], rpad(atomnames[iatom], 3), newline[17:end])         # updating atomname
-        newline = string(newline[1:17], "BGC", newline[21:end])                             # updating resname
-        newline = string(newline[1:21], " ", newline[23:end])                               # erasing chain
-        newline = string(newline[1:22], lpad(resid, 4), newline[27:end])                    # updating resid
-        newline = string(newline[1:56], "1.00", newline[61:end])                            # marking the crystallographic coordinates
+        newline = string(newline[1:13], rpad(atomnames[iatom], 3), newline[17:end])         
+        newline = string(newline[1:17], "BGC", newline[21:end])                             
+        newline = string(newline[1:21], " ", newline[23:end])                               
+        newline = string(newline[1:22], lpad(resid, 4), newline[27:end])                    
+        newline = string(newline[1:56], "1.00", newline[61:end])                            
 
         push!(pdbfile, newline)
 
@@ -72,7 +76,7 @@ function fragPDBs(xyzname::String; fragments=nothing, vmd="vmd", vmdDebug=false)
         println(file, "exit")
     end
 
-    vmdoutput = split(read(`$vmd -dispdev text -e $tcl`, String), "\n")
+    vmdoutput = execVMD(vmd, tcl)
     
     return vmdDebug ? vmdoutput : pdbnames
 end
@@ -135,8 +139,7 @@ function writePDB(
     
     end
     
-    vmdoutput = Base.split(Base.read(`$vmd -dispdev text -e $(tcl)`, String), "\n")
-    if vmdDebug
-        return vmdoutput
-    end
+    vmdoutput = execVMD(vmd, tcl)
+    
+    return vmdDebug ? vmdoutput : (pdb, psf)
 end

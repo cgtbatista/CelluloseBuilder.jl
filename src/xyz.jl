@@ -1,4 +1,9 @@
-function rawXYZ(crystal::CrystalXYZ, xyzsizes::Vector{Int64}; phase="Iβ", exporting=true, natoms=nothing, xyzfile=nothing, vmd="vmd", output=false)
+"""
+    rawXYZ(crystal::CrystalXYZ, xyzsizes::Vector{Int64}; phase="Iβ", exporting=true, natoms=nothing, xyzfile=nothing, vmd="vmd", vmdDebug=false)
+
+This function is able to clean the atomic labels and coordinates of the cellulose crystal, merging the unit cell into a single XYZ file.
+"""
+function rawXYZ(crystal::CrystalXYZ, xyzsizes::Vector{Int64}; phase="Iβ", exporting=true, natoms=nothing, xyzfile=nothing, vmd="vmd", vmdDebug=false)
     
     atemp, xtemp, ytemp, ztemp = xy_pruning(crystal.atoms, crystal.x, crystal.y, crystal.z, xyzsizes, phase)
     atoms, x, y, z = z_expansion(atemp, xtemp, ytemp, ztemp, xyzsizes, phase)
@@ -8,11 +13,14 @@ function rawXYZ(crystal::CrystalXYZ, xyzsizes::Vector{Int64}; phase="Iβ", expor
     else
         return writeXYZ(
                     atoms, x, y, z;
-                    natoms=natoms, xyzfile=xyzfile, vmd=vmd, output=output
+                    natoms=natoms, xyzfile=xyzfile, vmd=vmd, vmdDebug=vmdDebug
                 )
     end
 end
 
+"""
+    pbcXYZ(xyzname::String, xyzsizes::Vector{Int64}; phase="Iβ", structure=nothing, fibril=nothing, new_xyzname=nothing, vmd="vmd", vmdDebug=false)
+"""
 function pbcXYZ(
             xyzname::String,
             xyzsizes::Vector{Int64};
@@ -48,16 +56,16 @@ function pbcXYZ(
 
     tcl = tempname() * ".tcl"
 
-    vmdinput = open(tcl, "w")
-    Base.write(vmdinput, """
-    mol new $xyzname
-    set sel [ atomselect top \"fragment $(join(rchains, " "))\" ]
-    \$sel writexyz $new_xyzname
-    exit
-    """)
-    Base.close(vmdinput)
+    open(tcl, "w") do file
+        println(file, """
+        mol new $xyzname
+        set sel [ atomselect top \"fragment $(join(rchains, " "))\" ]
+        \$sel writexyz $new_xyzname
+        exit
+        """)
+    end
 
-    vmdoutput = split(Base.read(`$vmd -dispdev text -e $tcl`, String), "\n")
+    vmdoutput = execVMD(vmd, tcl)
 
     if vmdDebug
         return vmdoutput
@@ -67,7 +75,7 @@ function pbcXYZ(
 end
 
 """
-    pbcXYZ(nfrag::Int64, xsize::Int64, ysize::Int64; phase="Iβ", pbc=nothing, xyzfile="file.xyz", vmd="vmd")
+    pbcXYZ(xyzname::String, fragments::Int64, xyzsizes::Vector{Int64}; phase="Iβ", pbc=nothing, new_xyzname=nothing, vmd="vmd", vmdDebug=false)
 
 Applies the periodic boundary conditions on the cellulose crystal over *xy-plane* using the number of fragments (e.g. chains) as parameter.
 It returns cellulose **XYZ file** needed to prepare the PDB and PSF files.
@@ -118,7 +126,6 @@ end
 
 
 """
-
     writeXYZ(atoms::Vector{Vector{String}}, x::Vector{Vector{Float64}}, y::Vector{Vector{Float64}}, z::Vector{Vector{Float64}}; vmd="vmd", natoms=nothing, xyzfile=nothing)
     writeXYZ(atoms::Vector{String}, x::Vector{Float64}, y::Vector{Float64}, z::Vector{Float64}; vmd="vmd", natoms=nothing, xyzfile=nothing)
     writeXYZ(atoms::Vector{String}, xyzcoords::Vector{Vector{Float64}}; vmd="vmd", natoms=nothing, xyzfile=nothing)
@@ -141,33 +148,36 @@ end
 
 function writeXYZ(
                 atoms::Vector{String}, x::Vector{Float64}, y::Vector{Float64}, z::Vector{Float64};
-                natoms=nothing, xyzfile=nothing, vmd="vmd", output=false
+                natoms=nothing, xyzfile=nothing, vmd="vmd", vmdDebug=false
             )
 
     if isnothing(natoms); natoms = length(atoms); end
     if isnothing(xyzfile); xyzfile = tempname() * ".xyz"; end
     
-    structure = open(xyzfile, "w")
-    Base.write(structure, "$(length(atoms)) 1\n")
-    Base.write(structure, " \n")
-    for (at, i, j, k) in zip(atoms, x, y, z)
-        Base.write(structure, " $at $i $j $k\n")
+    open(xyzfile, "w") do file
+        println(file, """
+        $(length(atoms)) 1
+        """)
+        for (at, i, j, k) in zip(atoms, x, y, z)
+            println(file, " $at $i $j $k")
+        end
     end
-    Base.write(structure, " \n")
-    Base.close(structure)
 
-    vmdinput_file = tempname() * ".tcl"
-    vmdinput = open(vmdinput_file, "w")
-    Base.write(vmdinput, "mol new \"$xyzfile\" \n")
-    Base.write(vmdinput, "exit \n")
-    Base.close(vmdinput)
+    tcl = replace(xyzfile, ".xyz" => ".tcl")
 
-    vmdoutput = split(Base.read(`$vmd -dispdev text -e $vmdinput_file`, String), "\n")
+    open(tcl, "w") do file
+        println(file, """
+        mol new "$xyzfile"
+        exit
+        """)
+    end
+
+    vmdoutput = execVMD(vmd, tcl)
     
-    if output
+    if vmdDebug
         return vmdoutput
     else
-        return xyzfile, picking_fragments(vmdoutput)
+        return xyzfile, picking_fragments(split(vmdoutput, "\n"))
     end
 
 end

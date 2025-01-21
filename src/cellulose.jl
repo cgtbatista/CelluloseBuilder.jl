@@ -80,7 +80,10 @@ function cellulose(
         )
     end
     
-    cleaning_tmpfiles(replace(new_xyzname, ".xyz" => ""))
+    dummyname = replace(new_xyzname, ".xyz" => "")
+    
+    hetatm!(dummyname * ".pdb")
+    cleaning_tmpfiles(dummyname)
     
     println("""
 
@@ -161,7 +164,10 @@ function cellulose(
                     phase=phase, covalent=covalent, vmd=vmd, topology_file=topology_file
                 )
     
-    cleaning_tmpfiles(replace(new_xyzname, ".xyz" => ""))
+    dummyname = replace(new_xyzname, ".xyz" => "")
+    
+    hetatm!(dummyname * ".pdb")
+    cleaning_tmpfiles(dummyname)
     
     println("""
 
@@ -237,18 +243,15 @@ function cellulose(
         cleanPDB!(pdb, charmm_atomstyle)
     end
 
-    #n = if in(lowercase(phase), Set(["ib", "iβ", "ii"]))
-    #    2 * xyzsizes[3]
-    #else
-    #    xyzsizes[3]
-    #end
-
     vmdoutput = writePDB(
                     monomers, pdbnames, pdbname=replace(new_xyzname, ".xyz" => ".pdb"),
                     phase=phase, covalent=covalent, vmd=vmd, topology_file=topology_file
                 )
     
-    cleaning_tmpfiles(replace(new_xyzname, ".xyz" => ""))
+    dummyname = replace(new_xyzname, ".xyz" => "")
+    
+    hetatm!(dummyname * ".pdb")
+    cleaning_tmpfiles(dummyname)
     
     println("""
 

@@ -150,7 +150,7 @@ function picking_fragments(xyzname::String; vmd="vmd")
         exit
         """)
     end 
-    return picking_fragments(split(Base.read(`$vmd -dispdev text -e $tcl`, String), "\n"))
+    return picking_fragments(split(execVMD(vmd, tcl), "\n"))
 end
 
 """
@@ -197,26 +197,16 @@ end
 
 function printching!(file::IOStream; id=1, nresids=1, invert=false, phase="Iβ", covalent=true)
     
-    res = nresids
-    segid = "M$id"
+    inversion = invert && lowercase(phase) == "ii"
 
-    if lowercase(phase) == "ii" && invert
-        while res > 1
-            pres = res - 1
-            println(file, "patch 14bb $segid:$pres $segid:$res")
-            res -= 1
-            if res == 1 && covalent
-                println(file, "patch 14bb $segid:$nresids $segid:$res")
-            end
-        end
-    else
-        while res > 1
-            pres = res - 1
-            println(file, "patch 14bb $segid:$res $segid:$pres")
-            res -= 1
-            if res == 1 && covalent == true
-                println(file, "patch 14bb $segid:$res $segid:$nresids")
-            end
+    segid, resid = "M$id", nresids
+    while resid > 1
+        presid = resid - 1
+        inversion ? println(file, "patch 14bb $segid:$presid $segid:$resid") : println(file, "patch 14bb $segid:$resid $segid:$presid")
+        
+        resid -= 1
+        if resid == 1 && covalent
+            inversion ? println(file, "patch 14bb $segid:$nresids $segid:$resid") : println(file, "patch 14bb $segid:$resid $segid:$nresids")
         end
     end
 end
@@ -236,4 +226,23 @@ function cleaning_tmpfiles(filename::String; destination_path=pwd(), new_filenam
     end
 
     return nothing
+end
+
+"""
+    hetatm!(pdbname::String)
+
+Change the ATOM to HETATM on the PDB file.
+"""
+function hetatm!(pdbname::String)
+    lines = readlines(pdbname)
+    for (i, line) in enumerate(lines)
+        if occursin("ATOM", line)
+            lines[i] = replace(line, "ATOM  " => "HETATM")
+        end
+    end
+    open(pdbname, "w") do file
+        for line in lines
+            println(file, line)
+        end
+    end
 end
