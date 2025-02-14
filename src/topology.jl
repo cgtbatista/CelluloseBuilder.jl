@@ -32,7 +32,7 @@ function generate_cellulose_topology(; filename=nothing)
         
         !! RESIDS !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         
-        RESI BGC            0.000  ! 4C1 beta-D-glucose (based on the CHARMM36 BGLC residue type)
+        RESI BGLC            0.000  ! 4C1 beta-D-glucose (based on the CHARMM36 BGLC residue type)
         
         GROU                       !
         ATOM C1   CC3162    0.340  !

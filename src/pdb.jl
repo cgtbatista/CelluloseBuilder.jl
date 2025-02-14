@@ -27,7 +27,7 @@ function cleanPDB!(pdbname::String, atomnames::Vector{String})
 
         newline = "HETATM" * line[7:end]
         newline = string(newline[1:13], rpad(atomnames[iatom], 3), newline[17:end])         
-        newline = string(newline[1:17], "BGC", newline[21:end])                             
+        newline = string(newline[1:17], "BGLC", newline[22:end])                             
         newline = string(newline[1:21], " ", newline[23:end])                               
         newline = string(newline[1:22], lpad(resid, 4), newline[27:end])                    
         newline = string(newline[1:56], "1.00", newline[61:end])                            
