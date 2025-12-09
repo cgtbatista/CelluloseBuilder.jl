@@ -4,33 +4,39 @@
 Returns `(ncells, lattice)` where `ncells` is the number of unit cells along x, y and z axes and `lattice` is the unit cell vector of this cell.
 This function is used to define the periodic boundary conditions required to build the cellulose crystal.
 """
-function PBC(xsize::Int64, ysize::Int64, zsize::Int64; phase="Iβ", pbc=nothing)
-
-    valid_phases = in(lowercase(phase), Set(["iβ", "ib", "iα", "ia", "ii", "iii", "iii_i", "iiii"]))
-    valid_pbcs = isnothing(pbc) ? true : in(lowercase(pbc), Set(["a", "b", "all"]))
-
+function PBC(
+    xsize::T, ysize::T, zsize::T; phase="Iβ", pbc=nothing
+) where T
+    phase = lowercase(phase)
+    pbc = isnothing(pbc) ? nothing : lowercase(pbc)
+    valid_phases = in(
+        phase,
+        Set(["iβ", "ib", "iα", "ia", "ii", "iii", "iii_i", "iiii"])
+    )
+    valid_pbcs = in(
+        pbc,
+        Set(["a", "b", "all"])
+    ) || isnothing(pbc)
     if !(valid_phases || valid_pbcs)
-        error("The phase $phase or the pbc $pbc is not valid.")
+        throw(ArgumentError("The phase $phase or the pbc $pbc is not valid."))
     end
-
-    isalpha = in(lowercase(phase), ["iα", "ia"])
+    isalpha = in(phase, ["iα", "ia"])
     a, b, c = isalpha ? (zsize, ysize, xsize) : (xsize, ysize, zsize)
-
     if isnothing(pbc)
         println("""
         Periodic boundary conditions will not be special applied.
         Default translational symmetry will be applied with the surfaces (1 0 0) and (0 1 0) exposed!
         """)
-    else
-        dictionary, key = pbcdata(xsize, ysize, zsize), (lowercase(phase), lowercase(pbc))
-        if haskey(dictionary, key)
-            xsize, ysize, zsize, pbc_message = dictionary[key]()
-            print(pbc_message)
-        else
-            error("The `$pbc` periodic boundary condition is not possible for the $phase phase.")
-        end
     end
-
+    if !isnothing(pbc)
+        dictionary = pbcdata(xsize, ysize, zsize)
+        key = (phase, lowercase(pbc))
+        if !haskey(dictionary, key)
+            throw(ArgumentError("The `$pbc` periodic boundary condition is not possible for the $phase phase."))
+        end
+        xsize, ysize, zsize, pbc_message = dictionary[key]()
+        print(pbc_message)
+    end
     return [xsize, ysize, zsize], [a, b, c]
 end
 
@@ -39,7 +45,7 @@ end
 
 See `PBC(xsize::Int64, ysize::Int64, zsize::Int64; phase="Iβ", pbc=nothing)`.
 """
-function PBC(xyzsizes::Vector{Int64}; phase="Iβ", pbc=nothing)
+function PBC(xyzsizes::Vector{T}; phase="Iβ", pbc=nothing) where T
     return PBC(xyzsizes[1], xyzsizes[2], xyzsizes[3], phase=phase, pbc=pbc)
 end
 
@@ -49,12 +55,9 @@ end
 Define the crystallographic space to build the *cellulose fibril crystal* with a degree of β-glucose units (`monomers`).
 """
 function PBC(monomers::Int64; phase="Iβ")
-    
     n = Int64(monomers/2)
-    
     isalpha = in(lowercase(phase), ["iα", "ia"])
     a, b, c = isalpha ? (n, 0, 0) : (0, 0, n)
-
     dictionary, key = pbcdata(monomers), lowercase(phase)
 
     xsize, ysize, zsize = if haskey(dictionary, key)

@@ -1,14 +1,28 @@
+struct AtomData
+    atomname::String
+    xyz::SVector{3, Measurement{Float64}}
+end
+
+struct UnitCell
+    phase::String                                  ## phase
+    atoms::Vector{<:AtomData}                      ## atoms -- using CHARMM atomnames
+    lattice::SVector{3, Measurement{Float64}}      ## a, b, c
+    angles::SVector{3, Measurement{Float64}}       ## α, β, γ
+end
+
+
+mutable struct Cellulose
+    xyzsizes
+    monolayer
+    monomers
+    crystal::UnitCell
+end
+
 struct CrystalXYZ
     atoms::Vector{Vector{String}}
     x::Vector{Vector{Float64}}
     y::Vector{Vector{Float64}}
     z::Vector{Vector{Float64}}
-end
-
-struct UnitCell
-    atoms::Vector{String}                                   ##
-    coords::Vector{Vector{Float64}}                         ## fractional coordinates [ [x0, y0, z0], [x1, y1, z1], [x2, y2, z2], ..., [xN, yN, zN] ]
-    parameters::Tuple{Vector{Float64}, Vector{Float64}}     ## [ [a, b, c], [α, β, γ] ]
 end
 
 function crystal(xyzsizes::Vector{Int64}, phase::String; topnames=true)
@@ -255,4 +269,237 @@ function get_crystallographic_info(phase::String)
         error("I'm Sorry, but the phase $phase is not available...")
     end
     return atomnames, asymmetric_unit, parameters_unit
+end
+
+##### Some future adaptations!! --------------------------------------------------------------------------------------------------------------------------
+
+const _default_crystalographic_atomdata = Dict{String, Function}([
+    [ "ib", "iβ" ] .=> 
+        () -> (
+            [
+                "C1", "H1", "C2", "H2", "C3", "H3", "C4", "H4", "C5", "H5", "C6", "H61", "H62", "O2", "O3",
+                "O4", "O5", "O6", "HO2", "HO3", "HO6",      ## monomer 1
+                "C1", "H1", "C2", "H2", "C3", "H3", "C4", "H4", "C5", "H5", "C6", "H61", "H62", "O2", "O3",
+                "O4", "O5", "O6", "HO2", "HO3", "HO6"       ## monomer 2
+            ],
+            [
+                [  0.014,  -0.042,   0.0433 ], [  0.1382, -0.0188,  0.0598 ], [ -0.026,  -0.184,  -0.0516 ],
+                [ -0.1508, -0.2177, -0.0546 ], [  0.040,  -0.137,  -0.1848 ], [  0.1667, -0.1323, -0.1840 ],
+                [ -0.007,   0.030,  -0.2250 ], [ -0.1316,  0.0176, -0.2425 ], [  0.026,   0.159,  -0.1232 ],
+                [  0.1507,  0.1821, -0.1090 ], [ -0.047,   0.319,  -0.153  ], [ -0.1672,  0.2959, -0.1778 ],
+                [ -0.0407,  0.3872, -0.0765 ], [  0.061,  -0.314,  -0.0003 ], [ -0.027,  -0.261,  -0.2759 ],
+                [  0.079,   0.086,  -0.3424 ], [ -0.056,   0.099,  -0.0053 ], [  0.048,   0.403,  -0.254  ],
+                [  0.0366, -0.3194,  0.0920 ], [  0.0475, -0.2400, -0.3517 ], [ -0.0144,  0.4924, -0.2850 ],
+                [  0.533,   0.455,   0.3043 ], [  0.6577,  0.4616,  0.3200 ], [  0.475,   0.3178,  0.2094 ],
+                [  0.3480,  0.3058,  0.2052 ], [  0.545,   0.363,   0.0765 ], [  0.6716,  0.3753,  0.0793 ],
+                [  0.482,   0.526,   0.0375 ], [  0.3561,  0.5139,  0.0289 ], [  0.541,   0.6574,  0.1388 ],
+                [  0.6670,  0.6830,  0.1370 ], [  0.452,   0.815,   0.1125 ], [  0.3341,  0.7843,  0.0847 ],
+                [  0.4491,  0.8778,  0.1916 ], [  0.528,   0.166,   0.2520 ], [  0.486,   0.233,  -0.0081 ],
+                [  0.563,   0.586,  -0.0806 ], [  0.485,   0.607,   0.2639 ], [  0.542,   0.914,   0.017  ],
+                [  0.5035,  0.1593,  0.3448 ], [  0.5104,  0.2733, -0.0961 ], [  0.5184,  1.0275,  0.0326 ]     ## coordinates
+            ],  [ 7.784, 8.201, 10.380 ], [ 90.0, 90.0, 96.5 ]
+        );
+    [ "ia", "iα" ] .=>
+        () ->(
+            [
+                "C1", "H1", "C2", "H2", "C3", "H3", "C4", "H4", "C5", "H5", "C6", "H61", "H62", "O4", "O2", "O3",
+                "O5", "O6", "HO2", "HO3", "HO6",      ## monomer 1
+                "C1", "H1", "C2", "H2", "C3", "H3", "C4", "H4", "C5", "H5", "C6", "H61", "H62", "O4", "O2", "O3",
+                "O5", "O6", "HO2", "HO3", "HO6"       ## monomer 2
+            ],
+            [
+                [  0.254,  -0.054,   0.031  ], [  0.1973, -0.1585, -0.1140 ], [  0.193,  -0.143,   0.234  ],
+                [  0.2550, -0.0383,  0.3792 ], [  0.022,  -0.174,   0.114  ], [ -0.0404, -0.2902, -0.0201 ],
+                [  0.000,   0.035,  -0.003  ], [  0.0464,  0.1410,  0.1359 ], [  0.079,   0.138,  -0.175  ],
+                [  0.0220,  0.0485, -0.3333 ], [  0.092,   0.374,  -0.236  ], [  0.1302,  0.4540, -0.0814 ],
+                [  0.1664,  0.4464, -0.3072 ], [ -0.163,   0.003,  -0.152  ], [  0.211,  -0.346,   0.313  ],
+                [ -0.031,  -0.243,   0.307  ], [  0.239,   0.152,  -0.044  ], [ -0.059,   0.371,  -0.413  ],
+                [  0.326,  -0.296,   0.40   ], [ -0.117,  -0.188,   0.235  ], [ -0.039,   0.43,   -0.559  ],
+                [  0.766,   0.048,  -0.026  ], [  0.8462,  0.1471,  0.1231 ], [  0.650,   0.147,  -0.218  ],
+                [  0.5732,  0.0483, -0.3680 ], [  0.566,   0.180,  -0.086  ], [  0.6442,  0.2833,  0.0593 ],
+                [  0.483,  -0.038,   0.008  ], [  0.3980, -0.1353, -0.1395 ], [  0.596,  -0.148,   0.175  ],
+                [  0.6716, -0.0623,  0.3350 ], [  0.512,  -0.382,   0.231  ], [  0.4236, -0.4600,  0.0751 ],
+                [  0.5849, -0.4562,  0.2993 ], [  0.416,  -0.009,   0.157  ], [  0.740,   0.352,  -0.288  ],
+                [  0.455,   0.270,  -0.261  ], [  0.680,  -0.158,   0.046  ], [  0.457,  -0.387,   0.409  ],
+                [  0.839,   0.333,  -0.23   ], [  0.422,   0.302,  -0.148  ], [  0.481,  -0.508,   0.51   ]
+            ],  [ 10.400, 6.717, 5.962 ], [ 80.37, 118.08, 114.80 ]
+        );
+    [ "ii" ] .=>
+        () -> (
+            [
+                "C1", "H1", "C2", "H2", "C3", "H3", "C4", "H4", "C5", "H5", "C6", "H61", "H62", "O4", "O2", "O3",
+                "O5", "O6",      ## monomer 1
+                "C1", "H1", "C2", "H2", "C3", "H3", "C4", "H4", "C5", "H5", "C6", "H61", "H62", "O4", "O2", "O3",
+                "O5", "O6"       ## monomer 2
+            ],
+            [
+                [ -0.043,   0.007,   0.381  ], [ -0.1257, -0.1115,  0.3924 ], [ -0.125,   0.086,   0.286  ],
+                [ -0.0411,  0.2049,  0.2764 ], [ -0.151,  -0.003,   0.156  ], [ -0.2396, -0.1205,  0.1677 ],
+                [  0.034,   0.008,   0.112  ], [  0.1198,  0.1243,  0.0929 ], [  0.118,  -0.057,   0.216  ],
+                [  0.0297, -0.1731,  0.2320 ], [  0.298,  -0.053,   0.183  ], [  0.2935, -0.0928,  0.0947 ],
+                [  0.3960,  0.0603,  0.1874 ], [  0.011,  -0.091,  -0.001  ], [ -0.299,   0.062,   0.334  ], 
+                [ -0.224,   0.069,   0.066  ], [  0.133,   0.034,   0.333  ], [  0.337,  -0.155,   0.270  ],
+                [  0.468,   0.522,  -0.150  ], [  0.5652,  0.6374, -0.1577 ], [  0.318,   0.506,  -0.054  ],
+                [  0.2243,  0.3886, -0.0506 ], [  0.398,   0.559,   0.082  ], [  0.4800,  0.6792,  0.0821 ],
+                [  0.509,   0.468,   0.119  ], [  0.4232,  0.3516,  0.1370 ], [  0.640,   0.474,   0.011  ],
+                [  0.7246,  0.5920, -0.0036 ], [  0.757,   0.392,   0.037  ], [  0.8256,  0.4356,  0.1166 ],
+                [  0.6794,  0.2739,  0.0479 ], [  0.621,   0.539,   0.232  ], [  0.230,   0.603 , -0.092  ],
+                [  0.250,   0.523,   0.170  ], [  0.541,   0.413,  -0.108  ], [  0.886,   0.418,  -0.067  ],  
+            ],  [ 8.10, 9.03, 10.31 ], [ 90.0, 90.0, 117.1 ]
+        );
+    [ "iii", "iiii", "iii_i" ] .=>
+        () -> (
+            [ 
+                "C1", "C2", "C3", "C4", "C5", "C6", "O2", "O3", "O4", "O5", "O6", "H1", "H2", "H3", "H4", "H5",
+                "H61", "H62", "HO2", "HO3", "HO6",      ## monomer 1
+                "C1", "C2", "C3", "C4", "C5", "C6", "O2", "O3", "O4", "O5", "O6", "H1", "H2", "H3", "H4", "H5",
+                "H61", "H62", "HO2", "HO3", "HO6"       ## monomer 2
+            ],
+            [
+                [  0.050961,  0.057262, 0.380527 ], [  0.191389,  0.196135,  0.287129 ], [  0.047193,  0.160362, 0.153425 ],
+                [  0.009263, -0.031267, 0.112801 ], [ -0.148745, -0.157932,  0.218384 ], [ -0.176129, -0.348168, 0.188882 ],
+                [  0.181636,  0.366971, 0.331722 ], [  0.242720,  0.281823,  0.066537 ], [ -0.191038, -0.076143, 0.000711 ],
+                [  0.038639, -0.114787, 0.333349 ], [ -0.238242, -0.451795,  0.303957 ], [ -0.164524,  0.062564, 0.393673 ],
+                [  0.411219,  0.197152, 0.278760 ], [ -0.158495,  0.183912,  0.154995 ], [  0.213656, -0.050262, 0.093348 ],
+                [ -0.356184, -0.141547, 0.235149 ], [ -0.342927, -0.390800,  0.126975 ], [  0.016046, -0.359921, 0.150091 ],
+                [  0.40,      0.442,    0.33     ], [  0.15,      0.27,     -0.020    ], [ -0.12,     -0.54,     0.30     ]
+            ],  [ 4.450, 7.850, 10.310 ], [ 90.0, 90.0, 105.10 ]
+        );
+])
+
+function polymorph(
+    atomnames::Vector{String}, coords::Vector{Vector{Float64}}, lattice::Vector{Float64}, angles::Vector{Float64};
+    phase=nothing, error=zeros(Float64, 3)
+)
+    atoms = Vector{AtomData}(undef, length(atomnames))
+    for i in eachindex(atomnames, coords)
+        atoms[i] = AtomData(
+            atomnames[i], value2measurement(coords[i], error)
+        )
+    end
+    lattice, angles = value2measurement(lattice, error), value2measurement(angles, error)
+    return UnitCell(phase, atoms, lattice, angles)
+end
+
+function polymorph(phase::String)
+    phase = lowercase(phase)
+    if !in(phase, keys(_default_crystalographic_atomdata))
+        throw(ArgumentError("Invalid phase name: $phase."))
+    end
+    atomnames, coords, lattice, angles = _default_crystalographic_atomdata[phase]()
+    return polymorph(atomnames, coords, lattice, angles; phase=phase)
+end
+
+@inline function value2measurement(value::Vector{T}, error::Vector{T}) where T
+    if length(value) != 3 || length(error) != 3
+        throw(ArgumentError("The length of values and errors must be equal to 3."))
+    end
+    measure = SVector{3, Measurement{T}}(
+        measurement(value[1], error[1]),
+        measurement(value[2], error[2]),
+        measurement(value[3], error[3])
+    )
+    return measure
+end
+
+# TriclinicUnitCell
+# a ≠ b ≠ c, α ≠ β ≠ γ ≠ 90°
+# MonoclinicUnitCell P2_1
+# a ≠ b ≠ c, α = β = 90°, γ ≠ 90°
+
+## It would be nice to have a CIF scrapper to get the unit cell parameters and the fractional coordinates of the asymetric unit
+## Think about it later...
+
+function lattice2basis(xyzsizes, lattice, angles)
+    x, y, z = xyzsizes
+    a, b, c = lattice
+    α, β, γ = angles
+    basis1 = [
+        x*a,
+        0.,
+        0.
+    ]
+    basis2 = [
+        y*b*cosd(γ),
+        y*b*sind(γ),
+        0.
+    ]
+    basis3 = [
+        z*c*cosd(β),
+        z*c*(cosd(α) - cosd(β)*cosd(γ))/sind(γ),
+        z*c*sqrt(1 - cosd(β)^2 - ((cosd(α)-cosd(β)*cosd(γ))/sind(γ))^2)
+    ]
+    return [ basis1, basis2, basis3 ]
+end
+
+@inline function unitcell2(a::T, b::T, c::T; phase="Iβ") where T
+    xyzsizes, lattice = PBC(a, b, c, phase=phase)
+    return xyzsizes, lattice
+end
+
+@inline function unitcell2(monomers::T; phase="Iβ") where T
+    xyzsizes, lattice = PBC(monomers, phase=phase)  
+    return xyzsizes, lattice
+end
+
+@inline function unitcell2(monomers::T, chains::T; phase="Iβ", monolayer="origin") where T
+    xyzsizes, lattice = PBC(monomers, chains, phase=phase, layer=monolayer)  
+    return xyzsizes, lattice
+end
+
+@inline function crystal2(xyzsizes::Vector{Int64}, phase::String; topnames=true)
+    x, y, z = fractional2cartesian(xyzsizes, phase)
+    atoms, atypes = atomnames(phase, ncells=length(x))
+    return CrystalXYZ(atoms, x, y, z)
+end
+
+"""
+    fractional2cartesian(unitcell::Vector{Int64}, phase::String)
+
+Convert the fractional unit cell coordinates to the cartesian coordinates. The return is the `x`, `y`, and `z` cartesian coordinates.
+"""
+function fractional2cartesian2(unitcell::Vector{T}, phase::String) where T
+    phase = lowercase(phase)
+    coords = translate(phase)
+    parameters = get_crystallographic_info(phase)[3]
+    alpha = in(phase, ["ia", "iα"]) ? true : false
+    return fractional2cartesian(
+        unitcell, coords, parameters, istriclinic=alpha
+    )
+end
+
+function fractional2cartesian2(
+    unitcell::Vector{Int64},
+    fcoords::Vector{Vector{Float64}},
+    parameters::Vector{Vector{Float64}}; istriclinic=true
+)        
+    x, y, z = Vector{Float64}[], Vector{Float64}[], Vector{Float64}[]
+    a, b, c = parameters[1][1], parameters[1][2], parameters[1][3]
+    cosα, cosβ, cosγ = cosd(parameters[2][1]), cosd(parameters[2][2]), cosd(parameters[2][3])
+    sinγ = sind(parameters[2][3])
+    V = a * b * c * sqrt(1 - cosα^2 - cosβ^2 - cosγ^2 + 2*cosα*cosβ*cosγ)
+
+    function cartesian(xfrac, yfrac, zfrac)
+        xcart = a * xfrac + b * yfrac * cosγ + c * zfrac * cosβ
+        ycart = b * yfrac * sinγ + c * zfrac * (cosα - cosβ * cosγ) / sinγ
+        zcart = V * zfrac / (a * b * sinγ)
+        return xcart, ycart, zcart
+    end
+
+    imax, jmax, kmax = if istriclinic
+            unitcell[3]-1, unitcell[2]-1, unitcell[1]-1 ## parallelepiped
+        else
+            unitcell[1]-1, unitcell[2]-1, 0
+    end
+    
+    for k in 0:kmax, j in 0:jmax, i in 0:imax
+        xtemp, ytemp, ztemp = Float64[], Float64[], Float64[]
+        for fcoord in fcoords
+            xcart, ycart, zcart = cartesian(fcoord[1]+i, fcoord[2]+j, fcoord[3]+k)
+            push!(xtemp, xcart); push!(ytemp, ycart); push!(ztemp, zcart)
+        end
+        push!(x, xtemp); push!(y, ytemp); push!(z, ztemp)
+    end
+
+    return x, y, z
 end

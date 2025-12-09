@@ -1,39 +1,56 @@
+"""
+    generate_cellulose_topology(; filename=nothing)
+
+Create a CHARMM36 topology file needed to build the PSF file.
+"""
+
 function generate_cellulose_topology(; filename=nothing)
-
-    if isnothing(filename)
-        filename = tempname() * ".rtf"
-    end
-
-    rtf = Base.open(filename, "w")
-    
-    Base.write(rtf,
-        raw"""
+    filename = isnothing(filename) ? tempname() * ".rtf" : filename
+    open(filename, "w") do rtf
+        println(rtf, """
         ! This file is the topology file needed to build cellulose crystal (CHARMM36)
-     
         read rtf card append
         36 1
         AUTOGENERATE ANGLES DIHEDRALS
         !! carbon
+        MASS  -1  CG321     12.01100 C ! aliphatic C for CH2
+        MASS  -1  CG324     12.01100 C ! aliphatic C for CH2, adjacent to positive N (piperidine) (+)
         MASS  -1  CC3161    12.01100 C ! C2, C3, C4 CH bound to OH
         MASS  -1  CC3162    12.01100 C ! C1 (anomeric) CH bound to OH
         MASS  -1  CC3163    12.01100 C ! C5 CH bound to exocylic CH2OH
         MASS  -1  CC321     12.01100 C ! generic acyclic CH2 carbon (hexopyranose C6)
+        MASS  -1  CC324     12.01100 C ! aliphatic C for CH2 (e.g. CA and CB) it should be equal C6
         !! hydrogen
+        MASS  -1  HGA2       1.00800 H ! alphatic proton, CH2
+        MASS  -1  HGP1       1.00800 H ! polar H
+        MASS  -1  HGP2       1.00800 H ! polar H, +ve charge
         MASS  -1  HCA1       1.00800 H ! aliphatic proton, CH
         MASS  -1  HCA2       1.00800 H ! aliphatic proton, CH2
         MASS  -1  HCP1       1.00800 H ! polar H
+        MASS  -1  HCP2       1.00800 H ! polar H, +ve charge
         !! oxygen
         MASS  -1  OC311     15.99940 O ! hydroxyl oxygen
         MASS  -1  OC3C61    15.99940 O ! ether in six membered ring
         MASS  -1  OC301     15.99940 O ! generic linear ether
+        MASS  -1  OC2DP     15.99940 O ! =O in phosphate or sulfate		  || O2L in top_all27_lipid.rtf
+        MASS  -1  OC312     15.99940 O ! hydroxyl oxygen			      || OHL in top_all27_lipid.rtf
+        MASS  -1  OC30P     15.99940 O ! phosphate/sulfate ester oxygen	  || OSL in top_all27_lipid.rtf
+        MASS  -1  OG2P1     15.99940 O ! =O in phosphate or sulfate
+        MASS  -1  OG303     15.99940 O ! phosphate/sulfate ester oxygen
+        MASS  -1  OG311     15.99940 O ! hydroxyl oxygen
+        !! nitrogen
+        MASS  -1  NC3P3     14.00700 N ! primary NH3+, phosphatidylethanolamine
+        MASS  -1  NG3P3     14.00700 N ! primary NH3+, phosphatidylethanolamine
+        !! phosphorous
+        MASS  -1  PG1       30.97380 P ! phosphate -1
+        MASS  -1  PC        30.97380 P ! phosphate -1
         ! DEFAults for patching FIRSt and LAST residues
         DEFA FIRS NONE LAST NONE
         AUTOGENERATE ANGLES DIHEDRALS PATCH DRUDE
-        
+
         !! RESIDS !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        
+
         RESI BGLC            0.000  ! 4C1 beta-D-glucose (based on the CHARMM36 BGLC residue type)
-        
         GROU                       !
         ATOM C1   CC3162    0.340  !
         ATOM H1   HCA1      0.090  !
@@ -63,7 +80,7 @@ function generate_cellulose_topology(; filename=nothing)
         ATOM H62  HCA2      0.090  !
         ATOM O6   OC311    -0.650  !
         ATOM HO6  HCP1      0.420  !
-        
+
         BOND C1   O1        C1   H1        O1   HO1       C1   O5        C1   C2
         BOND C2   H2        C2   O2        O2   HO2       C2   C3        C3   H3
         BOND C3   O3        O3   HO3       C3   C4        C4   H4        C4   O4
@@ -95,79 +112,8 @@ function generate_cellulose_topology(; filename=nothing)
         IC   C3   C4   O4   HO4    1.5497  112.77   47.45  109.31   0.9911
         IC   C5   C6   O6   HO6    1.5597  109.41  -54.60  118.82   0.95210
         PATC  FIRS NONE LAST NONE
-        
-        !! PATCHES !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        
-        ! equatorial-equatorial 1->4 linkage
-        ! LACTOS03, EYOCUQ01, CELLOB01
-        PRES 14bb           0.02 ! (i)1->4(i-1) equatorial at C1 and equatorial at C4
-        dele atom 1HO4
-        dele atom 2HO1
-        dele atom 2O1
-        ATOM 1C4  CC3161    0.09 !
-        ATOM 1O4  OC301    -0.36 !
-        ATOM 2C1  CC3162    0.29 !
-        BOND 1O4  2C1
-        !    I    J    K    L      R(IK)   T(IKJ)    PHI   T(JKL)   R(KL)
-        IC   1C3  1C4  1O4  2C1    1.5009  110.76   81.86  121.00   1.3902  ! psi
-        IC   1C4  1O4  2C1  2O5    1.4560  121.00 -130.97  108.63   1.4470  ! phi
-        IC   1O4  2O5 *2C1  2C2    1.3896  108.63  122.12  110.87   1.5318
-        IC   2O5  1O4 *2C1  2H1    1.4470  108.63  121.92  111.32   1.0837
-        
-        END
-        """
-        )
 
-    Base.close(rtf)
-
-    return filename
-end
-
-function generate_petn_topology(; filename=nothing)
-
-    if isnothing(filename)
-        filename = tempname() * ".rtf"
-    end
-
-    rtf = Base.open(filename, "w")
-    
-    Base.write(rtf, 
-        raw"""
-        ! This file is the topology file needed to generate pEtN and patch it to cellulose chain (CHARMM36)
-        
-        read rtf card append
-        36 1
-        AUTOGENERATE ANGLES DIHEDRALS
-        !! already exists on cgenff
-        MASS  -1  HGA2       1.00800 H                          ! alphatic proton, CH2
-        MASS  -1  HGP1       1.00800 H                          ! polar H
-        MASS  -1  HGP2       1.00800 H                          ! polar H, +ve charge
-        MASS  -1  CG321     12.01100 C                          ! aliphatic C for CH2
-        MASS  -1  CG324     12.01100 C                          ! aliphatic C for CH2, adjacent to positive N (piperidine) (+)
-        MASS  -1  NG3P3     14.00700 N                          ! primary NH3+, phosphatidylethanolamine
-        MASS  -1  OG2P1     15.99940 O                          ! =O in phosphate or sulfate
-        MASS  -1  OG303     15.99940 O                          ! phosphate/sulfate ester oxygen
-        MASS  -1  OG311     15.99940 O                          ! hydroxyl oxygen
-        MASS  -1  PG1       30.97380 P                          ! phosphate -1
-        !! already exists on carb force field
-        MASS  -1  CC321     12.01100 C                          ! aliphatic C for CH2 (e.g. CA and CB) it should be equal C6
-        MASS  -1  HCA2       1.00800 H                          ! alphatic proton, CH2
-        MASS  -1  HCP1       1.00800 H                          ! polar H
-        MASS  -1  OC2DP     15.99940 O                          ! =O in phosphate or sulfate		    || O2L in top_all27_lipid.rtf
-        MASS  -1  OC312     15.99940 O                          ! hydroxyl oxygen			            || OHL in top_all27_lipid.rtf
-        MASS  -1  OC30P     15.99940 O                          ! phosphate/sulfate ester oxygen		|| OSL in top_all27_lipid.rtf
-        MASS  -1  PC        30.97380 P                          ! phosphate -1
-        !! new ones to phosphoethanolamine patch
-        MASS  -1  CC324     12.01100 C                          ! aliphatic C for CH2 (e.g. CA and CB) it should be equal C6
-        MASS  -1  HCP2       1.00800 H                          ! polar H, +ve charge
-        MASS  -1  NC3P3     14.00700 N                          ! primary NH3+, phosphatidylethanolamine
-        ! DEFAults for patching FIRSt and LAST residues
-        DEFA FIRS NONE LAST NONE
-        AUTOGENERATE ANGLES DIHEDRALS PATCH DRUDE
-
-        !! RESIDS !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-        RESI ENP            0.000 !   Phosphoethanolamine
+        RESI PETN           0.000 !   Phosphoethanolamine
         GROUP             ! CHARGE
         ATOM NP     NG3P3  -0.293 !
         ATOM HN1    HGP2    0.328 !
@@ -204,6 +150,23 @@ function generate_petn_topology(; filename=nothing)
 
         !! PATCHES !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+        ! equatorial-equatorial 1->4 linkage
+        ! LACTOS03, EYOCUQ01, CELLOB01
+        PRES 14bb           0.02 ! (i)1->4(i-1) equatorial at C1 and equatorial at C4
+        dele atom 1HO4
+        dele atom 2HO1
+        dele atom 2O1
+        ATOM 1C4  CC3161    0.09 !
+        ATOM 1O4  OC301    -0.36 !
+        ATOM 2C1  CC3162    0.29 !
+        BOND 1O4  2C1
+        !    I    J    K    L      R(IK)   T(IKJ)    PHI   T(JKL)   R(KL)
+        IC   1C3  1C4  1O4  2C1    1.5009  110.76   81.86  121.00   1.3902  ! psi
+        IC   1C4  1O4  2C1  2O5    1.4560  121.00 -130.97  108.63   1.4470  ! phi
+        IC   1O4  2O5 *2C1  2C2    1.3896  108.63  122.12  110.87   1.5318
+        IC   2O5  1O4 *2C1  2H1    1.4470  108.63  121.92  111.32   1.0837
+
+        ! pEtN-cellulose
         PRES PETN         -0.270       ! pEtN-BGlc linkage
         dele atom HO6                  ! residual charge = +0.420
         ATOM C6  CC321    -0.075       ! B-Glc O6 attacking the pEtN P (like a SN1 mechanism)
@@ -239,133 +202,10 @@ function generate_petn_topology(; filename=nothing)
         IC   O6    O2P  *P     O4P   1.5231  108.09 -120.31  106.92  1.5173 !
         IC   O2P   P     O6    C6    1.5799  108.09   83.12  132.97  1.4179 !
         IC   P     O6    C6    C5    1.5231  132.97  -54.60  109.41  1.5597 !
+
         END
-        """
-    )
-    
-    Base.close(rtf)
-
-    return filename
-end
-
-function generate_waterions_topology(; filename=nothing)
-
-    if isnothing(filename)
-        filename = tempname() * ".rtf"
+        """)
     end
-
-    rtf = Base.open(filename, "w")
-    
-    Base.write(rtf,
-        raw"""
-        ! This file is the topology file needed to generate water and ions (CHARMM36)
-
-        read rtf card @app
-        * Topology for water and ions
-        *
-        31  1
-
-        MASS  -1  HT         1.00800 H ! TIPS3P WATER HYDROGEN
-        MASS  -1  HX         1.00800 H ! hydroxide hydrogen
-        MASS  -1  OT        15.99940 O ! TIPS3P WATER OXYGEN
-        MASS  -1  OX        15.99940 O ! hydroxide oxygen
-        MASS  -1  LIT        6.94100 LI ! Lithium ion
-        MASS  -1  SOD       22.98977 NA ! Sodium Ion
-        MASS  -1  MG        24.30500 MG ! Magnesium Ion
-        MASS  -1  POT       39.09830 K ! Potassium Ion
-        MASS  -1  CAL       40.08000 CA ! Calcium Ion
-        MASS  -1  RUB       85.46780 RB ! Rubidium Ion
-        MASS  -1  CES      132.90545 CS ! Cesium Ion
-        MASS  -1  BAR      137.32700 BA ! Barium Ion
-        MASS  -1  ZN        65.37000 ZN ! zinc (II) cation
-        MASS  -1  CAD      112.41100 CD ! cadmium (II) cation
-        MASS  -1  CLA       35.45000 CL ! Chloride Ion
-        default first none last none
-        AUTO ANGLE DIHE
-
-        !! RESIDS !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-        RESI HOH         0.000 NOANG NODIH ! tip3p water model
-        GROUP
-        ATOM OH2  OT     -0.834
-        ATOM H1   HT      0.417
-        ATOM H2   HT      0.417
-        BOND OH2 H1 OH2 H2 H1 H2    ! the last bond is needed for shake
-        ANGLE H1 OH2 H2             ! required
-        DONOR H1 OH2
-        DONOR H2 OH2
-        ACCEPTOR OH2
-        PATCHING FIRS NONE LAST NONE
-
-        RESI OH       -1.00 ! hydroxide ion by adm.jr.
-        GROUP
-        ATOM O1 OX    -1.32
-        ATOM H1 HX     0.32
-        BOND O1 H1
-        DONOR H1 O1
-        ACCEPTOR O1
-
-        RESI LIT       1.00 ! Lithium Ion
-        GROUP
-        ATOM LIT  LIT  1.00
-        PATCHING FIRST NONE LAST NONE
-
-        RESI SOD       1.00 ! Sodium Ion
-        GROUP
-        ATOM SOD  SOD  1.00
-        PATCHING FIRST NONE LAST NONE
-
-        RESI MG        2.00 ! Magnesium Ion
-        GROUP
-        ATOM MG   MG   2.00
-        PATCHING FIRST NONE LAST NONE
-
-        RESI POT       1.00 ! Potassium Ion
-        GROUP
-        ATOM POT   POT 1.00
-        PATCHING FIRST NONE LAST NONE
-
-        RESI CAL       2.00 ! Calcium Ion
-        GROUP
-        ATOM CAL  CAL  2.00
-        PATCHING FIRST NONE LAST NONE
-
-        RESI RUB       1.00 ! Rubidium Ion
-        GROUP
-        ATOM RUB  RUB  1.00
-        PATCHING FIRST NONE LAST NONE
-
-        RESI CES       1.00 ! Cesium Ion
-        GROUP
-        ATOM CES  CES  1.00
-        PATCHING FIRST NONE LAST NONE
-
-        RESI BAR       2.00 ! Barium Ion
-        GROUP
-        ATOM BAR  BAR  2.00
-        PATCHING FIRST NONE LAST NONE
-
-        RESI ZN2       2.00 ! Zinc (II) cation, Roland Stote
-        GROUP
-        ATOM ZN   ZN   2.00
-        PATCHING FIRST NONE LAST NONE
-
-        RESI CD2       2.00 ! Cadmium (II) cation
-        GROUP
-        ATOM CD   CAD  2.00
-        PATCHING FIRST NONE LAST NONE
-
-        RESI CLA      -1.00 ! Chloride Ion
-        GROUP
-        ATOM CLA  CLA -1.00
-        PATCHING FIRST NONE LAST NONE
-
-        END
-        """
-    )
-    
-    Base.close(rtf)
-
     return filename
 end
 

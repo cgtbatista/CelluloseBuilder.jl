@@ -1,5 +1,11 @@
 module CelluloseBuilder
 
+import PDBTools
+import LinearAlgebra
+import Printf: @printf, @sprintf
+import Measurements: Measurement, measurement, ±
+import StaticArrays: SVector, @SVector
+
 ## structures
 export CrystalXYZ, UnitCell
 
@@ -13,12 +19,17 @@ export generate_cellulose_topology, get_crystallographic_info
 export surface
 
 export unitcell, crystal, picking_fragments, cleanPDB!, isinverted
+export execVMD, execPSFGEN
+
+export polymorph
+
+#####
+export q_cm5
 
 ## crystalographic tools to deal with cellulose
 include("./crystaltoolkit.jl")
 
 ## editing the default atomnames
-include("./atomnames.jl")
 include("./coords.jl")
 
 ## PBC tools
@@ -28,18 +39,16 @@ include("./pbc.jl")
 
 ## cleaning the temporary files
 include("./pdb.jl")
-include("./topology.jl")
 
 # file generators
 include("./xyz.jl")
 
 # main cellulose builder function
 include("./cellulose.jl")
-include("./operators.jl")
 include("./utils.jl")
-include("./VMD.jl")
+include("./topology.jl")        #done without tests
+include("./VMD.jl")             #done
 
-# surface generation
-include("./Surface.jl")
+include("./opls.jl")
 
 end
