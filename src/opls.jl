@@ -154,27 +154,40 @@ function q_cm5(atoms::Vector{<:PDBTools.Atom}, q::Vector{Float64}; α=2.474)
         for j in eachindex(atoms)
             i == j && continue
             iatom, jatom = atoms[i], atoms[j]
-            ij = (PDBTools.element(iatom), PDBTools.element(jatom))
-            Tij = get(D, ij, 0.0000)                                               ## pairwise parameter
+            A, B = PDBTools.element(iatom), PDBTools.element(jatom)
+            Tij = get(D, (A, B), 0.0000)                                               ## pairwise parameter
             ri = SVector{3}(iatom.x, iatom.y, iatom.z)
             rj = SVector{3}(jatom.x, jatom.y, jatom.z)
-            Bij = exp(
-                -α * (LinearAlgebra.norm(ri - rj) - covalent_radii[iatom.name] - covalent_radii[jatom.name])
-            )                                                                      ## Pauling bond order
-            qi += Tij*Bij
+            Pij = exp(
+                -α * (LinearAlgebra.norm(ri - rj) - covalent_radii[A] - covalent_radii[B])
+            )                                                                          ## Pauling bond order, originaly Bij
+            qi += Tij*Pij
         end
         q_cm5[i] = qi
     end
     return q_cm5
 end
 
-function adjusting_q_cm5(atoms::Vector{<:PDBTools.Atom}, q_cm5::Vector{Float64}, psfname::AbstractString)
-    charges = Dict{String, Vector{Float64}}()
-    q_cm5 .-= sum(q_cm5)/length(q_cm5)
-    indices = PDBTools.index.(atoms)
+function adjusting_charges(
+    atomtypes::Dict{Tuple{String, String}, Vector{Int64}}, charges::Vector{Float64}; λ = 1.2
+)
+    adjusted_charges = Dict{Tuple{String, String}, Float64}()
+    charges .-= sum(charges) / length(charges)
+    for (key, indices) in atomtypes
+        average_charge = sum(charges[indices]) / length(indices)
+        adjusted_charges[key] = round(λ * average_charge, digits=6)
+    end
+    return adjusted_charges
+end
+
+function atomtypes_generator(psfname::AbstractString, pdbname::AbstractString)
+    atomtypes = Dict{Tuple{String, String}, Vector{Int}}()
     Base.open(psfname, "r") do file
-        lines = readlines(file)
+        indices = PDBTools.index.(
+            PDBTools.readPDB(pdbname)
+        )
         counter = 1
+        lines = readlines(file)
         for (i, line) in enumerate(lines)
             if occursin("!NATOM", line)
                 natoms = parse(Int, split(line)[1])
@@ -182,20 +195,19 @@ function adjusting_q_cm5(atoms::Vector{<:PDBTools.Atom}, q_cm5::Vector{Float64},
                     atomline = lines[i + j]
                     idx = parse(Int, strip(split(atomline)[1]))
                     !in(idx, indices) && continue
-                    atomtype = string(
-                        strip(split(atomline)[6])
-                    )
-                    if haskey(charges, atomtype)
-                        push!(charges[atomtype], q_cm5[counter])
+                    atomname = string(strip(split(atomline)[5]))
+                    atomtype = string(strip(split(atomline)[6]))
+                    if haskey(atomtypes, (atomname, atomtype))
+                        push!(atomtypes[(atomname, atomtype)], counter)
                     else
-                        charges[atomtype] = [ q_cm5[counter] ]
+                        atomtypes[(atomname, atomtype)] = [ counter ]
                     end
                     counter += 1
-                    counter > length(q_cm5) && break
                 end
             end
         end
     end
+    return atomtypes
 end
 
 #
@@ -203,7 +215,7 @@ end
 #
 
 # maybe with String+Int64 or String+Int64+String
-function chargesPSF!(psfname::AbstractString, charges::Dict{String, Float64})
+function chargesPSF!(psfname::AbstractString, charges::Dict{Tuple{String,String}, Float64})
     Base.open(psfname, "r+") do file
         lines = readlines(file)
         for (i, line) in enumerate(lines)
@@ -211,11 +223,16 @@ function chargesPSF!(psfname::AbstractString, charges::Dict{String, Float64})
                 natoms = parse(Int, split(line)[1])
                 for j in 1:natoms
                     atomline = lines[i + j]
-                    atomname = strip(split(atomline)[5])
-                    q = strip(split(atomline)[7])
-                    q_cm5 = get(charges, atomname, nothing)
+                    atomname = string(strip(split(atomline)[5]))
+                    atomtype = string(strip(split(atomline)[6]))
+                    q_old = lpad(
+                        strip(split(atomline)[7]), 9, " "
+                    )
+                    q_new = lpad(
+                        get(charges, (atomname, atomtype), 0.0), 9, " "
+                    )
                     if !isnothing(q_cm5)
-                        newline = replace(atomline, q => @sprintf("%8.6f", q_cm5))
+                        newline = replace(atomline, q_old => q_new)
                         lines[i + j] = newline
                     end
                 end
