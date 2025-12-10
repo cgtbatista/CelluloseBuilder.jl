@@ -90,7 +90,7 @@ function write_orca_input(
         """)
         for atom in atoms
             element = _opls_aa_bglc[atom.name].element
-            @printf(io, "%-2s %12.6f %12.6f %12.6f\n", element, atom.x, atom.y, atom.z)
+            #@printf(io, "%-2s %12.6f %12.6f %12.6f\n", element, atom.x, atom.y, atom.z)
         end
         println(io, "*")
     end

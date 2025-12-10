@@ -2,7 +2,6 @@ module CelluloseBuilder
 
 import PDBTools
 import LinearAlgebra
-import Printf: @printf, @sprintf
 import Measurements: Measurement, measurement, ±
 import StaticArrays: SVector, @SVector
 
@@ -24,7 +23,8 @@ export execVMD, execPSFGEN
 export polymorph
 
 #####
-export q_cm5
+export atomtypesPSF!, chargesPSF!, atomtypes_generator
+export q_cm5, orca_hirshfeld_charges, adjusting_charges
 
 ## crystalographic tools to deal with cellulose
 include("./crystaltoolkit.jl")
